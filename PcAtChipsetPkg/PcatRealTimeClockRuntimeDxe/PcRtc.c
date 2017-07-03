@@ -116,12 +116,14 @@ PcRtcInit (
   BOOLEAN         Enabled;
   BOOLEAN         Pending;
 
+  DEBUG ((EFI_D_INFO, "PcRtcInit: %d\n",  __LINE__));
   //
   // Acquire RTC Lock to make access to RTC atomic
   //
   if (!EfiAtRuntime ()) {
     EfiAcquireLock (&Global->RtcLock);
   }
+  DEBUG ((EFI_D_INFO, "PcRtcInit: %d\n",  __LINE__));
   //
   // Initialize RTC Register
   //
@@ -160,6 +162,7 @@ PcRtcInit (
     if (!EfiAtRuntime ()) {
       EfiReleaseLock (&Global->RtcLock);
     }
+    DEBUG ((EFI_D_INFO, "PcRtcInit: %d\n",  __LINE__));
     return EFI_DEVICE_ERROR;
   }
   //
@@ -237,6 +240,7 @@ PcRtcInit (
   //
   Status = PcRtcSetTime (&Time, Global);
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_INFO, "PcRtcInit: %d\n",  __LINE__));
     return EFI_DEVICE_ERROR;
   }
   
@@ -278,6 +282,7 @@ PcRtcInit (
     if (!EfiAtRuntime ()) {
     EfiReleaseLock (&Global->RtcLock);
     }
+    DEBUG ((EFI_D_INFO, "PcRtcInit: %d\n",  __LINE__));
     return EFI_DEVICE_ERROR;
   }
 
@@ -297,6 +302,7 @@ PcRtcInit (
     if (!EfiAtRuntime ()) {
       EfiReleaseLock (&Global->RtcLock);
     }
+    DEBUG ((EFI_D_INFO, "PcRtcInit: %d\n",  __LINE__));
     return EFI_DEVICE_ERROR;
   }
   

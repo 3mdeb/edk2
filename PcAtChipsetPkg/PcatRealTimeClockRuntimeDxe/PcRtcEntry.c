@@ -137,7 +137,12 @@ InitializePcRtc (
   EfiInitializeLock (&mModuleGlobal.RtcLock, TPL_CALLBACK);
   mModuleGlobal.CenturyRtcAddress = GetCenturyRtcAddress ();
 
+  DEBUG ((EFI_D_INFO, "InitializePcRtc: %d\n", __LINE__));
+
   Status = PcRtcInit (&mModuleGlobal);
+
+  DEBUG ((EFI_D_INFO, "InitializePcRtc: %d\n", __LINE__));
+  DEBUG ((EFI_D_INFO, "Status: %r\n", Status));
   ASSERT_EFI_ERROR (Status);
   
   Status = gBS->CreateEventEx (
