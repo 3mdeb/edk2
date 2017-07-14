@@ -16,6 +16,65 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "PlatformBootManager.h"
 #include "PlatformConsole.h"
 
+#define DP_NODE_LEN(Type) { (UINT8)sizeof (Type), (UINT8)(sizeof (Type) >> 8) }
+
+#pragma pack (1)
+typedef struct {
+  VENDOR_DEVICE_PATH         SerialDxe;
+  UART_DEVICE_PATH           Uart;
+  VENDOR_DEFINED_DEVICE_PATH TermType;
+  EFI_DEVICE_PATH_PROTOCOL   End;
+} PLATFORM_SERIAL_CONSOLE;
+#pragma pack ()
+
+#define SERIAL_DXE_FILE_GUID { \
+          0xD3987D4B, 0x971A, 0x435F, \
+          { 0x8C, 0xAF, 0x49, 0x67, 0xEB, 0x62, 0x72, 0x41 } \
+          }
+
+STATIC PLATFORM_SERIAL_CONSOLE mSerialConsole = {
+  //
+  // VENDOR_DEVICE_PATH SerialDxe
+  //
+  {
+    { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, DP_NODE_LEN (VENDOR_DEVICE_PATH) },
+    SERIAL_DXE_FILE_GUID
+  },
+
+  //
+  // UART_DEVICE_PATH Uart
+  //
+  {
+    { MESSAGING_DEVICE_PATH, MSG_UART_DP, DP_NODE_LEN (UART_DEVICE_PATH) },
+    0,                                      // Reserved
+    FixedPcdGet64 (PcdUartDefaultBaudRate), // BaudRate
+    FixedPcdGet8 (PcdUartDefaultDataBits),  // DataBits
+    FixedPcdGet8 (PcdUartDefaultParity),    // Parity
+    FixedPcdGet8 (PcdUartDefaultStopBits)   // StopBits
+  },
+
+  //
+  // VENDOR_DEFINED_DEVICE_PATH TermType
+  //
+  {
+    {
+      MESSAGING_DEVICE_PATH, MSG_VENDOR_DP,
+      DP_NODE_LEN (VENDOR_DEFINED_DEVICE_PATH)
+    }
+    //
+    // Guid to be filled in dynamically
+    //
+  },
+
+  //
+  // EFI_DEVICE_PATH_PROTOCOL End
+  //
+  {
+    END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE,
+    DP_NODE_LEN (EFI_DEVICE_PATH_PROTOCOL)
+  }
+};
+
 VOID
 InstallReadyToLock (
   VOID
@@ -187,6 +246,18 @@ PlatformBootManagerBeforeConsole (
   Down.UnicodeChar = CHAR_NULL;
   EfiBootManagerGetBootManagerMenu (&BootOption);
   EfiBootManagerAddKeyOptionVariable (NULL, (UINT16) BootOption.OptionNumber, 0, &Down, NULL);
+
+  //
+  // Add the hardcoded serial console device path to ConIn, ConOut, ErrOut.
+  //
+  CopyGuid (&mSerialConsole.TermType.Guid,
+    PcdGetPtr (PcdTerminalTypeGuidBuffer));
+  EfiBootManagerUpdateConsoleVariable (ConIn,
+    (EFI_DEVICE_PATH_PROTOCOL *)&mSerialConsole, NULL);
+  EfiBootManagerUpdateConsoleVariable (ConOut,
+    (EFI_DEVICE_PATH_PROTOCOL *)&mSerialConsole, NULL);
+  EfiBootManagerUpdateConsoleVariable (ErrOut,
+    (EFI_DEVICE_PATH_PROTOCOL *)&mSerialConsole, NULL);
 
   //
   // Install ready to lock.
