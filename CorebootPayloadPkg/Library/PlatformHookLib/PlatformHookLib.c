@@ -88,10 +88,11 @@ PlatformHookSerialPortInitialize (
     return Status;
   }
 
-  Status = PcdSet64S (PcdUartDefaultBaudRate, BaudRate);
+/* Status = PcdSet64S (PcdUartDefaultBaudRate, BaudRate);
   if (RETURN_ERROR (Status)) {
     return Status;
   }
+  */
 
   Status = PcdSet32S (PcdSerialClockRate, InputHertz);
   if (RETURN_ERROR (Status)) {
