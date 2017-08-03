@@ -381,7 +381,7 @@ CbPeiEntryPoint (
   SmbiosTableSize = 0;
   Status = CbParseAcpiTable (&pAcpiTable, &AcpiTableSize);
   if (EFI_ERROR (Status)) {
-    // ACPI table is oblidgible
+    // ACPI table is obligable
     DEBUG ((EFI_D_ERROR, "Failed to find the required acpi table\n"));
     ASSERT (FALSE);
   }
