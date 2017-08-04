@@ -71,14 +71,14 @@ Patch content inline or attached
 
 === Definitions for sample patch email ===
 
-* "CodeModule" is a short idenfier for the affected code.  For
+* "CodeModule" is a short identifier for the affected code.  For
   example MdePkg, or MdeModulePkg UsbBusDxe.
 * "Brief-single-line-summary" is a short summary of the change.
 * The entire first line should be less than ~70 characters.
 * "Full-commit-message" a verbose multiple line comment describing
   the change.  Each line should be less than ~70 characters.
-* "Contributed-under" explicitely states that the contribution is
-  made under the terms of the contribtion agreement.  This
+* "Contributed-under" explicitly states that the contribution is
+  made under the terms of the contribution agreement. This
   agreement is included below in this document.
 * "Signed-off-by" is the contributor's signature identifying them
   by their real/legal name and their email address.

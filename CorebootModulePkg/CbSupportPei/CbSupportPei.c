@@ -141,7 +141,7 @@ CbPeiReportRemainedFvs (
 }
 
 /**
-  Based on memory base, size and type, build resource descripter HOB.
+  Based on memory base, size and type, build resource descriptor HOB.
 
   @param  Base    Memory base address.
   @param  Size    Memory size.
