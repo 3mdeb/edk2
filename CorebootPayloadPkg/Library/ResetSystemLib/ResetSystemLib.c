@@ -163,7 +163,7 @@ EnterS3WithImmediateWake (
 }
 
 /**
-  This function causes a systemwide reset. The exact type of the reset is
+  This function causes a system wide reset. The exact type of the reset is
   defined by the EFI_GUID that follows the Null-terminated Unicode string passed
   into ResetData. If the platform does not recognize the EFI_GUID in ResetData
   the platform must pick a supported reset type to perform.The platform may

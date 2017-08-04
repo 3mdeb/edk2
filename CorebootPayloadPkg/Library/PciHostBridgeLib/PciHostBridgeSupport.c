@@ -146,7 +146,7 @@ PcatPciRootBridgeBarExisted (
 }
 
 /**
-  Parse PCI bar and collect the assigned PCI resouce information.
+  Parse PCI bar and collect the assigned PCI resource information.
 
   @param[in]  Command          Supported attributes.
 
@@ -392,7 +392,7 @@ ScanForRootBridges (
           //
           if (Pci.Bridge.SubordinateBus > SubBus) {
             //
-            // If the suborinate bus number of the PCI-PCI bridge is greater
+            // If the subordinate bus number of the PCI-PCI bridge is greater
             // than the PCI root bridge's current subordinate bus number,
             // then update the PCI root bridge's subordinate bus number
             //
