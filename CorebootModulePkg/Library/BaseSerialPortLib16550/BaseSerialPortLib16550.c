@@ -23,12 +23,12 @@
 #include <Library/BaseLib.h>
 
 //
-// PCI Defintions.
+// PCI Definitions.
 //
 #define PCI_BRIDGE_32_BIT_IO_SPACE              0x01
 
 //
-// 16550 UART register offsets and bitfields
+// 16550 UART register offsets and bit fields
 //
 #define R_UART_RXBUF          0
 #define R_UART_TXBUF          0
@@ -154,7 +154,7 @@ SerialPortLibUpdatePciRegister16 (
   @param  Value       The value to program into the PCI Configuration Register.
   @param  Mask        Bitmask of the bits to check and update in the PCI configuration register.
 
-  @return  The Secondary bus number that is actually programed into the PCI to PCI Bridge device.
+  @return  The Secondary bus number that is actually programmed into the PCI to PCI Bridge device.
 
 **/
 UINT32
@@ -451,7 +451,7 @@ SerialPortWritable (
       //    0    0   No cable connected.                       Transmit
       //    0    1   No cable connected.                       Transmit
       //    1    0   Cable connected, but not clear to send.   Wait
-      //    1    1   Cable connected, and clar to send.        Transmit
+      //    1    1   Cable connected, and clear to send.        Transmit
       //
       return (BOOLEAN) ((SerialPortReadRegister (SerialRegisterBase, R_UART_MSR) & (B_UART_MSR_DSR | B_UART_MSR_CTS)) != (B_UART_MSR_DSR));
     }
@@ -722,7 +722,7 @@ SerialPortRead (
 /**
   Polls a serial device to see if there is any data waiting to be read.
 
-  Polls aserial device to see if there is any data waiting to be read.
+  Polls a serial device to see if there is any data waiting to be read.
   If there is data waiting to be read from the serial device, then TRUE is returned.
   If there is no data waiting to be read from the serial device, then FALSE is returned.
 
@@ -903,7 +903,7 @@ SerialPortGetControl (
 }
 
 /**
-  Sets the baud rate, receive FIFO depth, transmit/receice time out, parity,
+  Sets the baud rate, receive FIFO depth, transmit/receive time out, parity,
   data bits, and stop bits on a serial device.
 
   @param BaudRate           The requested baud rate. A BaudRate value of 0 will use the

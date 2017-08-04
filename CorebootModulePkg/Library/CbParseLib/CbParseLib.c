@@ -30,7 +30,7 @@
 
   @param  val      The pointer to packed data.
 
-  @return          the UNIT64 value after convertion.
+  @return          the UNIT64 value after conversion.
 
 **/
 UINT64
@@ -90,7 +90,7 @@ CbCheckSum16 (
   @param  Tag                The tag id to be found
 
   @retval NULL              The Tag is not found.
-  @retval Others            The poiter to the record found.
+  @retval Others            The pointer to the record found.
 
 **/
 VOID *
@@ -383,7 +383,7 @@ CbParseSmbiosTable (
   @param  pPmCtrlReg         Pointer to the address of power management control register
   @param  pPmTimerReg        Pointer to the address of power management timer register
   @param  pResetReg          Pointer to the address of system reset register
-  @param  pResetValue        Pointer to the value to be writen to the system reset register
+  @param  pResetValue        Pointer to the value to be written to the system reset register
   @param  pPmEvtReg          Pointer to the address of power management event register
   @param  pPmGpeEnReg        Pointer to the address of power management GPE enable register
 
@@ -531,7 +531,7 @@ CbParseFadtInfo (
   @param  pRegBase           Pointer to the base address of serial port registers
   @param  pRegAccessType     Pointer to the access type of serial port registers
   @param  pRegWidth          Pointer to the register width in bytes
-  @param  pBaudrate          Pointer to the serial port baudrate
+  @param  pBaudrate          Pointer to the serial port baud rate
   @param  pInputHertz        Pointer to the input clock frequency
   @param  pUartPciAddr       Pointer to the UART PCI bus, dev and func address
 

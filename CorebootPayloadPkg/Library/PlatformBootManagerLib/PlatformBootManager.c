@@ -279,7 +279,7 @@ PlatformBootManagerBeforeConsole (
     Signal console ready platform customized event;
     Run diagnostics like memory testing;
     Connect certain devices;
-    Dispatch aditional option roms.
+    Dispatch additional option roms.
 **/
 VOID
 EFIAPI

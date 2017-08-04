@@ -241,7 +241,7 @@ GetGopDevicePath (
           ) == 0) {
         //
         // In current implementation, we only enable one of the child handles
-        // as console device, i.e. sotre one of the child handle's device
+        // as console device, i.e. store one of the child handle's device
         // path to variable "ConOut"
         // In future, we could select all child handles to be console device
         //

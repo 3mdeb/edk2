@@ -91,7 +91,7 @@ SecTemporaryRamSupport (
   the control is transferred to this function.
 
   @param SizeOfRam           Size of the temporary memory available for use.
-  @param TempRamBase         Base address of tempory ram
+  @param TempRamBase         Base address of temporary ram
   @param BootFirmwareVolume  Base address of the Boot Firmware Volume.
 **/
 VOID
