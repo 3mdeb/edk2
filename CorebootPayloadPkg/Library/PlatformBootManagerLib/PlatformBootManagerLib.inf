@@ -78,3 +78,4 @@
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
+  gUefiCorebootPayloadPkgTokenSpaceGuid.PcdTerminalTypeGuidBuffer

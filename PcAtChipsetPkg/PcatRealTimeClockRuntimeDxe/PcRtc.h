@@ -78,7 +78,7 @@ extern PC_RTC_MODULE_GLOBALS  mModuleGlobal;
 //
 // Register initial values
 //
-#define RTC_INIT_REGISTER_A 0x26
+#define RTC_INIT_REGISTER_A 0x6
 #define RTC_INIT_REGISTER_B 0x02
 #define RTC_INIT_REGISTER_D 0x0
 

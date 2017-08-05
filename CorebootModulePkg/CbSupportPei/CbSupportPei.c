@@ -141,7 +141,7 @@ CbPeiReportRemainedFvs (
 }
 
 /**
-  Based on memory base, size and type, build resource descripter HOB.
+  Based on memory base, size and type, build resource descriptor HOB.
 
   @param  Base    Memory base address.
   @param  Size    Memory size.
@@ -381,7 +381,7 @@ CbPeiEntryPoint (
   SmbiosTableSize = 0;
   Status = CbParseAcpiTable (&pAcpiTable, &AcpiTableSize);
   if (EFI_ERROR (Status)) {
-    // ACPI table is oblidgible
+    // ACPI table is obligable
     DEBUG ((EFI_D_ERROR, "Failed to find the required acpi table\n"));
     ASSERT (FALSE);
   }

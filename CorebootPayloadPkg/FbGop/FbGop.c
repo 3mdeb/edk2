@@ -528,7 +528,7 @@ FbGopChildHandleInstall (
     }
     
     //
-    // Creat child handle and device path protocol firstly
+    // Create child handle and device path protocol firstly
     //
     FbGopPrivate->Handle = NULL;
     Status = gBS->InstallMultipleProtocolInterfaces (
@@ -559,7 +559,7 @@ FbGopChildHandleInstall (
   }
 
   //
-  // Creat child handle and install Graphics Output Protocol,EDID Discovered/Active Protocol
+  // Create child handle and install Graphics Output Protocol,EDID Discovered/Active Protocol
   //
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &FbGopPrivate->Handle,
@@ -688,7 +688,7 @@ FbGopChildHandleUninstall (
 
 
 /**
-  Release resource for biso video instance.
+  Release resource for BIOS video instance.
 
   @param  FbGopPrivate       Video child device private data structure
 
@@ -703,7 +703,7 @@ FbGopDeviceReleaseResource (
   }
 
   //
-  // Release all the resourses occupied by the FB_VIDEO_DEV
+  // Release all the resources occupied by the FB_VIDEO_DEV
   //
   
   //
@@ -1222,7 +1222,7 @@ FbGopVbeBltWorker (
   }
   //
   // We need to fill the Virtual Screen buffer with the blt data.
-  // The virtual screen is upside down, as the first row is the bootom row of
+  // The virtual screen is upside down, as the first row is the bottom row of
   // the image.
   //
   if (BltOperation == EfiBltVideoToBltBuffer) {
