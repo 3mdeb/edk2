@@ -164,12 +164,16 @@ CbDxeEntryPoint (
   //
   //Status = CbReserveResourceInGcd (TRUE, EfiGcdMemoryTypeMemoryMappedIo, 0xFEE00000, SIZE_1MB, 0, SystemTable); // LAPIC
   //ASSERT_EFI_ERROR (Status);
+  //
 
-  //Status = CbReserveResourceInGcd (TRUE, EfiGcdMemoryTypeMemoryMappedIo, 0xFEC00000, SIZE_4KB, 0, SystemTable); // IOAPIC
-  //ASSERT_EFI_ERROR (Status);
+  UINT64 apic_base_addr = AsmReadMsr64(0x1b);
+  DEBUG((DEBUG_INFO, "APIC BAR: 0x%x\n", apic_base_addr));
 
-  //Status = CbReserveResourceInGcd (TRUE, EfiGcdMemoryTypeMemoryMappedIo, 0xFED00000, SIZE_1KB, 0, SystemTable); // HPET
-  //ASSERT_EFI_ERROR (Status);
+  Status = CbReserveResourceInGcd (TRUE, EfiGcdMemoryTypeMemoryMappedIo, 0xFEC00000, SIZE_4KB, 0, SystemTable); // IOAPIC
+  ASSERT_EFI_ERROR (Status);
+
+  Status = CbReserveResourceInGcd (TRUE, EfiGcdMemoryTypeMemoryMappedIo, 0xFED00000, SIZE_1KB, 0, SystemTable); // HPET
+  ASSERT_EFI_ERROR (Status);
 
   //
   // Find the system table information guid hob
