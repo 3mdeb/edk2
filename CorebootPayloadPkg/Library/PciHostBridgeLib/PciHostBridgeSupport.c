@@ -353,6 +353,7 @@ ScanForRootBridges (
             //
             break;
           } else {
+            DEBUG((DEBUG_INFO, "ScanForRootBridges:%d\n", __LINE__));
             //
             // If PCI function != 0, VendorId == 0xFFFF, we continue to search
             // PCI function.
@@ -371,6 +372,7 @@ ScanForRootBridges (
         // PCI root bridge
         //
         NumberOfDevices++;
+        DEBUG((DEBUG_INFO, "ScanForRootBridges:%d NumberOfDevices: %d\n", __LINE__, NumberOfDevices));
 
         //
         // Look for devices with the VGA Palette Snoop enabled in the COMMAND
@@ -557,6 +559,7 @@ ScanForRootBridges (
     // If at least one PCI device was found on the primary bus of this PCI
     // root bridge, then the PCI root bridge exists.
     //
+    DEBUG((DEBUG_INFO, "ScanForRootBridges:%d NumberOfDevices: %d\n", __LINE__, NumberOfDevices));
     if (NumberOfDevices > 0) {
       RootBridges = ReallocatePool (
                       (*NumberOfRootBridges) * sizeof (PCI_ROOT_BRIDGE),
@@ -581,5 +584,6 @@ ScanForRootBridges (
     }
   }
 
+  DEBUG((DEBUG_INFO, "ScanForRootBridges:%d RootBridges: %d\n", __LINE__, RootBridges));
   return RootBridges;
 }

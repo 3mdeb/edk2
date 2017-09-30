@@ -367,8 +367,11 @@ InitializePciHostBridge (
   BOOLEAN                     ResourceAssigned;
   LIST_ENTRY                  *Link;
 
+  DEBUG((DEBUG_INFO, "InitializePciHostBridge:%d\n", __LINE__));
   RootBridges = PciHostBridgeGetRootBridges (&RootBridgeCount);
   if ((RootBridges == NULL) || (RootBridgeCount == 0)) {
+    DEBUG((DEBUG_INFO, "InitializePciHostBridge:%d\n", __LINE__));
+    DEBUG((DEBUG_INFO, "(RootBridges == %p) || (RootBridgeCount == %p)\n", RootBridges, RootBridgeCount));
     return EFI_UNSUPPORTED;
   }
 

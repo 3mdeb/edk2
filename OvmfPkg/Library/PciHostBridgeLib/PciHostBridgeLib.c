@@ -217,10 +217,13 @@ PciHostBridgeGetRootBridges (
   PCI_ROOT_BRIDGE_APERTURE Mem;
   PCI_ROOT_BRIDGE_APERTURE MemAbove4G;
 
+  DEBUG((DEBUG_INFO, "PciHostBridgeGetRootBridges:%d\n", __LINE__));
   if (PcdGetBool (PcdPciDisableBusEnumeration)) {
+    DEBUG((DEBUG_INFO, "PciHostBridgeGetRootBridges:%d\n", __LINE__));
     return ScanForRootBridges (Count);
   }
 
+  DEBUG((DEBUG_INFO, "PciHostBridgeGetRootBridges:%d\n", __LINE__));
   Attributes = EFI_PCI_ATTRIBUTE_IDE_PRIMARY_IO |
     EFI_PCI_ATTRIBUTE_IDE_SECONDARY_IO |
     EFI_PCI_ATTRIBUTE_ISA_IO_16 |
@@ -347,6 +350,7 @@ PciHostBridgeGetRootBridges (
   ++Initialized;
 
   *Count = Initialized;
+  DEBUG((DEBUG_INFO, "PciHostBridgeGetRootBridges:%d Bridges: %d\n", __LINE__, Bridges));
   return Bridges;
 
 FreeBridges:
@@ -355,6 +359,7 @@ FreeBridges:
     UninitRootBridge (&Bridges[Initialized]);
   }
 
+  DEBUG((DEBUG_INFO, "PciHostBridgeGetRootBridges:%d Bridges: %d\n", __LINE__, Bridges));
   FreePool (Bridges);
   return NULL;
 }

@@ -49,10 +49,22 @@ CbReserveResourceInGcd (
     if (EFI_ERROR (Status)) {
       DEBUG ((
         EFI_D_ERROR,
-        "Failed to add memory space :0x%lx 0x%lx\n",
+        "Failed to add memory space :0x%lx 0x%lx Status:%r\n",
         BaseAddress,
-        Length
+        Length,
+	Status
         ));
+    EFI_GCD_MEMORY_SPACE_DESCRIPTOR memDesc;
+    gDS->GetMemorySpaceDescriptor (
+                    BaseAddress,
+                    &memDesc
+                    );
+    DEBUG((EFI_D_ERROR, "Length: 0x%x\n", memDesc.Length));
+    DEBUG((EFI_D_ERROR, "Capabilities: 0x%x\n", memDesc.Capabilities));
+    DEBUG((EFI_D_ERROR, "Attributes: 0x%x\n", memDesc.Attributes));
+    DEBUG((EFI_D_ERROR, "GcdMemoryType: 0x%x\n", memDesc.GcdMemoryType));
+    DEBUG((EFI_D_ERROR, "ImageHandle: 0x%x\n", memDesc.ImageHandle));
+    DEBUG((EFI_D_ERROR, "DeviceHandle: 0x%x\n", memDesc.DeviceHandle));
     }
     ASSERT_EFI_ERROR (Status);
     Status = gDS->AllocateMemorySpace (
@@ -61,9 +73,19 @@ CbReserveResourceInGcd (
                     Alignment,
                     Length,
                     &BaseAddress,
+
                     ImageHandle,
                     NULL
                     );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((
+        EFI_D_ERROR,
+        "Failed to allocate memory space :0x%lx 0x%lx Status:%r\n",
+        BaseAddress,
+        Length,
+	Status
+        ));
+    }
     ASSERT_EFI_ERROR (Status);
   } else {
     Status = gDS->AddIoSpace (

@@ -167,6 +167,7 @@ PciHostBridgeGetRootBridges (
   UINTN *Count
 )
 {
+  DEBUG((DEBUG_INFO, "PciHostBridgeGetRootBridges:%d\n", __LINE__));
   return ScanForRootBridges (Count);
 }
 
