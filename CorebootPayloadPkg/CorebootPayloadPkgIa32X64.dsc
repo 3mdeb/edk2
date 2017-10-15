@@ -41,7 +41,7 @@
   #
   # PCI options
   #
-  DEFINE PCIE_BASE                        = 0xE0000000
+  DEFINE PCIE_BASE                        = 0xF8000000
 
   #
   # Serial port set up

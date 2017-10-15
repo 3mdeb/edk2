@@ -38,6 +38,8 @@
   BaseMemoryLib
   DevicePathLib
   HobLib
+  PciLib
+  PciCf8Lib
 
 [Sources]
   PcatPciRootBridge.h

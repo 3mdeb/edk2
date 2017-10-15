@@ -244,9 +244,12 @@ PciSearchDevice (
     Bus, Device, Func
     ));
 
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
   if (!IS_PCI_BRIDGE (Pci)) {
 
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
     if (IS_CARDBUS_BRIDGE (Pci)) {
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
       PciIoDevice = GatherP2CInfo (
                       Bridge,
                       Pci,
@@ -254,14 +257,18 @@ PciSearchDevice (
                       Device,
                       Func
                       );
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
       if ((PciIoDevice != NULL) && gFullEnumeration) {
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
         InitializeP2C (PciIoDevice);
       }
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
     } else {
 
       //
       // Create private data for Pci Device
       //
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
       PciIoDevice = GatherDeviceInfo (
                       Bridge,
                       Pci,
@@ -277,6 +284,7 @@ PciSearchDevice (
     //
     // Create private data for PPB
     //
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
     PciIoDevice = GatherPpbInfo (
                     Bridge,
                     Pci,
@@ -288,11 +296,14 @@ PciSearchDevice (
     //
     // Special initialization for PPB including making the PPB quiet
     //
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
     if ((PciIoDevice != NULL) && gFullEnumeration) {
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
       InitializePpb (PciIoDevice);
     }
   }
 
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
   if (PciIoDevice == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
@@ -300,8 +311,10 @@ PciSearchDevice (
   //
   // Update the bar information for this PCI device so as to support some specific device
   //
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
   UpdatePciInfo (PciIoDevice);
 
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
   if (PciIoDevice->DevicePath == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
@@ -309,14 +322,18 @@ PciSearchDevice (
   //
   // Detect this function has option rom
   //
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
   if (gFullEnumeration) {
 
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
     if (!IS_CARDBUS_BRIDGE (Pci)) {
 
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
       GetOpRomInfo (PciIoDevice);
 
     }
 
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
     ResetPowerManagementFeature (PciIoDevice);
 
   }
@@ -324,16 +341,20 @@ PciSearchDevice (
   //
   // Insert it into a global tree for future reference
   //
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
   InsertPciDevice (Bridge, PciIoDevice);
 
   //
   // Determine PCI device attributes
   //
 
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
   if (PciDevice != NULL) {
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
     *PciDevice = PciIoDevice;
   }
 
+  DEBUG ((DEBUG_INFO, "PciSearchDevice: %d\n", __LINE__));
   return EFI_SUCCESS;
 }
 
@@ -552,6 +573,7 @@ GatherPpbInfo (
   UINT16                          PrefetchableMemoryBase;
   UINT16                          PrefetchableMemoryLimit;
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   PciIoDevice = CreatePciIoDevice (
                   Bridge,
                   Pci,
@@ -560,16 +582,20 @@ GatherPpbInfo (
                   Func
                   );
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   if (PciIoDevice == NULL) {
     return NULL;
   }
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   if (gFullEnumeration) {
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     PCI_DISABLE_COMMAND_REGISTER (PciIoDevice, EFI_PCI_COMMAND_BITS_OWNED);
 
     //
     // Initalize the bridge control register
     //
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     PCI_DISABLE_BRIDGE_CONTROL_REGISTER (PciIoDevice, EFI_PCI_BRIDGE_CONTROL_BITS_OWNED);
 
   }
@@ -577,27 +603,38 @@ GatherPpbInfo (
   //
   // PPB can have two BARs
   //
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   if (PciParseBar (PciIoDevice, 0x10, PPB_BAR_0) == 0x14) {
     //
     // Not 64-bit bar
     //
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     PciParseBar (PciIoDevice, 0x14, PPB_BAR_1);
   }
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   PciIo = &PciIoDevice->PciIo;
 
   //
   // Test whether it support 32 decode or not
   //
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   PciIo->Pci.Read (PciIo, EfiPciIoWidthUint8, 0x1C, 1, &Temp);
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   PciIo->Pci.Write (PciIo, EfiPciIoWidthUint8, 0x1C, 1, &gAllOne);
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   PciIo->Pci.Read (PciIo, EfiPciIoWidthUint8, 0x1C, 1, &Value);
   PciIo->Pci.Write (PciIo, EfiPciIoWidthUint8, 0x1C, 1, &Temp);
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   if (Value != 0) {
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     if ((Value & 0x01) != 0) {
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
       PciIoDevice->Decodes |= EFI_BRIDGE_IO32_DECODE_SUPPORTED;
     } else {
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
       PciIoDevice->Decodes |= EFI_BRIDGE_IO16_DECODE_SUPPORTED;
     }
   }
@@ -607,31 +644,42 @@ GatherPpbInfo (
   // PCI bridge supporting non-standard I/O window alignment less than 4K.
   //
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   PciIoDevice->BridgeIoAlignment = 0xFFF;
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   if (FeaturePcdGet (PcdPciBridgeIoAlignmentProbe)) {
     //
     // Check any bits of bit 3-1 of I/O Base Register are writable.
     // if so, it is assumed non-standard I/O window alignment is supported by this bridge.
     // Per spec, bit 3-1 of I/O Base Register are reserved bits, so its content can't be assumed.
     //
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     Value = (UINT8)(Temp ^ (BIT3 | BIT2 | BIT1));
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     PciIo->Pci.Write (PciIo, EfiPciIoWidthUint8, 0x1C, 1, &Value);
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     PciIo->Pci.Read (PciIo, EfiPciIoWidthUint8, 0x1C, 1, &Value);
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     PciIo->Pci.Write (PciIo, EfiPciIoWidthUint8, 0x1C, 1, &Temp);
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     Value = (UINT8)((Value ^ Temp) & (BIT3 | BIT2 | BIT1));
     switch (Value) {
       case BIT3:
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
         PciIoDevice->BridgeIoAlignment = 0x7FF;
         break;
       case BIT3 | BIT2:
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
         PciIoDevice->BridgeIoAlignment = 0x3FF;
         break;
       case BIT3 | BIT2 | BIT1:
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
         PciIoDevice->BridgeIoAlignment = 0x1FF;
         break;
     }
   }
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   Status = BarExisted (
             PciIoDevice,
             0x24,
@@ -647,11 +695,14 @@ GatherPpbInfo (
   //   0 - the bridge supports only 32 bit addresses.
   //   1 - the bridge supports 64-bit addresses.
   //
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   PrefetchableMemoryBase = (UINT16)(PMemBaseLimit & 0xffff);
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   PrefetchableMemoryLimit = (UINT16)(PMemBaseLimit >> 16);
   if (!EFI_ERROR (Status) &&
       (PrefetchableMemoryBase & 0x000f) == 0x0001 &&
       (PrefetchableMemoryLimit & 0x000f) == 0x0001) {
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
     Status = BarExisted (
               PciIoDevice,
               0x28,
@@ -660,9 +711,11 @@ GatherPpbInfo (
               );
 
     if (!EFI_ERROR (Status)) {
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
       PciIoDevice->Decodes |= EFI_BRIDGE_PMEM32_DECODE_SUPPORTED;
       PciIoDevice->Decodes |= EFI_BRIDGE_PMEM64_DECODE_SUPPORTED;
     } else {
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
       PciIoDevice->Decodes |= EFI_BRIDGE_PMEM32_DECODE_SUPPORTED;
     }
   }
@@ -672,13 +725,16 @@ GatherPpbInfo (
   //
   PciIoDevice->Decodes |= EFI_BRIDGE_MEM32_DECODE_SUPPORTED;
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   GetResourcePaddingPpb (PciIoDevice);
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   DEBUG_CODE (
     DumpPpbPaddingResource (PciIoDevice, PciBarTypeUnknown);
     DumpPciBars (PciIoDevice);
   );
 
+  DEBUG ((DEBUG_INFO, "GatherPpbInfo: %d\n", __LINE__));
   return PciIoDevice;
 }
 
@@ -1746,7 +1802,7 @@ PciIovParseVfBar (
       break;
     }
   }
-  
+
   //
   // Check the length again so as to keep compatible with some special bars
   //
@@ -1755,7 +1811,7 @@ PciIovParseVfBar (
     PciIoDevice->VfPciBar[BarIndex].BaseAddress = 0;
     PciIoDevice->VfPciBar[BarIndex].Alignment   = 0;
   }
-  
+
   //
   // Increment number of bar
   //
@@ -2195,7 +2251,7 @@ CreatePciIoDevice (
       //
       ParentPciIo = &Bridge->PciIo;
       ParentPciIo->Pci.Read (
-                          ParentPciIo, 
+                          ParentPciIo,
                           EfiPciIoWidthUint32,
                           Bridge->PciExpressCapabilityOffset + EFI_PCIE_CAPABILITY_DEVICE_CAPABILITIES_2_OFFSET,
                           1,

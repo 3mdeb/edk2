@@ -1,17 +1,17 @@
 /*++
 
 Copyright (c) 2005 - 2009, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+This program and the accompanying materials
+are licensed and made available under the terms and conditions of the BSD License
+which accompanies this distribution.  The full text of the license may be found at
+http://opensource.org/licenses/bsd-license.php
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 Module Name:
   PcatPciRootBridge.c
-    
+
 Abstract:
 
     EFI PC-AT PCI Root Bridge Controller
@@ -20,6 +20,10 @@ Abstract:
 
 #include "PcatPciRootBridge.h"
 #include "DeviceIo.h"
+#include <Library/PciLib.h>
+#include <Library/PciExpressLib.h>
+#include <Library/PciCf8Lib.h>
+
 
 EFI_CPU_IO2_PROTOCOL *gCpuIo;
 
@@ -37,7 +41,7 @@ Routine Description:
 Arguments:
   ImageHandle -
   SystemTable -
-    
+
 Returns:
     None
 
@@ -110,7 +114,7 @@ Returns:
     PrivateData->Pmem64Base  = 0xffffffffffffffffULL;
 
     //
-    // The default mechanism for performing PCI Configuration cycles is to 
+    // The default mechanism for performing PCI Configuration cycles is to
     // use the I/O ports at 0xCF8 and 0xCFC.  This is only used for IA-32.
     // IPF uses SAL calls to perform PCI COnfiguration cycles
     //
@@ -123,7 +127,7 @@ Returns:
     // For IPF, a SAL call is made to retrieve the base address for PCI I/O cycles
     //
     Status = PcatRootBridgeIoGetIoPortMapping (
-               &PrivateData->PhysicalIoBase, 
+               &PrivateData->PhysicalIoBase,
                &PrivateData->PhysicalMemoryBase
                );
     if (EFI_ERROR (Status)) {
@@ -163,32 +167,37 @@ Returns:
     if (EFI_ERROR (Status)) {
       goto Done;
     }
-    
+
     //
     // Scan all the PCI devices on the primary bus of the PCI root bridge
     //
     for (Device = 0, NumberOfPciDevices = 0; Device <= PCI_MAX_DEVICE; Device++) {
-    
+
       for (Function = 0; Function <= PCI_MAX_FUNC; Function++) {
 
         //
         // Compute the PCI configuration address of the PCI device to probe
         //
         Address = EFI_PCI_ADDRESS (PrimaryBusIndex, Device, Function, 0);
+        DEBUG ((DEBUG_INFO, "Address - 0x%lx, PciRead16 (Address): 0x%x\n", Address, PciRead16 (Address)));
+        DEBUG ((DEBUG_INFO, "Address - 0x%lx, PciCf8Read16 (Address): 0x%x\n", Address, PciCf8Read16 (Address)));
+        //DEBUG ((DEBUG_INFO, "Address - 0x%lx, PciExpressRead16 (Address): 0x%x\n", Address, PciExpressRead16 (Address)));
 
         //
         // Read the Vendor ID from the PCI Configuration Header
         //
         Status = PrivateData->Io.Pci.Read (
-                                       &PrivateData->Io, 
-                                       EfiPciWidthUint16, 
-                                       Address, 
-                                       sizeof (VendorId) / sizeof (UINT16), 
+                                       &PrivateData->Io,
+                                       EfiPciWidthUint16,
+                                       Address,
+                                       sizeof (VendorId) / sizeof (UINT16),
                                        &VendorId
                                        );
+
+        DEBUG ((DEBUG_INFO, "VendorId - 0x%lx\n", VendorId));
         if ((EFI_ERROR (Status)) || ((VendorId == 0xffff) && (Function == 0))) {
           //
-          // If the PCI Configuration Read fails, or a PCI device does not exist, then 
+          // If the PCI Configuration Read fails, or a PCI device does not exist, then
           // skip this entire PCI device
           //
           break;
@@ -204,10 +213,10 @@ Returns:
         // Read the entire PCI Configuration Header
         //
         Status = PrivateData->Io.Pci.Read (
-                                       &PrivateData->Io, 
-                                       EfiPciWidthUint16, 
-                                       Address, 
-                                       sizeof (PciConfigurationHeader) / sizeof (UINT16), 
+                                       &PrivateData->Io,
+                                       EfiPciWidthUint16,
+                                       Address,
+                                       sizeof (PciConfigurationHeader) / sizeof (UINT16),
                                        &PciConfigurationHeader
                                        );
         if (EFI_ERROR (Status)) {
@@ -240,7 +249,7 @@ Returns:
           if (PciConfigurationHeader.Bridge.SubordinateBus > PrivateData->SubordinateBus) {
             //
             // If the suborinate bus number of the PCI-PCI bridge is greater than the PCI root bridge's
-            // current subordinate bus number, then update the PCI root bridge's subordinate bus number 
+            // current subordinate bus number, then update the PCI root bridge's subordinate bus number
             //
             PrivateData->SubordinateBus = PciConfigurationHeader.Bridge.SubordinateBus;
           }
@@ -339,10 +348,10 @@ Returns:
           //
           if ((PciConfigurationHeader.Hdr.HeaderType & HEADER_LAYOUT_CODE) == HEADER_TYPE_DEVICE) {
             Status = PcatPciRootBridgeParseBars (
-                       PrivateData, 
+                       PrivateData,
                        PciConfigurationHeader.Hdr.Command,
-                       PrimaryBusIndex, 
-                       Device, 
+                       PrimaryBusIndex,
+                       Device,
                        Function
                        );
           }
@@ -385,12 +394,12 @@ Returns:
           }
 
           //
-          // See if the PCI Device is a PCI - ISA or PCI - EISA 
+          // See if the PCI Device is a PCI - ISA or PCI - EISA
           // or ISA_POSITIVIE_DECODE Bridge device
           //
           if (PciConfigurationHeader.Hdr.ClassCode[2] == 0x06) {
             if (PciConfigurationHeader.Hdr.ClassCode[1] == 0x01 ||
-                PciConfigurationHeader.Hdr.ClassCode[1] == 0x02 || 
+                PciConfigurationHeader.Hdr.ClassCode[1] == 0x02 ||
                 PciConfigurationHeader.Hdr.ClassCode[1] == 0x80 ) {
               PrivateData->Attributes |= EFI_PCI_ATTRIBUTE_ISA_IO;
               PrivateData->Attributes |= EFI_PCI_ATTRIBUTE_ISA_MOTHERBOARD_IO;
@@ -415,7 +424,7 @@ Returns:
     }
 
     //
-    // After scanning all the PCI devices on the PCI root bridge's primary bus, update the 
+    // After scanning all the PCI devices on the PCI root bridge's primary bus, update the
     // Primary Bus Number for the next PCI root bridge to be this PCI root bridge's subordinate
     // bus number + 1.
     //
@@ -456,10 +465,10 @@ Returns:
       ASSERT_EFI_ERROR (Status);
 
       //
-      // Create the handle for this PCI Root Bridge 
+      // Create the handle for this PCI Root Bridge
       //
       Status = gBS->InstallMultipleProtocolInterfaces (
-                     &PrivateData->Handle,              
+                     &PrivateData->Handle,
                      &gEfiDevicePathProtocolGuid,
                      PrivateData->DevicePath,
                      &gEfiPciRootBridgeIoProtocolGuid,
@@ -541,7 +550,7 @@ Done:
   return EFI_SUCCESS;
 }
 
-EFI_STATUS 
+EFI_STATUS
 ConstructConfiguration(
   IN OUT PCAT_PCI_ROOT_BRIDGE_INSTANCE  *PrivateData
   )
@@ -556,7 +565,7 @@ Returns:
   None
 
 --*/
- 
+
 {
   EFI_STATUS                         Status;
   UINT8                              NumConfig;
@@ -591,7 +600,7 @@ Returns:
     // If there is no resource request
     //
     Status = gBS->AllocatePool (
-                    EfiBootServicesData, 
+                    EfiBootServicesData,
                     sizeof (EFI_ACPI_ADDRESS_SPACE_DESCRIPTOR) + sizeof (EFI_ACPI_END_TAG_DESCRIPTOR),
                     (VOID **)&PrivateData->Configuration
                     );
@@ -600,12 +609,12 @@ Returns:
     }
 
     Configuration = PrivateData->Configuration;
-    
+
     ZeroMem (
-      Configuration, 
-      sizeof (EFI_ACPI_ADDRESS_SPACE_DESCRIPTOR) + sizeof (EFI_ACPI_END_TAG_DESCRIPTOR) 
+      Configuration,
+      sizeof (EFI_ACPI_ADDRESS_SPACE_DESCRIPTOR) + sizeof (EFI_ACPI_END_TAG_DESCRIPTOR)
       );
-    
+
     Configuration->Desc = ACPI_ADDRESS_SPACE_DESCRIPTOR;
     Configuration->Len  = sizeof (EFI_ACPI_ADDRESS_SPACE_DESCRIPTOR);
     Configuration++;
@@ -617,21 +626,21 @@ Returns:
 
   //
   // If there is at least one type of resource request,
-  // allocate a acpi resource node 
+  // allocate a acpi resource node
   //
   Status = gBS->AllocatePool (
-                  EfiBootServicesData, 
+                  EfiBootServicesData,
                   sizeof (EFI_ACPI_ADDRESS_SPACE_DESCRIPTOR) * NumConfig + sizeof (EFI_ACPI_END_TAG_DESCRIPTOR),
                   (VOID **)&PrivateData->Configuration
                   );
   if (EFI_ERROR (Status )) {
     return Status;
   }
-  
+
   Configuration = PrivateData->Configuration;
 
   ZeroMem (
-    Configuration, 
+    Configuration,
     sizeof (EFI_ACPI_ADDRESS_SPACE_DESCRIPTOR) * NumConfig + sizeof (EFI_ACPI_END_TAG_DESCRIPTOR)
     );
 
@@ -639,7 +648,7 @@ Returns:
     Configuration->Desc         = ACPI_ADDRESS_SPACE_DESCRIPTOR;
     Configuration->Len          = sizeof (EFI_ACPI_ADDRESS_SPACE_DESCRIPTOR);
     Configuration->ResType      = ACPI_ADDRESS_SPACE_TYPE_BUS;
-    Configuration->SpecificFlag = 0; 
+    Configuration->SpecificFlag = 0;
     Configuration->AddrRangeMin = PrivateData->PrimaryBus;
     Configuration->AddrRangeMax = PrivateData->SubordinateBus;
     Configuration->AddrLen      = Configuration->AddrRangeMax - Configuration->AddrRangeMin + 1;
@@ -672,7 +681,7 @@ Returns:
     Configuration->AddrRangeMax         = PrivateData->Mem32Limit;
     Configuration->AddrLen              = Configuration->AddrRangeMax - Configuration->AddrRangeMin + 1;
     Configuration++;
-  } 
+  }
 
   //
   // Deal with Pmem32 aperture
@@ -729,13 +738,13 @@ Returns:
   return EFI_SUCCESS;
 }
 
-EFI_STATUS 
+EFI_STATUS
 PcatPciRootBridgeBarExisted (
   IN  PCAT_PCI_ROOT_BRIDGE_INSTANCE  *PrivateData,
   IN  UINT64                         Address,
   OUT UINT32                         *OriginalValue,
   OUT UINT32                         *Value
-  ) 
+  )
 /*++
 
 Routine Description:
@@ -756,10 +765,10 @@ Returns:
   // Preserve the original value
   //
   Status = PrivateData->Io.Pci.Read (
-                                 &PrivateData->Io, 
-                                 EfiPciWidthUint32, 
-                                 Address, 
-                                 1, 
+                                 &PrivateData->Io,
+                                 EfiPciWidthUint32,
+                                 Address,
+                                 1,
                                  OriginalValue
                                  );
 
@@ -771,17 +780,17 @@ Returns:
   AllOnes = 0xffffffff;
 
   Status = PrivateData->Io.Pci.Write (
-                                 &PrivateData->Io, 
-                                 EfiPciWidthUint32, 
-                                 Address, 
-                                 1, 
+                                 &PrivateData->Io,
+                                 EfiPciWidthUint32,
+                                 Address,
+                                 1,
                                  &AllOnes
                                  );
   Status = PrivateData->Io.Pci.Read (
-                                 &PrivateData->Io, 
-                                 EfiPciWidthUint32, 
-                                 Address, 
-                                 1, 
+                                 &PrivateData->Io,
+                                 EfiPciWidthUint32,
+                                 Address,
+                                 1,
                                  Value
                                  );
 
@@ -789,10 +798,10 @@ Returns:
   //Write back the original value
   //
   Status = PrivateData->Io.Pci.Write (
-                                 &PrivateData->Io, 
-                                 EfiPciWidthUint32, 
-                                 Address, 
-                                 1, 
+                                 &PrivateData->Io,
+                                 EfiPciWidthUint32,
+                                 Address,
+                                 1,
                                  OriginalValue
                                  );
 
@@ -849,7 +858,7 @@ Returns:
                );
 
     if (!EFI_ERROR (Status )) {
-      if ( Value & 0x01 ) { 
+      if ( Value & 0x01 ) {
         if (Command & 0x0001) {
           //
           //Device I/Os
@@ -871,7 +880,7 @@ Returns:
             }
           }
         }
-   
+
       } else {
 
         if (Command & 0x0002) {
@@ -879,11 +888,11 @@ Returns:
           Mask = 0xfffffff0;
           Base = OriginalValue & Mask;
           Length = Value & Mask;
- 
+
           if ((Value & 0x07) != 0x04) {
             Length = ((~Length) + 1) & 0xffffffff;
           } else {
-            Offset += 4; 
+            Offset += 4;
             Address = EFI_PCI_ADDRESS (Bus, Device, Function, Offset);
 
             Status = PcatPciRootBridgeBarExisted (
@@ -965,7 +974,7 @@ Routine Description:
 Arguments:
   HostBridgeNumber - The number of HostBridge
   RootBridgeNumber - The number of RootBridge
-    
+
 Returns:
   UINT64 - PciExpressBaseAddress for this HostBridge and RootBridge
 
