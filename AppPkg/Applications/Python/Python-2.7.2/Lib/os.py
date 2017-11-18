@@ -1,9 +1,9 @@
-r"""OS routines for Mac, NT, or Posix depending on what system we're on.
+"""OS routines for Mac, NT, Posix, or UEFI depending on what system we're on.
 
 This exports:
-  - all functions from posix, nt, os2, or ce, e.g. unlink, stat, etc.
-  - os.path is one of the modules posixpath, or ntpath
-  - os.name is 'posix', 'nt', 'os2', 'ce' or 'riscos'
+  - all functions from edk2, posix, nt, os2, or ce, e.g. unlink, stat, etc.
+  - os.path is one of the modules uefipath, posixpath, or ntpath
+  - os.name is 'edk2', 'posix', 'nt', 'os2', 'ce' or 'riscos'
   - os.curdir is a string representing the current directory ('.' or ':')
   - os.pardir is a string representing the parent directory ('..' or '::')
   - os.sep is the (or a most common) pathname separator ('/' or ':' or '\\')
@@ -112,6 +112,20 @@ elif 'riscos' in _names:
     import riscos
     __all__.extend(_get_exports_list(riscos))
     del riscos
+
+elif 'edk2' in _names:
+    name = 'edk2'
+    linesep = '\n'
+    from edk2 import *
+    try:
+        from edk2 import _exit
+    except ImportError:
+        pass
+    import ntpath as path
+
+    import edk2
+    __all__.extend(_get_exports_list(edk2))
+    del edk2
 
 else:
     raise ImportError, 'no os specific module found'

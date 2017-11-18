@@ -122,8 +122,13 @@ def join(a, *p):
 def splitdrive(p):
     """Split a pathname into drive and path specifiers. Returns a 2-tuple
 "(drive,path)";  either part may be empty"""
-    if p[1:2] == ':':
-        return p[0:2], p[2:]
+    pparts = p.split(':', 2)
+    numparts = len(pparts)
+    if numparts == 2:
+        return pparts[0] + ':', pparts[1]
+    else:
+        if numparts == 1:
+          return '', pparts[0]
     return '', p
 
 
@@ -136,7 +141,7 @@ def splitunc(p):
     using backslashes).  unc+rest is always the input path.
     Paths containing drive letters never have an UNC part.
     """
-    if p[1:2] == ':':
+    if len(p.split(':', 2)) > 1:
         return '', p # Drive letter present
     firstTwo = p[0:2]
     if firstTwo == '//' or firstTwo == '\\\\':

@@ -1,4 +1,8 @@
-/* Python interpreter main program */
+/** @file
+  Python interpreter main program.
+
+  Copyright (c) 2015, Daryl McDaniel. All rights reserved.<BR>
+**/
 
 #include "Python.h"
 #include "osdefs.h"
@@ -40,7 +44,7 @@ static char **orig_argv;
 static int  orig_argc;
 
 /* command line options */
-#define BASE_OPTS "3bBc:dEhiJm:OQ:sStuUvVW:xX?"
+#define BASE_OPTS "#3bBc:dEhiJm:OQ:sStuUvVW:xX?"
 
 #ifndef RISCOS
 #define PROGRAM_OPTS BASE_OPTS
@@ -59,6 +63,7 @@ static char *usage_line =
 /* Long usage message, split into parts < 512 bytes */
 static char *usage_1 = "\
 Options and arguments (and corresponding environment variables):\n\
+-#     : alias stderr to stdout for platforms without STDERR output.\n\
 -B     : don't write .py[co] files on import; also PYTHONDONTWRITEBYTECODE=x\n\
 -c cmd : program passed in as string (terminates option list)\n\
 -d     : debug output from parser; also PYTHONDEBUG=x\n\
@@ -99,7 +104,7 @@ PYTHONPATH   : '%c'-separated list of directories prefixed to the\n\
 static char *usage_5 = "\
 PYTHONHOME   : alternate <prefix> directory (or <prefix>%c<exec_prefix>).\n\
                The default module search path uses %s.\n\
-PYTHONCASEOK : ignore case in 'import' statements (Windows).\n\
+PYTHONCASEOK : ignore case in 'import' statements (UEFI default).\n\
 PYTHONIOENCODING: Encoding[:errors] used for stdin/stdout/stderr.\n\
 ";
 
@@ -241,6 +246,7 @@ Py_Main(int argc, char **argv)
     int help = 0;
     int version = 0;
     int saw_unbuffered_flag = 0;
+    int saw_pound_flag = 0;
     PyCompilerFlags cf;
 
     cf.cf_flags = 0;
@@ -346,8 +352,8 @@ Py_Main(int argc, char **argv)
             break;
 
         case 'E':
-            Py_IgnoreEnvironmentFlag++;
-            break;
+          Py_IgnoreEnvironmentFlag++;
+          break;
 
         case 't':
             Py_TabcheckFlag++;
@@ -388,6 +394,15 @@ Py_Main(int argc, char **argv)
         case 'W':
             PySys_AddWarnOption(_PyOS_optarg);
             break;
+
+        case '#':
+          if (saw_pound_flag == 0) {
+            if(freopen("stdout:", "w", stderr) == NULL) {
+              puts("ERROR: Unable to reopen stderr as an alias to stdout!");
+            }
+            saw_pound_flag = 0xFF;
+          }
+          break;
 
         /* This space reserved for other options */
 
@@ -543,7 +558,7 @@ Py_Main(int argc, char **argv)
         sts = PyRun_SimpleStringFlags(command, &cf) != 0;
         free(command);
     } else if (module) {
-        sts = RunModule(module, 1);
+        sts = (RunModule(module, 1) != 0);
         free(module);
     }
     else {

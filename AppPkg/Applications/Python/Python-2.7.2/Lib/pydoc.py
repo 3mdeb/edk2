@@ -1326,11 +1326,15 @@ def getpager():
     if 'PAGER' in os.environ:
         if sys.platform == 'win32': # pipes completely broken in Windows
             return lambda text: tempfilepager(plain(text), os.environ['PAGER'])
+        elif sys.platform == 'uefi':
+            return lambda text: tempfilepager(plain(text), os.environ['PAGER'])
         elif os.environ.get('TERM') in ('dumb', 'emacs'):
             return lambda text: pipepager(plain(text), os.environ['PAGER'])
         else:
             return lambda text: pipepager(text, os.environ['PAGER'])
     if os.environ.get('TERM') in ('dumb', 'emacs'):
+        return plainpager
+    if sys.platform == 'uefi':
         return plainpager
     if sys.platform == 'win32' or sys.platform.startswith('os2'):
         return lambda text: tempfilepager(plain(text), 'more <')

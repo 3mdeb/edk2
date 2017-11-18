@@ -127,7 +127,7 @@
   }
 
 #### Un-comment the following line to build Python 2.7.2.
-#  AppPkg/Applications/Python/PythonCore.inf
+AppPkg/Applications/Python/PythonCore.inf
 
 #### Un-comment the following line to build Python 2.7.10.
 # AppPkg/Applications/Python/Python-2.7.10/Python2710.inf
