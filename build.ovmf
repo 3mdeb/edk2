@@ -1,0 +1,4 @@
+#!/bin/sh
+# Build OVMF
+
+build -a X64 -p OvmfPkg/OvmfPkgX64.dsc -D SMM_REQUIRE -t GCC5 -b NOOPT -n 4

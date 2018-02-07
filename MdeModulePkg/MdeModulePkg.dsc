@@ -222,8 +222,7 @@
 ###################################################################################################
 
 [Components]
-  MdeModulePkg/Application/HelloWorld/HelloWorld.inf
-  MdeModulePkg/Application/MemoryProfileInfo/MemoryProfileInfo.inf
+hello/hello.inf
 
   MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
   MdeModulePkg/Bus/Pci/PciSioSerialDxe/PciSioSerialDxe.inf
