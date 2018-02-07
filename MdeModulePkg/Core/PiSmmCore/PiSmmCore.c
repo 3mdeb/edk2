@@ -586,6 +586,8 @@ SmmEntryPoint (
 
   PERF_START (NULL, "SMM", NULL, 0) ;
 
+  DEBUG(( EFI_D_INFO, "######## SMM magic ########\n" ));
+  
   //
   // Update SMST with contents of the SmmEntryContext structure
   //
