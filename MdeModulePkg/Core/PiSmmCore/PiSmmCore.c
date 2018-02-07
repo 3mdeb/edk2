@@ -439,6 +439,9 @@ SmmEntryPoint (
 
   DEBUG(( EFI_D_INFO, "######## SMM magic ########\n" ));
   
+  unsigned int *val = (unsigned int *)0x7CD32E40;
+  DEBUG(( EFI_D_INFO, "########  %x  ########\n", *val ));
+
   //
   // Update SMST with contents of the SmmEntryContext structure
   //
