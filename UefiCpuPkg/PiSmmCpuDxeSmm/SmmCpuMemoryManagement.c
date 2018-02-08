@@ -1049,10 +1049,12 @@ SetUefiMemMapAttributes (
   VOID
   )
 {
+/*
   EFI_STATUS            Status;
   EFI_MEMORY_DESCRIPTOR *MemoryMap;
   UINTN                 MemoryMapEntryCount;
   UINTN                 Index;
+
 
   DEBUG ((DEBUG_INFO, "SetUefiMemMapAttributes\n"));
 
@@ -1080,7 +1082,7 @@ SetUefiMemMapAttributes (
     }
     MemoryMap = NEXT_MEMORY_DESCRIPTOR(MemoryMap, mUefiDescriptorSize);
   }
-
+*/
   //
   // Do free mUefiMemoryMap, it will be checked in IsSmmCommBufferForbiddenAddress().
   //
