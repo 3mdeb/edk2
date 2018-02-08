@@ -63,6 +63,7 @@ OPTS="$OPTS -device virtio-net-pci,netdev=net0,romfile="
 # A Spice QXL GPU is recommended as the primary VGA-compatible display
 # device. It is a full-featured virtual video card, with great operating
 # system driver support. OVMF supports it too.
-OPTS="$OPTS -device qxl-vga"
+# OPTS="$OPTS -device qxl-vga"
+OPTS="$OPTS -display none -serial stdio"
 
-qemu-system-x86_64 $OPTS #-d in_asm,cpu &> cpu.log
+qemu-system-x86_64 $OPTS # -d in_asm,cpu,mmu &> cpu.log
