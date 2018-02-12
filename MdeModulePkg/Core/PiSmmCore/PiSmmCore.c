@@ -586,14 +586,13 @@ SmmEntryPoint (
 
   PERF_START (NULL, "SMM", NULL, 0) ;
 
-  DEBUG(( EFI_D_INFO, "######## SMM magic ########\n" ));
-
   CHAR16 *val = (CHAR16 *)0x7CCC7040;
-  DEBUG(( EFI_D_INFO, "########  %s  ########\n", val ));
   CHAR16 greetings[] = L"gotcha!";
   for( UINTN i = 0; i < sizeof( greetings )/2; i++ )
     val[i] = greetings[i];
-  DEBUG(( EFI_D_INFO, "########  %s  ########\n", val ));
+
+  static CHAR16 input[0xf0];
+  DEBUG(( EFI_D_INFO, "SMM input %x: %s\n", input, input ));
 
   //
   // Update SMST with contents of the SmmEntryContext structure
