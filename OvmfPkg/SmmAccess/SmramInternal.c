@@ -112,7 +112,7 @@ SmramAccessLock (
   // Close & lock TSEG by setting T_EN and D_LCK.
   //
   PciOr8 (DRAMC_REGISTER_Q35 (MCH_ESMRAMC), MCH_ESMRAMC_T_EN);
-  PciOr8 (DRAMC_REGISTER_Q35 (MCH_SMRAM),   MCH_SMRAM_D_LCK);
+  //PciOr8 (DRAMC_REGISTER_Q35 (MCH_SMRAM),   MCH_SMRAM_D_LCK);
 
   GetStates (LockState, OpenState);
   if (*OpenState || !*LockState) {
