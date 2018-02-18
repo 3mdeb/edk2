@@ -571,6 +571,8 @@ InternalIsBufferOverlapped (
                                     needed by SMM Foundation.
 
 **/
+
+
 VOID
 EFIAPI
 SmmEntryPoint (
@@ -586,12 +588,12 @@ SmmEntryPoint (
 
   PERF_START (NULL, "SMM", NULL, 0) ;
 
-  CHAR16 *val = (CHAR16 *)0x7CCC7040;
+  CHAR16 *val = (CHAR16 *)0x7CCC58C0;
   CHAR16 greetings[] = L"gotcha!";
   for( UINTN i = 0; i < sizeof( greetings )/2; i++ )
     val[i] = greetings[i];
 
-  static CHAR16 input[0xf0];
+  static CHAR16 input[0xf0] = L"foo";
   DEBUG(( EFI_D_INFO, "SMM input %x: %s\n", input, input ));
 
   //
