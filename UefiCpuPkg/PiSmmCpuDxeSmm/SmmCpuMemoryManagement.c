@@ -1042,6 +1042,7 @@ SetUefiMemMapAttributes (
   UINTN                 Index;
 
   DEBUG ((DEBUG_INFO, "SetUefiMemMapAttributes\n"));
+    return ;
 
   if (mUefiMemoryMap == NULL) {
     DEBUG ((DEBUG_INFO, "UefiMemoryMap - NULL\n"));

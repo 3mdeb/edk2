@@ -11,7 +11,7 @@ OPTS="$OPTS -enable-kvm"
 # "normal" qemu drive on the host side, and it is exposed to the guest as a
 # persistent flash device.
 #ovmf_bin="Build/OvmfX64/DEBUG_GCC5/FV/OVMF.fd"
-ovmf_bin="Build/OvmfX64/NOOPT_GCC5/FV/OVMF.fd"
+ovmf_bin="$1/Build/OvmfX64/NOOPT_GCC5/FV/OVMF.fd"
 OPTS="$OPTS -drive if=pflash,format=raw,file=$ovmf_bin"
 
 # The hard disk is exposed to the guest as a virtio-block device. OVMF has a
@@ -19,7 +19,7 @@ OPTS="$OPTS -drive if=pflash,format=raw,file=$ovmf_bin"
 # option. OVMF recognizes the boot order specification.
 # OPTS="$OPTS -drive id=disk0,if=none,format=qcow2,file=app.img"
 # OPTS="$OPTS -device virtio-blk-pci,drive=disk0,bootindex=0"
-os_dev="luv-v2.2-rc2_diskboot_gpt_x86_64_.img"
+os_dev="$2"
 OPTS="$OPTS -drive file=$os_dev,index=0,media=disk,format=raw"
 
 # The Fedora installer disk appears as an IDE CD-ROM in the guest. This is
