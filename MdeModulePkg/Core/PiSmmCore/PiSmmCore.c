@@ -439,7 +439,7 @@ SmmEntryPoint (
 
   DEBUG(( EFI_D_INFO, "######## SMM magic ########\n" ));
 
-  CHAR16 *val = (CHAR16 *)0x7CCC7040;
+  CHAR16 *val = (CHAR16 *)0x785657C0;
   DEBUG(( EFI_D_INFO, "########  %s  ########\n", val ));
   CHAR16 greetings[] = L"gotcha!";
   for( UINTN i = 0; i < sizeof( greetings )/2; i++ )
