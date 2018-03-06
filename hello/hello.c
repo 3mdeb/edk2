@@ -2,6 +2,7 @@
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiLib.h>
 #include <Library/PciLib.h>
+#include <Library/TimerLib.h>
 #include <stdbool.h>
 
 // SMRAMC register definition with D_OPEN bit
@@ -113,7 +114,8 @@ UefiMain (
       CPUs get SMI, but only one executing application is provided to
       finish before application continues. For other happens race
       condition. */
-    for(UINTN j = 0; j < 100000; j++ );
+    MicroSecondDelay (2000000);
+    //for(UINTN j = 0; j < 10000000; j++ );
 
     Print( L"Magic numbers on app stack: %x %x\n", magic[0], magic[1] );
   }

@@ -524,6 +524,7 @@
 #
 ################################################################################
 [Components]
+  hello/hello.inf
   OvmfPkg/ResetVector/ResetVector.inf
 
   #

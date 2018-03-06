@@ -16,6 +16,7 @@
   UefiApplicationEntryPoint
   PciLib
   UefiLib
+  TimerLib
 
 [BuildOptions]
     GCC:*_*_*_CC_FLAGS    = -fno-aggressive-loop-optimizations
