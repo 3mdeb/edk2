@@ -49,6 +49,17 @@
 #
 ################################################################################
 [PcdsFixedAtBuild, PcdsPatchableInModule]
+  ## Specifies the initial value for Register_A in RTC.
+  # @Prompt Initial value for Register_A in RTC.
+  gPcAtChipsetPkgTokenSpaceGuid.PcdInitialValueRtcRegisterA|0x26|UINT8|0x00000006
+
+  ## Specifies the initial value for Register_B in RTC.
+  # @Prompt Initial value for Register_B in RTC.
+  gPcAtChipsetPkgTokenSpaceGuid.PcdInitialValueRtcRegisterB|0x02|UINT8|0x00000002
+
+  ## Specifies the initial value for Register_D in RTC.
+  # @Prompt Initial value for Register_D in RTC.
+  gPcAtChipsetPkgTokenSpaceGuid.PcdInitialValueRtcRegisterD|0x00|UINT8|0x00000000
 
 [PcdsDynamic, PcdsDynamicEx]
 
