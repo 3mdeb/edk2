@@ -146,7 +146,7 @@ PcRtcInit (
   //
   // Clear RTC register D - all bits except VRT (Valid RAM and Time)
   //
-  RegisterD.Data = FixedPcdGet8 (PcdInitialValueRtcRegisterD);
+  RegisterD.Data = RtcRead (RTC_ADDRESS_REGISTER_D);
   RtcWrite (RTC_ADDRESS_REGISTER_D, RegisterD.Data & 0x80);
 
   //
