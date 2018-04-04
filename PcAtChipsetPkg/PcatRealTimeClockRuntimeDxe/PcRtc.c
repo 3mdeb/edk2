@@ -144,10 +144,10 @@ PcRtcInit (
   RtcRead (RTC_ADDRESS_REGISTER_C);
 
   //
-  // Clear RTC register D
+  // Clear RTC register D - all bits except VRT (Valid RAM and Time)
   //
   RegisterD.Data = FixedPcdGet8 (PcdInitialValueRtcRegisterD);
-  RtcWrite (RTC_ADDRESS_REGISTER_D, RegisterD.Data);
+  RtcWrite (RTC_ADDRESS_REGISTER_D, RegisterD.Data & 0x80);
 
   //
   // Wait for up to 0.1 seconds for the RTC to be updated
