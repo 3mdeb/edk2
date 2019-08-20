@@ -85,7 +85,7 @@
   #
   # Shell options: [BUILD_SHELL, FULL_BIN, MIN_BIN, NONE, UEFI]
   #
-  DEFINE SHELL_TYPE              = FULL_BIN
+  DEFINE SHELL_TYPE              = BUILD_SHELL
 
 [BuildOptions]
   *_*_*_CC_FLAGS                 = -D DISABLE_NEW_DEPRECATED_INTERFACES
@@ -260,7 +260,11 @@
 #
 ################################################################################
 [PcdsFeatureFlag]
+!if $(TARGET) == DEBUG
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|TRUE
+!else
+  gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseSerial|FALSE
+!endif
   gEfiMdeModulePkgTokenSpaceGuid.PcdStatusCodeUseMemory|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplSwitchToLongMode|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutGopSupport|TRUE
@@ -451,11 +455,8 @@
   #
   # PCI Support
   #
-  MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
-  MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf {
-    <LibraryClasses>
-      PciHostBridgeLib|CorebootPayloadPkg/Library/PciHostBridgeLib/PciHostBridgeLib.inf
-  }
+  DuetPkg/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
+  DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 
   #
   # SCSI/ATA/IDE/DISK Support

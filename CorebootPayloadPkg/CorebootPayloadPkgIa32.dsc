@@ -450,11 +450,8 @@
   #
   # PCI Support
   #
-  MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
-  MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf {
-    <LibraryClasses>
-      PciHostBridgeLib|CorebootPayloadPkg/Library/PciHostBridgeLib/PciHostBridgeLib.inf
-  }
+  DuetPkg/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
+  DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 
   #
   # SCSI/ATA/IDE/DISK Support
