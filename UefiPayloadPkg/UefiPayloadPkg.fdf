@@ -51,8 +51,10 @@ INF MdeModulePkg/Universal/StatusCodeHandler/Pei/StatusCodeHandlerPei.inf
 INF UefiPayloadPkg/BlSupportPei/BlSupportPei.inf
 INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 
+!if $(TPM2_ENABLE) == TRUE
 INF  OvmfPkg/Tcg/Tcg2Config/Tcg2ConfigPei.inf
 INF  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
+!endif
 
 ################################################################################
 
@@ -164,9 +166,12 @@ INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
+!if $(TPM2_ENABLE) == TRUE
 INF  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
-# INF  SecurityPkg/Tcg/Tcg2Config/Tcg2ConfigDxe.inf
-
+!if $(TPM2_CONFIG_ENABLE) == TRUE
+INF  SecurityPkg/Tcg/Tcg2Config/Tcg2ConfigDxe.inf
+!endif
+!endif
 
 #
 # Shell
