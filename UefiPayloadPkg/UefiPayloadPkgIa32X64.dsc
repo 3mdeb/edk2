@@ -314,6 +314,8 @@
 
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress|$(PCIE_BASE)
 
+  gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
+
 !if $(SOURCE_DEBUG_ENABLE)
   gEfiSourceLevelDebugPkgTokenSpaceGuid.PcdDebugLoadImageMethod|0x2
 !endif
@@ -385,7 +387,8 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|100
 
 !if $(TPM2_ENABLE) == TRUE
-  gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid|{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid|{ 0x28, 0x6b ,0xf2, 0x5a, 0xc2, 0xc3, 0x40, 0x8c, 0xb3, 0xb4, 0x25, 0xe6, 0x75, 0x8b, 0x73, 0x17 }
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask|3
 !endif
 
 ################################################################################
