@@ -51,6 +51,9 @@ INF MdeModulePkg/Universal/StatusCodeHandler/Pei/StatusCodeHandlerPei.inf
 INF UefiPayloadPkg/BlSupportPei/BlSupportPei.inf
 INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 
+INF  OvmfPkg/Tcg/Tcg2Config/Tcg2ConfigPei.inf
+INF  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
+
 ################################################################################
 
 [FV.DXEFV]
@@ -160,6 +163,9 @@ INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+
+INF  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
+# INF  SecurityPkg/Tcg/Tcg2Config/Tcg2ConfigDxe.inf
 
 
 #
