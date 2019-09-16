@@ -16,10 +16,10 @@ ErasePolarity = 1
 BlockSize     = 0x1000
 NumBlocks     = 0x410
 
-0x00000000|0x030000
+0x00000000|0x040000
 FV = PEIFV
 
-0x00030000|0x3E0000
+0x00040000|0x3D0000
 FV = DXEFV
 
 ################################################################################
@@ -50,6 +50,11 @@ INF MdeModulePkg/Universal/ReportStatusCodeRouter/Pei/ReportStatusCodeRouterPei.
 INF MdeModulePkg/Universal/StatusCodeHandler/Pei/StatusCodeHandlerPei.inf
 INF UefiPayloadPkg/BlSupportPei/BlSupportPei.inf
 INF MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
+
+!if $(TPM2_ENABLE) == TRUE
+INF  OvmfPkg/Tcg/Tcg2Config/Tcg2ConfigPei.inf
+INF  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf
+!endif
 
 ################################################################################
 
@@ -161,6 +166,12 @@ INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
+!if $(TPM2_ENABLE) == TRUE
+INF  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
+!if $(TPM2_CONFIG_ENABLE) == TRUE
+INF  SecurityPkg/Tcg/Tcg2Config/Tcg2ConfigDxe.inf
+!endif
+!endif
 
 #
 # Shell

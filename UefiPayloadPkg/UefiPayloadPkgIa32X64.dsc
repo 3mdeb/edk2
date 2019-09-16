@@ -25,6 +25,8 @@
   FLASH_DEFINITION                    = UefiPayloadPkg/UefiPayloadPkg.fdf
 
   DEFINE SOURCE_DEBUG_ENABLE          = FALSE
+  DEFINE TPM2_ENABLE                  = FALSE
+  DEFINE TPM2_CONFIG_ENABLE           = FALSE
 
   #
   # SBL:      UEFI payload for Slim Bootloader
@@ -205,6 +207,20 @@
   TpmMeasurementLib|MdeModulePkg/Library/TpmMeasurementLibNull/TpmMeasurementLibNull.inf
   VarCheckLib|MdeModulePkg/Library/VarCheckLib/VarCheckLib.inf
 
+
+  #
+  # TPM2
+  #
+!if $(TPM2_ENABLE) == TRUE
+  Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
+  Tcg2PhysicalPresenceLib|SecurityPkg/Library/DxeTcg2PhysicalPresenceLib/DxeTcg2PhysicalPresenceLib.inf
+  Tcg2PpVendorLib|SecurityPkg/Library/Tcg2PpVendorLibNull/Tcg2PpVendorLibNull.inf
+  TpmMeasurementLib|SecurityPkg/Library/DxeTpmMeasurementLib/DxeTpmMeasurementLib.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLibCrypto.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
+!endif
+
 [LibraryClasses.IA32.SEC]
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
@@ -221,6 +237,12 @@
   ExtractGuidedSectionLib|MdePkg/Library/PeiExtractGuidedSectionLib/PeiExtractGuidedSectionLib.inf
 !if $(SOURCE_DEBUG_ENABLE)
   DebugAgentLib|SourceLevelDebugPkg/Library/DebugAgent/SecPeiDebugAgentLib.inf
+!endif
+
+!if $(TPM2_ENABLE) == TRUE
+[LibraryClasses.common.PEIM]
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
+  Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2DeviceLibDTpm.inf
 !endif
 
 [LibraryClasses.common.DXE_CORE]
@@ -245,6 +267,9 @@
 !endif
   CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf
   MpInitLib|UefiCpuPkg/Library/MpInitLib/DxeMpInitLib.inf
+!if $(TPM2_ENABLE) == TRUE
+  Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibTcg2/Tpm2DeviceLibTcg2.inf
+!endif
 
 [LibraryClasses.common.DXE_RUNTIME_DRIVER]
   PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
@@ -288,6 +313,10 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x21, 0xaa, 0x2c, 0x46, 0x14, 0x76, 0x03, 0x45, 0x83, 0x6e, 0x8a, 0xb6, 0xf4, 0x66, 0x23, 0x31 }
 
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress|$(PCIE_BASE)
+  gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
+!if $(TPM2_ENABLE) == TRUE
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2AcpiTableRev|4
+!endif
 
 !if $(SOURCE_DEBUG_ENABLE)
   gEfiSourceLevelDebugPkgTokenSpaceGuid.PcdDebugLoadImageMethod|0x2
@@ -306,7 +335,7 @@
   # The following parameters are set by Library/PlatformHookLib
   #
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseMmio|FALSE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x3f8
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x2f8
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate|$(BAUD_RATE)
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterStride|1
 
@@ -359,6 +388,11 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|31
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|100
 
+!if $(TPM2_ENABLE) == TRUE
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid|{ 0x28, 0x6b ,0xf2, 0x5a, 0xc2, 0xc3, 0x40, 0x8c, 0xb3, 0xb4, 0x25, 0xe6, 0x75, 0x8b, 0x73, 0x17 }
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask|3
+!endif
+
 ################################################################################
 #
 # Components Section - list of all EDK II Modules needed by this Platform.
@@ -388,6 +422,23 @@
   UefiPayloadPkg/BlSupportPei/BlSupportPei.inf
   MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 
+  #
+  # TPM2
+  #
+!if $(TPM2_ENABLE) == TRUE
+  OvmfPkg/Tcg/Tcg2Config/Tcg2ConfigPei.inf
+  SecurityPkg/Tcg/Tcg2Pei/Tcg2Pei.inf {
+    <LibraryClasses>
+      HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterPei.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha512/HashInstanceLibSha512.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSm3/HashInstanceLibSm3.inf
+  }
+!endif
+
+
 [Components.X64]
   #
   # DXE Core
@@ -400,7 +451,14 @@
   #
   # Components that produce the architectural protocols
   #
-  MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
+
+  MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf {
+    <LibraryClasses>
+!if $(TPM2_ENABLE) == TRUE
+      NULL|SecurityPkg/Library/DxeTpm2MeasureBootLib/DxeTpm2MeasureBootLib.inf
+!endif
+  }
+
   UefiCpuPkg/CpuDxe/CpuDxe.inf
   MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
   MdeModulePkg/Application/UiApp/UiApp.inf {
@@ -501,6 +559,23 @@
   MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
   MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
   UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutputDxe.inf
+
+!if $(TPM2_ENABLE) == TRUE
+  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf {
+    <LibraryClasses>
+      Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibRouter/Tpm2DeviceLibRouterDxe.inf
+      NULL|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2InstanceLibDTpm.inf
+      HashLib|SecurityPkg/Library/HashLibBaseCryptoRouter/HashLibBaseCryptoRouterDxe.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha1/HashInstanceLibSha1.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha256/HashInstanceLibSha256.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha384/HashInstanceLibSha384.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSha512/HashInstanceLibSha512.inf
+      NULL|SecurityPkg/Library/HashInstanceLibSm3/HashInstanceLibSm3.inf
+  }
+!if $(TPM2_CONFIG_ENABLE) == TRUE
+  SecurityPkg/Tcg/Tcg2Config/Tcg2ConfigDxe.inf
+!endif
+!endif
 
   #------------------------------
   #  Build the shell
