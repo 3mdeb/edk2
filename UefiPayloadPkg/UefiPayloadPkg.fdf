@@ -11,15 +11,15 @@
 ################################################################################
 [FD.UefiPayload]
 BaseAddress   = 0x800000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemBase
-Size          = 0x410000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemSize
+Size          = 0x4a0000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemSize
 ErasePolarity = 1
 BlockSize     = 0x1000
-NumBlocks     = 0x410
+NumBlocks     = 0x4a0
 
 0x00000000|0x040000
 FV = PEIFV
 
-0x00040000|0x3D0000
+0x00040000|0x460000
 FV = DXEFV
 
 ################################################################################
@@ -171,6 +171,10 @@ INF  SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf
 !if $(TPM2_CONFIG_ENABLE) == TRUE
 INF  SecurityPkg/Tcg/Tcg2Config/Tcg2ConfigDxe.inf
 !endif
+!endif
+
+!if $(SECURE_BOOT_ENABLE) == TRUE
+  INF  SecurityPkg/VariableAuthenticated/SecureBootConfigDxe/SecureBootConfigDxe.inf
 !endif
 
 #
