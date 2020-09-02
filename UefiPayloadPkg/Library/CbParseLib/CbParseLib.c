@@ -555,6 +555,34 @@ ParseGfxDeviceInfo (
   OUT EFI_PEI_GRAPHICS_DEVICE_INFO_HOB       *GfxDeviceInfo
   )
 {
-  return RETURN_NOT_FOUND;
+  UINTN      Address;
+
+  // Vendor identification
+  Address = PCI_LIB_ADDRESS (0, 2, 0, 0x00);
+
+  if (PciRead16 (Address) != MAX_UINT16) {
+  
+    GfxDeviceInfo->VendorId = PciRead16 (Address);
+
+    // Device identification
+    Address = PCI_LIB_ADDRESS (0, 2, 0, 0x02);
+    GfxDeviceInfo->VendorId = PciRead16 (Address);
+
+    // Subsystem vendor identification
+    Address = PCI_LIB_ADDRESS (0, 2, 0, 0x2C);
+    GfxDeviceInfo->SubsystemVendorId = PciRead16 (Address);
+
+    // Subsystem identification
+    Address = PCI_LIB_ADDRESS (0, 2, 0, 0x2E);
+    GfxDeviceInfo->SubsystemVendorId = PciRead16 (Address);
+
+    GfxDeviceInfo->RevisionId = 0xFF;
+    GfxDeviceInfo->BarIndex = 1;
+  }
+  else {
+    return RETURN_NOT_FOUND;
+  }
+
+  return RETURN_SUCCESS;
 }
 
