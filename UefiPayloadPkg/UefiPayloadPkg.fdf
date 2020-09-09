@@ -213,7 +213,7 @@ INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 #
 # Random Number Generator
 #
-INF SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
+# INF SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
 
 #
 # Security

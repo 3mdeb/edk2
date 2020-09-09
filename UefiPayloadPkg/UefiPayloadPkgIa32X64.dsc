@@ -630,10 +630,10 @@
   #
   # Random Number Generator
   #
-  SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf {
-      <LibraryClasses>
-      RngLib|UefiPayloadPkg/Library/BaseRngLib/BaseRngLib.inf
-  }
+  #SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf {
+  #    <LibraryClasses>
+  #    RngLib|UefiPayloadPkg/Library/BaseRngLib/BaseRngLib.inf
+  #}
 
 !if $(TPM_ENABLE) == TRUE
   SecurityPkg/Tcg/Tcg2Dxe/Tcg2Dxe.inf {
