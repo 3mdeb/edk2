@@ -78,7 +78,7 @@
   #
   # Shell options: [BUILD_SHELL, MIN_BIN, NONE, UEFI_BIN]
   #
-  DEFINE SHELL_TYPE                   = BUILD_SHELL
+  DEFINE SHELL_TYPE                   = NONE
 
   #
   # Security options:
@@ -570,12 +570,6 @@
   OvmfPkg/SioBusDxe/SioBusDxe.inf
   MdeModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2KeyboardDxe.inf
 !endif
-
-  #
-  # SMBUS Support
-  #
-  UefiPayloadPkg/SmbusDxe/SMBusi801Dxe.inf
-  UefiPayloadPkg/SmbusConfigLoaderDxe/SMBusConfigLoader.inf
 
   #
   # Console Support
