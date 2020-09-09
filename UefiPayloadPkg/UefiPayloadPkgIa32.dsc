@@ -541,21 +541,21 @@
   MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
   MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
-  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
+  #MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 
   #
   # SD/eMMC Support
   #
-  MdeModulePkg/Bus/Pci/SdMmcPciHcDxe/SdMmcPciHcDxe.inf
-  MdeModulePkg/Bus/Sd/EmmcDxe/EmmcDxe.inf
-  MdeModulePkg/Bus/Sd/SdDxe/SdDxe.inf
+  #MdeModulePkg/Bus/Pci/SdMmcPciHcDxe/SdMmcPciHcDxe.inf
+  #MdeModulePkg/Bus/Sd/EmmcDxe/EmmcDxe.inf
+  #MdeModulePkg/Bus/Sd/SdDxe/SdDxe.inf
 
   #
   # Usb Support
   #
-  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
+  #MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
   MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
   MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
   MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
