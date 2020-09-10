@@ -11,15 +11,15 @@
 ################################################################################
 [FD.UefiPayload]
 BaseAddress   = 0x800000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemBase
-Size          = 0x800000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemSize
+Size          = 0x140000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemSize
 ErasePolarity = 1
 BlockSize     = 0x1000
-NumBlocks     = 0x800
+NumBlocks     = 0x140
 
-0x00000000|0x040000
+0x00000000|0x020000
 FV = PEIFV
 
-0x00040000|0x7C0000
+0x00020000|0x120000
 FV = DXEFV
 
 ################################################################################
@@ -166,94 +166,28 @@ INF MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 INF MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
 INF MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
 INF MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
-INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
+#INF MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
 INF MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 
 INF FatPkg/EnhancedFatDxe/Fat.inf
 
 #
-# Filesystem drivers
-#
-!if $(ARCH) == IA32
-INF  RuleOverride=BINARY USE = IA32 FSDrivers/exfat.inf
-INF  RuleOverride=BINARY USE = IA32 FSDrivers/ext2.inf
-INF  RuleOverride=BINARY USE = IA32 FSDrivers/ntfs.inf
-INF  RuleOverride=BINARY USE = IA32 FSDrivers/ext4.inf
-!else
-INF  RuleOverride=BINARY USE = X64 FSDrivers/exfat.inf
-INF  RuleOverride=BINARY USE = X64 FSDrivers/ext2.inf
-INF  RuleOverride=BINARY USE = X64 FSDrivers/ntfs.inf
-INF  RuleOverride=BINARY USE = X64 FSDrivers/ext4.inf
-!endif
-
-#
 # SD/eMMC Support
 #
-INF MdeModulePkg/Bus/Pci/SdMmcPciHcDxe/SdMmcPciHcDxe.inf
-INF MdeModulePkg/Bus/Sd/EmmcDxe/EmmcDxe.inf
-INF MdeModulePkg/Bus/Sd/SdDxe/SdDxe.inf
+#INF MdeModulePkg/Bus/Pci/SdMmcPciHcDxe/SdMmcPciHcDxe.inf
+#INF MdeModulePkg/Bus/Sd/EmmcDxe/EmmcDxe.inf
+#INF MdeModulePkg/Bus/Sd/SdDxe/SdDxe.inf
 
 #
 # Usb Support
 #
-INF MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
+#INF MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
 INF MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
 INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
-
-#
-# Network Support
-#
-!include NetworkPkg/Network.fdf.inc
-
-
-#
-# Network modules (only available on X64)
-# Available at https://downloadcenter.intel.com/download/29137?v=t
-#
-!if $(NETWORK_ENABLE)
-!if $(ARCH) == IA32
-  # FIXME
-!else
-!if $(NETWORK_INTEL_GBE)
-  FILE DRIVER = D25C6DB6-0218-4BE9-802A-2841A7DA5ABE {
-    SECTION PE32 = UefiPayloadPkg/NetworkDrivers/E0027X7.EFI
-  }
-!endif
-!if $(NETWORK_INTEL_40GBE)
-  FILE DRIVER = F49F4961-BE4F-4102-A07D-111E148D0974 {
-    SECTION PE32 = UefiPayloadPkg/NetworkDrivers/E4015X5.EFI
-  }
-!endif
-!if $(NETWORK_INTEL_10GBE)
-  FILE DRIVER = 3E04EC12-5FDA-4BA8-88BB-5AB1467F280E {
-    SECTION PE32 = UefiPayloadPkg/NetworkDrivers/E7512X4.EFI
-  }
-!endif
-!if $(NETWORK_INTEL_PRO1000)
-  FILE DRIVER = BF21AF15-235B-4387-B62B-79134BC81E22 {
-    SECTION PE32 = UefiPayloadPkg/NetworkDrivers/E9112X3.EFI
-  }
-!endif
-!endif
-!endif
-
-#
-# iPXE support
-#
-!if (NETWORK_IPXE)
-  FILE FREEFORM = B68653C7-EEA1-4435-A199-A44F59E4476C {
-   SECTION PE32 = UefiPayloadPkg/NetworkDrivers/ipxe.efi
-  }
-!endif
-
-#
-# Random Number Generator
-#
-INF SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
 
 #
 # Security
