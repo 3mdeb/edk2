@@ -438,7 +438,6 @@
 #
 ################################################################################
 [Components.IA32]
-
   #
   # SEC Core
   #
@@ -546,6 +545,8 @@
   MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
 
   UefiPayloadPkg/BlSupportDxe/BlSupportDxe.inf
+
+  UefiPayloadPkg/spi/spi.inf
 
   #
   # SMBIOS Support

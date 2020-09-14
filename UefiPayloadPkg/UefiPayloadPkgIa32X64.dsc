@@ -513,8 +513,6 @@
   SecurityPkg/VariableAuthenticated/SecureBootConfigDxe/SecureBootConfigDxe.inf
   OvmfPkg/EnrollDefaultKeys/EnrollDefaultKeys.inf
   UefiPayloadPkg/SecureBootEnrollDefaultKeys/SecureBootSetup.inf
-
-  UefiPayloadPkg/spi/spi.inf
 !endif
 
   UefiCpuPkg/CpuDxe/CpuDxe.inf
@@ -559,6 +557,8 @@
   MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
 
   UefiPayloadPkg/BlSupportDxe/BlSupportDxe.inf
+
+  UefiPayloadPkg/spi/spi.inf
 
   #
   # SMBIOS Support

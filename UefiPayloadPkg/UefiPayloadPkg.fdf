@@ -124,6 +124,8 @@ INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 INF MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
 INF UefiPayloadPkg/BlSupportDxe/BlSupportDxe.inf
 
+INF UefiPayloadPkg/spi/spi.inf
+
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 INF MdeModulePkg/Logo/LogoDxe.inf
 !if $(BOOTLOADER) == "COREBOOT"
@@ -259,8 +261,6 @@ INF SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
 # Security
 #
 !if $(SECURE_BOOT_ENABLE) == TRUE
-  INF UefiPayloadPkg/spi/spi.inf
-
   INF  SecurityPkg/VariableAuthenticated/SecureBootConfigDxe/SecureBootConfigDxe.inf
   INF  UefiPayloadPkg/SecureBootEnrollDefaultKeys/SecureBootSetup.inf
 
