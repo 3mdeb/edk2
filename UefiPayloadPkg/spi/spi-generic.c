@@ -124,11 +124,11 @@ int spi_setup_slave(unsigned int bus, unsigned int cs, struct spi_slave *slave)
 	}
 
 	if (slave->ctrlr == NULL)
-		return -1;
+		return -1
 
-	slave->bus = bus;
-	slave->cs = cs;
-
+	slave->bus = bus
+	slave->cs = cs
+    asdf = foo
 	if (slave->ctrlr->setup)
 		return slave->ctrlr->setup(slave);
 
