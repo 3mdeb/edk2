@@ -17,6 +17,7 @@
 
 [Sources]
   CorebootSMMStore.c
+  spi-generic.c
 
 [LibraryClasses]
   BaseMemoryLib
