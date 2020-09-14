@@ -1805,14 +1805,14 @@ XhcCreateUsbHc (
   Xhc->UsbLegSupOffset = XhcGetCapabilityAddr (Xhc, XHC_CAP_USB_LEGACY);
   Xhc->DebugCapSupOffset = XhcGetCapabilityAddr (Xhc, XHC_CAP_USB_DEBUG);
 
-  DEBUG ((EFI_D_INFO, "XhcCreateUsb3Hc: Capability length 0x%x\n", Xhc->CapLength));
-  DEBUG ((EFI_D_INFO, "XhcCreateUsb3Hc: HcSParams1 0x%x\n", Xhc->HcSParams1));
-  DEBUG ((EFI_D_INFO, "XhcCreateUsb3Hc: HcSParams2 0x%x\n", Xhc->HcSParams2));
-  DEBUG ((EFI_D_INFO, "XhcCreateUsb3Hc: HcCParams 0x%x\n", Xhc->HcCParams));
-  DEBUG ((EFI_D_INFO, "XhcCreateUsb3Hc: DBOff 0x%x\n", Xhc->DBOff));
-  DEBUG ((EFI_D_INFO, "XhcCreateUsb3Hc: RTSOff 0x%x\n", Xhc->RTSOff));
-  DEBUG ((EFI_D_INFO, "XhcCreateUsb3Hc: UsbLegSupOffset 0x%x\n", Xhc->UsbLegSupOffset));
-  DEBUG ((EFI_D_INFO, "XhcCreateUsb3Hc: DebugCapSupOffset 0x%x\n", Xhc->DebugCapSupOffset));
+  DEBUG ((EFI_D_INFO, "asdf XhcCreateUsb3Hc: Capability length 0x%x\n", Xhc->CapLength));
+  DEBUG ((EFI_D_INFO, "asdf XhcCreateUsb3Hc: HcSParams1 0x%x\n", Xhc->HcSParams1));
+  DEBUG ((EFI_D_INFO, "asdf XhcCreateUsb3Hc: HcSParams2 0x%x\n", Xhc->HcSParams2));
+  DEBUG ((EFI_D_INFO, "asdf XhcCreateUsb3Hc: HcCParams 0x%x\n", Xhc->HcCParams));
+  DEBUG ((EFI_D_INFO, "asdf XhcCreateUsb3Hc: DBOff 0x%x\n", Xhc->DBOff));
+  DEBUG ((EFI_D_INFO, "asdf XhcCreateUsb3Hc: RTSOff 0x%x\n", Xhc->RTSOff));
+  DEBUG ((EFI_D_INFO, "asdf XhcCreateUsb3Hc: UsbLegSupOffset 0x%x\n", Xhc->UsbLegSupOffset));
+  DEBUG ((EFI_D_INFO, "asdf XhcCreateUsb3Hc: DebugCapSupOffset 0x%x\n", Xhc->DebugCapSupOffset));
 
   //
   // Create AsyncRequest Polling Timer
