@@ -259,6 +259,8 @@ INF SecurityPkg/RandomNumberGenerator/RngDxe/RngDxe.inf
 # Security
 #
 !if $(SECURE_BOOT_ENABLE) == TRUE
+  INF UefiPayloadPkg/spi/spi.inf
+
   INF  SecurityPkg/VariableAuthenticated/SecureBootConfigDxe/SecureBootConfigDxe.inf
   INF  UefiPayloadPkg/SecureBootEnrollDefaultKeys/SecureBootSetup.inf
 

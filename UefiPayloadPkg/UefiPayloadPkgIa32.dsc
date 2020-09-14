@@ -440,11 +440,6 @@
 [Components.IA32]
 
   #
-  # SPI
-  #
-  UefiPayloadPkg/spi/spi.inf
-
-  #
   # SEC Core
   #
   UefiPayloadPkg/SecCore/SecCore.inf
