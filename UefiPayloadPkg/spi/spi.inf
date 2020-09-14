@@ -1,0 +1,30 @@
+## @file
+# This driver does SPI
+#
+# Copyright (c) 2020, 3mdeb
+#
+#  SPDX-License-Identifier: What-licence-should-be-here?
+#  TODO: THIS COMMENT
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SPIDriver
+  FILE_GUID                      = 86D58F7B-6E7C-401F-BDD4-E32E6D582AAF
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = spi_init
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources.common]
+  spi-generic.c
+  spi-generic.h
+
+[Protocols]
+  SPI                       ## PRODUCES
