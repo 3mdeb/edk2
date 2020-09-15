@@ -558,8 +558,6 @@
 
   UefiPayloadPkg/BlSupportDxe/BlSupportDxe.inf
 
-  UefiPayloadPkg/spi/spi.inf
-
   #
   # SMBIOS Support
   #
