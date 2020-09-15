@@ -10,7 +10,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = SPILib
-  FILE_GUID                      = 40A2CBC6-CFB8-447b-A90E-298E88FD345F
+  FILE_GUID                      = 6d32b330-e0e9-4fcf-8490-1e978497ef53
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = SPILib
