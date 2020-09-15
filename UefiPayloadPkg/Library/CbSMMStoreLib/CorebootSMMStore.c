@@ -18,7 +18,7 @@
  * static inline because the resulting assembly is often smaller than
  * the call sequence due to constant folding.
  */
-static inline UINT32 call_smm(UINT8 c
+static inline UINT32 call_smm(UINT8 cmd, UINT8 subcmd, UINT32 arg) {
 	UINT32 res = ~0;
 	__asm__ __volatile__ (
 		"outb %b0, $0xb2"
