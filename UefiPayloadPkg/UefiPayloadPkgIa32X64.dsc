@@ -259,6 +259,7 @@
 !endif
 !if $(BOOTLOADER) == "COREBOOT"
   SmmStoreLib|UefiPayloadPkg/Library/CbSMMStoreLib/CbSMMStoreLib.inf
+  SPILib|UefiPayloadPkg/Library/SPILib/SPILib.inf
 !else
   SmmStoreLib|UefiPayloadPkg/Library/SblSMMStoreLib/SblSMMStoreLib.inf
 !endif

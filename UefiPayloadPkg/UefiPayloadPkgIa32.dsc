@@ -249,6 +249,7 @@
 
 !if $(BOOTLOADER) == "COREBOOT"
   SmmStoreLib|UefiPayloadPkg/Library/CbSMMStoreLib/CbSMMStoreLib.inf
+  SPILib|UefiPayloadPkg/Library/SPILib/SPILib.inf
 !else
   SmmStoreLib|UefiPayloadPkg/Library/SblSMMStoreLib/SblSMMStoreLib.inf
 !endif
@@ -545,8 +546,6 @@
   MdeModulePkg/Universal/Acpi/BootGraphicsResourceTableDxe/BootGraphicsResourceTableDxe.inf
 
   UefiPayloadPkg/BlSupportDxe/BlSupportDxe.inf
-
-  UefiPayloadPkg/spi/spi.inf
 
   #
   # SMBIOS Support
