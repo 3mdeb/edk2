@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
-// #ifndef _SPI_GENERIC_H_
+#ifndef _SPI_GENERIC_H_
 #define _SPI_GENERIC_H_
 
 /* Common parameters -- kind of high, but they should only occur when there
@@ -68,6 +68,38 @@ typedef UINT32   uint32_t;
 #define VENDOR_ID_SST				0xbf
 #define VENDOR_ID_STMICRO			0x20
 #define VENDOR_ID_WINBOND			0xef
+
+#ifndef __packed
+#if defined(__WIN32) || defined(__WIN64)
+#define __packed __attribute__((gcc_struct, packed))
+#else
+#define __packed __attribute__((packed))
+#endif
+#endif
+
+#ifndef __aligned
+#define __aligned(x) __attribute__((aligned(x)))
+#endif
+
+#ifndef __always_unused
+#define __always_unused __attribute__((unused))
+#endif
+
+#ifndef __must_check
+#define __must_check __attribute__((warn_unused_result))
+#endif
+
+#ifndef __weak
+#define __weak __attribute__((weak))
+#endif
+
+#ifndef __noreturn
+#define __noreturn __attribute__((noreturn))
+#endif
+
+#ifndef __always_inline
+#define __always_inline inline __attribute__((always_inline))
+#endif
 
 /* Controller-specific definitions: */
 
