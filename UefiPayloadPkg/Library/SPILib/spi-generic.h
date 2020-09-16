@@ -11,7 +11,7 @@
 #define SPI_FLASH_PAGE_ERASE_TIMEOUT_MS		500
 
 // #include <stdint.h>
-// #include <stddef.h>
+#include <stddef.h>
 
 /* SPI vendor IDs */
 #define VENDOR_ID_ADESTO			0x1f
