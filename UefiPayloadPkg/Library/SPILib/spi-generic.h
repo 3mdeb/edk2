@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
-#ifndef _SPI_GENERIC_H_
+// #ifndef _SPI_GENERIC_H_
 #define _SPI_GENERIC_H_
 
 /* Common parameters -- kind of high, but they should only occur when there
