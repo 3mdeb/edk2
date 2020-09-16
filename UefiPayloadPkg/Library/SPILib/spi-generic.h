@@ -10,7 +10,51 @@
 #define SPI_FLASH_PROG_TIMEOUT_MS		200
 #define SPI_FLASH_PAGE_ERASE_TIMEOUT_MS		500
 
-#include <brotli/types.h>
+typedef __SIZE_TYPE__ size_t;
+///
+/// 1-byte signed value
+///
+typedef signed char           INT8;
+///
+/// Logical Boolean.  1-byte value containing 0 for FALSE or a 1 for TRUE.  Other
+/// values are undefined.
+///
+typedef unsigned char         BOOLEAN;
+///
+/// 1-byte unsigned value.
+///
+typedef unsigned char         UINT8;
+///
+/// 1-byte Character.
+///
+typedef char                  CHAR8;
+///
+/// 2-byte signed value.
+///
+typedef short                 INT16;
+///
+/// 2-byte unsigned value.
+///
+typedef unsigned short        UINT16;
+///
+/// 2-byte Character.  Unless otherwise specified all strings are stored in the
+/// UTF-16 encoding format as defined by Unicode 2.1 and ISO/IEC 10646 standards.
+///
+typedef unsigned short        CHAR16;
+///
+/// 4-byte signed value.
+///
+typedef int                   INT32;
+///
+/// 4-byte unsigned value.
+///
+typedef unsigned int          UINT32;
+typedef INT8     int8_t;
+typedef INT16    int16_t;
+typedef INT32    int32_t;
+typedef UINT8    uint8_t;
+typedef UINT16   uint16_t;
+typedef UINT32   uint32_t;
 #include "stddef.h"
 
 /* SPI vendor IDs */
