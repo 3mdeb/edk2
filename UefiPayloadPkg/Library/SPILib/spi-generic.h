@@ -10,7 +10,6 @@
 #define SPI_FLASH_PROG_TIMEOUT_MS		200
 #define SPI_FLASH_PAGE_ERASE_TIMEOUT_MS		500
 
-#include <commonlib/region.h>
 #include <stdint.h>
 #include <stddef.h>
 
@@ -19,7 +18,7 @@
 #define VENDOR_ID_AMIC				0x37
 #define VENDOR_ID_ATMEL				0x1f
 #define VENDOR_ID_EON				0x1c
-#define VENDOR_ID_GIGADEVICE			0xc8
+#define VENDOR_ID_GIGADEVICE		0xc8
 #define VENDOR_ID_MACRONIX			0xc2
 #define VENDOR_ID_SPANSION			0x01
 #define VENDOR_ID_SST				0xbf
