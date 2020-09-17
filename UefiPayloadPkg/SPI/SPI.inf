@@ -15,13 +15,15 @@
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = SPIInitialize
 
-#[Sources.common]
+[Sources.common]
+  spi-generic.c
+  spi-generic.h
 #  BlSMMStoreDxe.h
 #  BlSMMStoreDxe.c
 #  BlSMMStoreFvbDxe.c
 
-# [Packages]
-#   MdePkg/MdePkg.dec
+[Packages]
+  MdePkg/MdePkg.dec
 #   MdeModulePkg/MdeModulePkg.dec
 #   EmbeddedPkg/EmbeddedPkg.dec
 #   UefiPayloadPkg/UefiPayloadPkg.dec
