@@ -208,7 +208,7 @@ INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 #
 # SPI
 #
-# INF UefiPayloadPkg/SPI/SPI.inf
+INF UefiPayloadPkg/SPI/SPI.inf
 
 #
 # Network Support
