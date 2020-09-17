@@ -13,7 +13,7 @@ EFI_STATUS EFIAPI SPIInitialize (
 {
   DEBUG ((DEBUG_WARN, "SPI\n"));
   EFI_STATUS Status = EFI_SUCCESS;
-  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL *FvbProtocol;
+  // EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL *FvbProtocol;
 
   // Status = gBS->LocateProtocol (
   //   &gEfiFirmwareVolumeBlockProtocolGuid,
