@@ -37,12 +37,12 @@
   DxeServicesTableLib
 
 [Guids]
-  gEfiSystemNvDataFvGuid
-  gEfiVariableGuid
-  gEfiAuthenticatedVariableGuid
+  # gEfiSystemNvDataFvGuid
+  # gEfiVariableGuid
+  # gEfiAuthenticatedVariableGuid
   gEfiEventVirtualAddressChangeGuid
-  gEdkiiNvVarStoreFormattedGuid     ## PRODUCES ## PROTOCOL
-  gEfiSMMSTOREInfoHobGuid
+  # gEdkiiNvVarStoreFormattedGuid     ## PRODUCES ## PROTOCOL
+  # gEfiSMMSTOREInfoHobGuid
 
 [Protocols]
   gEfiBlockIoProtocolGuid
