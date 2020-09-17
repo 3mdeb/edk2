@@ -16,7 +16,7 @@
   ENTRY_POINT                    = SPIInitialize
 
 [Sources.common]
-  spi-generic.c
+  SPI.c
 
 [Packages]
   MdePkg/MdePkg.dec
