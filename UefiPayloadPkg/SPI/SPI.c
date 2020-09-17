@@ -15,10 +15,10 @@ EFI_STATUS EFIAPI SPIInitialize (
   EFI_STATUS Status;
   EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL *FvbProtocol;
 
-  Status = gBS->LocateProtocol (
-    &gEfiFirmwareVolumeBlockProtocolGuid,
-    NULL,
-    (VOID**)&FvbProtocol);
+  // Status = gBS->LocateProtocol (
+  //   &gEfiFirmwareVolumeBlockProtocolGuid,
+  //   NULL,
+  //   (VOID**)&FvbProtocol);
   DEBUG((EFI_D_ERROR, "%a: Statasus %i\n", __FUNCTION__, Status));
 if (EFI_ERROR (Status)) {
     DEBUG((EFI_D_ERROR, "%a: ERRRRORRRR %i\n", __FUNCTION__, Status));
