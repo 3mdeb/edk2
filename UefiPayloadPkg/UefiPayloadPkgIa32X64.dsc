@@ -640,7 +640,7 @@
   #
   # SPI
   #
-  UefiPayloadPkg/SPI/SPI.inf
+  # UefiPayloadPkg/SPI/SPI.inf
 
   #
   # Network Support
