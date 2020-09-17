@@ -24,17 +24,17 @@
   # EmbeddedPkg/EmbeddedPkg.dec
   # UefiPayloadPkg/UefiPayloadPkg.dec
 
-[LibraryClasses]
-  IoLib
-  BaseLib
-  DebugLib
-  HobLib
-  SmmStoreLib
-  UefiLib
-  UefiDriverEntryPoint
-  UefiBootServicesTableLib
-  UefiRuntimeLib
-  DxeServicesTableLib
+# [LibraryClasses]
+#   IoLib
+#   BaseLib
+#   DebugLib
+#   HobLib
+#   SmmStoreLib
+#   UefiLib
+#   UefiDriverEntryPoint
+#   UefiBootServicesTableLib
+#   UefiRuntimeLib
+#   DxeServicesTableLib
 
 [Guids]
   # gEfiSystemNvDataFvGuid
