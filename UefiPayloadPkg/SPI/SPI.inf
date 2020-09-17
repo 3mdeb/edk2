@@ -50,14 +50,14 @@
   gEfiFirmwareVolumeBlockProtocolGuid ## PRODUCES
   gEfiDiskIoProtocolGuid
 
-[Pcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
-  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+# [Pcd]
+#   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase
+#   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize
+#   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase
+#   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize
+#   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase
+#   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
+#   gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
 
  [Depex]
    gEfiCpuArchProtocolGuid
