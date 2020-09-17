@@ -17,10 +17,6 @@
 
 [Sources.common]
   spi-generic.c
-  spi-generic.h
-#  BlSMMStoreDxe.h
-#  BlSMMStoreDxe.c
-#  BlSMMStoreFvbDxe.c
 
 [Packages]
   MdePkg/MdePkg.dec
