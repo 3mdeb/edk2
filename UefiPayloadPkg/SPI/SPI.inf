@@ -45,10 +45,10 @@
   # gEfiSMMSTOREInfoHobGuid
 
 [Protocols]
-  gEfiBlockIoProtocolGuid
-  gEfiDevicePathProtocolGuid
+#   gEfiBlockIoProtocolGuid
+#   gEfiDevicePathProtocolGuid
   gEfiFirmwareVolumeBlockProtocolGuid ## PRODUCES
-  gEfiDiskIoProtocolGuid
+#   gEfiDiskIoProtocolGuid
 
 # [Pcd]
 #   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase
