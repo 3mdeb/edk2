@@ -20,9 +20,9 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec
-  EmbeddedPkg/EmbeddedPkg.dec
-  UefiPayloadPkg/UefiPayloadPkg.dec
+  # MdeModulePkg/MdeModulePkg.dec
+  # EmbeddedPkg/EmbeddedPkg.dec
+  # UefiPayloadPkg/UefiPayloadPkg.dec
 
 [LibraryClasses]
   IoLib
