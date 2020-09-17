@@ -21,7 +21,6 @@
 [LibraryClasses]
   BaseMemoryLib
   DebugLib
-  SPILib
 
 [Packages]
   MdePkg/MdePkg.dec

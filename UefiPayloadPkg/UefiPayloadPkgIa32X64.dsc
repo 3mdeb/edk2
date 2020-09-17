@@ -257,9 +257,9 @@
 !else
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
 !endif
+
 !if $(BOOTLOADER) == "COREBOOT"
   SmmStoreLib|UefiPayloadPkg/Library/CbSMMStoreLib/CbSMMStoreLib.inf
-  SPILib|UefiPayloadPkg/Library/SPILib/SPILib.inf
 !else
   SmmStoreLib|UefiPayloadPkg/Library/SblSMMStoreLib/SblSMMStoreLib.inf
 !endif
@@ -636,6 +636,11 @@
 !if $(BOOTLOADER) == "COREBOOT"
   UefiPayloadPkg/BlSMMStoreDxe/BlSMMStoreDxe.inf
 !endif
+
+  #
+  # SPI
+  #
+  UefiPayloadPkg/SPI/SPI.inf
 
   #
   # Network Support
