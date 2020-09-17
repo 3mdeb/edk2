@@ -5,7 +5,7 @@
 
 EFI_STATUS
 EFIAPI
-BlSMMSTOREInitialise (
+SPIInitialize (
   IN EFI_HANDLE         ImageHandle,
   IN EFI_SYSTEM_TABLE   *SystemTable
   )
