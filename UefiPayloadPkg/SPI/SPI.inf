@@ -61,5 +61,5 @@
 #   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
 #   gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
 
-# [Depex]
-#   gEfiCpuArchProtocolGuid
+ [Depex]
+   gEfiCpuArchProtocolGuid
