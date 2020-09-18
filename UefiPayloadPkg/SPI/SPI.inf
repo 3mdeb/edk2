@@ -18,10 +18,20 @@
 [Sources]
   SPI.c
 
-[LibraryClasses]
-  DebugLib
-
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  UefiPayloadPkg/UefiPayloadPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  DebugLib
+  IoLib
+  UefiLib
+  TimerLib
+  PciExpressLib
+
+[Protocols]
+  gEfiSmbusHcProtocolGuid                       ## PRODUCES
+
+[Depex]
+  TRUE
