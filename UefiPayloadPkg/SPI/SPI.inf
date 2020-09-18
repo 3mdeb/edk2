@@ -25,16 +25,16 @@
   UefiPayloadPkg/UefiPayloadPkg.dec
 
 [LibraryClasses]
-  IoLib
-  BaseLib
+  # IoLib
+  # BaseLib
   DebugLib
-  HobLib
-  SmmStoreLib
-  UefiLib
-  UefiDriverEntryPoint
-  UefiBootServicesTableLib
-  UefiRuntimeLib
-  DxeServicesTableLib
+  # HobLib
+  # SmmStoreLib
+  # UefiLib
+  # UefiDriverEntryPoint
+  # UefiBootServicesTableLib
+  # UefiRuntimeLib
+  # DxeServicesTableLib
 
 [Guids]
   gEfiSystemNvDataFvGuid
