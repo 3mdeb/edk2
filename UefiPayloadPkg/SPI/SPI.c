@@ -10,7 +10,7 @@
 #include <Include/Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/FirmwareVolumeBlock.h>
-#include <BlSMMStoreDxe/BlSMMStoreDxe.h>
+#include "SPI.h"
 
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
     FvbGetAttributes, // GetAttributes
