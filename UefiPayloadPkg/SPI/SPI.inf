@@ -23,12 +23,12 @@
   MdeModulePkg/MdeModulePkg.dec
 
 [LibraryClasses]
-  UefiDriverEntryPoint
+  # UefiDriverEntryPoint
   DebugLib
-  IoLib
-  UefiLib
-  TimerLib
-  PciExpressLib
+  # IoLib
+  # UefiLib
+  # TimerLib
+  # PciExpressLib
 
 [Protocols]
   gEfiSmbusHcProtocolGuid                       ## PRODUCES
