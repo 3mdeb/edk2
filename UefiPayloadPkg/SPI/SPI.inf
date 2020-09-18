@@ -38,12 +38,12 @@
 
 [Guids]
   gEfiMdeModulePkgTokenSpaceGuid
-#   gEfiSystemNvDataFvGuid
-#   gEfiVariableGuid
-#   gEfiAuthenticatedVariableGuid
-#   gEfiEventVirtualAddressChangeGuid
-#   gEdkiiNvVarStoreFormattedGuid     ## PRODUCES ## PROTOCOL
-#   gEfiSMMSTOREInfoHobGuid
+  gEfiSystemNvDataFvGuid
+  gEfiVariableGuid
+  gEfiAuthenticatedVariableGuid
+  gEfiEventVirtualAddressChangeGuid
+  gEdkiiNvVarStoreFormattedGuid     ## PRODUCES ## PROTOCOL
+  gEfiSMMSTOREInfoHobGuid
 
 [Protocols]
 #   gEfiBlockIoProtocolGuid
