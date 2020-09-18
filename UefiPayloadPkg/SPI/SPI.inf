@@ -36,13 +36,13 @@
   # UefiRuntimeLib
   # DxeServicesTableLib
 
-[Guids]
-  gEfiSystemNvDataFvGuid
-  gEfiVariableGuid
-  gEfiAuthenticatedVariableGuid
-  gEfiEventVirtualAddressChangeGuid
-  gEdkiiNvVarStoreFormattedGuid     ## PRODUCES ## PROTOCOL
-  gEfiSMMSTOREInfoHobGuid
+# [Guids]
+#   gEfiSystemNvDataFvGuid
+#   gEfiVariableGuid
+#   gEfiAuthenticatedVariableGuid
+#   gEfiEventVirtualAddressChangeGuid
+#   gEdkiiNvVarStoreFormattedGuid     ## PRODUCES ## PROTOCOL
+#   gEfiSMMSTOREInfoHobGuid
 
 [Protocols]
 #   gEfiBlockIoProtocolGuid
