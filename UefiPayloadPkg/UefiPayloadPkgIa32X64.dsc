@@ -259,6 +259,7 @@
 !endif
 !if $(BOOTLOADER) == "COREBOOT"
   SmmStoreLib|UefiPayloadPkg/Library/CbSMMStoreLib/CbSMMStoreLib.inf
+  SPI|UefiPayloadPkg/Library/SPI/SPI.inf
 !else
   SmmStoreLib|UefiPayloadPkg/Library/SblSMMStoreLib/SblSMMStoreLib.inf
 !endif
@@ -469,8 +470,7 @@
   MdeModulePkg/Universal/ReportStatusCodeRouter/Pei/ReportStatusCodeRouterPei.inf
   MdeModulePkg/Universal/StatusCodeHandler/Pei/StatusCodeHandlerPei.inf
 
-  UefiPayloadPkg/BlSupportPei/BlSupportPei.inf
-  UefiPayloadPkg/Library/SPI/SPI.inf
+  UefiPayloadPkg/BlSupportPei/BlSupportPei.inf\
   MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 
 !if $(TPM_ENABLE) == TRUE
