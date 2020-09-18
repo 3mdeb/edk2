@@ -9,7 +9,6 @@
 #include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
 
-STATIC
 EFI_STATUS
 SPIInitialize (
   IN EFI_HANDLE                        ImageHandle,
