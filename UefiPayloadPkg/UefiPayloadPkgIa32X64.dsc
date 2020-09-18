@@ -470,7 +470,7 @@
   MdeModulePkg/Universal/StatusCodeHandler/Pei/StatusCodeHandlerPei.inf
 
   UefiPayloadPkg/BlSupportPei/BlSupportPei.inf
-  UefiPayloadPkg/SPI/SPI.inf
+  UefiPayloadPkg/Library/SPI/SPI.inf
   MdeModulePkg/Core/DxeIplPeim/DxeIpl.inf
 
 !if $(TPM_ENABLE) == TRUE

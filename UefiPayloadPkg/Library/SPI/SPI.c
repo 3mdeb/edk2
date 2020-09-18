@@ -11,7 +11,7 @@
 
 EFI_STATUS
 EFIAPI
-InstallSmbusProtocol (
+SPIInitialize (
   IN EFI_HANDLE                        ImageHandle,
   IN EFI_SYSTEM_TABLE                  *SystemTable
   )
