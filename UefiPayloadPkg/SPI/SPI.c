@@ -37,7 +37,7 @@ SPIInitialize (
     EFI_NATIVE_INTERFACE,
     &FvbProtocol);
   DEBUG((EFI_D_INFO, "SPI\n"));
-  DEBUG((EFI_D_INFO, "%i\n", Status));
-  DEBUG((EFI_D_INFO, "%i\n", EFI_ERROR (Status)));
+  DEBUG((EFI_D_INFO, "%d\n", Status));
+  DEBUG((EFI_D_INFO, "%d\n", EFI_ERROR (Status)));
   return EFI_SUCCESS;
 }
