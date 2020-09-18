@@ -259,7 +259,6 @@
 !endif
 !if $(BOOTLOADER) == "COREBOOT"
   SmmStoreLib|UefiPayloadPkg/Library/CbSMMStoreLib/CbSMMStoreLib.inf
-  SPI|UefiPayloadPkg/Library/SPI/SPI.inf
 !else
   SmmStoreLib|UefiPayloadPkg/Library/SblSMMStoreLib/SblSMMStoreLib.inf
 !endif
@@ -488,6 +487,7 @@
 !endif
 
 [Components.X64]
+  UefiPayloadPkg/SPI/SPI.inf
   #
   # DXE Core
   #

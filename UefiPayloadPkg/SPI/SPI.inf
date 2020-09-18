@@ -10,10 +10,10 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = SPI
-  FILE_GUID                      = 9f185eec-6795-462d-9663-5bb9a85be9f2
-  MODULE_TYPE                    = BASE
+  FILE_GUID                      = e18edc1a-d43d-4e34-8131-088433608076
+  MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = SPIInitialize
+  ENTRY_POINT                    = SPIInitialize
 
 [Sources]
   SPI.c

@@ -249,7 +249,6 @@
 
 !if $(BOOTLOADER) == "COREBOOT"
   SmmStoreLib|UefiPayloadPkg/Library/CbSMMStoreLib/CbSMMStoreLib.inf
-  SPI|UefiPayloadPkg/Library/SPI/SPI.inf
 !else
   SmmStoreLib|UefiPayloadPkg/Library/SblSMMStoreLib/SblSMMStoreLib.inf
 !endif
@@ -439,6 +438,8 @@
 #
 ################################################################################
 [Components.IA32]
+
+  UefiPayloadPkg/SPI/SPI.inf
   #
   # SEC Core
   #
