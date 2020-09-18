@@ -262,7 +262,7 @@
 !else
   SmmStoreLib|UefiPayloadPkg/Library/SblSMMStoreLib/SblSMMStoreLib.inf
 !endif
-SPI|UefiPayloadPkg/Library/SPI.inf
+SPI|UefiPayloadPkg/SPI/SPI.inf
 
 !if $(TPM_ENABLE) == TRUE
   Tpm12CommandLib|SecurityPkg/Library/Tpm12CommandLib/Tpm12CommandLib.inf
