@@ -25,10 +25,10 @@
 [LibraryClasses]
   UefiDriverEntryPoint
   DebugLib
-  IoLib
-  UefiLib
-  TimerLib
-  PciExpressLib
+  # IoLib
+  # UefiLib
+  # TimerLib
+  # PciExpressLib
 
 [Protocols]
   gEfiSmbusHcProtocolGuid                       ## PRODUCES
