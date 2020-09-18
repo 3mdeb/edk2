@@ -36,7 +36,8 @@
   # UefiRuntimeLib
   # DxeServicesTableLib
 
-# [Guids]
+[Guids]
+  gEfiMdeModulePkgTokenSpaceGuid
 #   gEfiSystemNvDataFvGuid
 #   gEfiVariableGuid
 #   gEfiAuthenticatedVariableGuid
