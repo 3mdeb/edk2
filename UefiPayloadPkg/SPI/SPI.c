@@ -23,9 +23,9 @@ EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
     NULL, //ParentHandle
   };
 
-EFI_STATUS
-EFIAPI
-SPIInitialize (
+EFI_HANDLE Handle;
+
+EFI_STATUS EFIAPI SPIInitialize (
   IN EFI_HANDLE                        ImageHandle,
   IN EFI_SYSTEM_TABLE                  *SystemTable
   )
@@ -38,7 +38,7 @@ SPIInitialize (
   //   &FvbProtocol);
   DEBUG((EFI_D_INFO, "SPI\n"));
     Status = gBS->InstallMultipleProtocolInterfaces (
-                NULL,
+                &Handle,
                 &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
                 NULL
                 );
