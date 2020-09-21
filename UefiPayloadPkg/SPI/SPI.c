@@ -15,9 +15,9 @@
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
     NULL, // GetAttributes
     NULL, // SetAttributes
-    NULL,  // GetPhysicalAddress
-    NULL,  // GetBlockSize
-    NULL,  // Read
+    NULL, // GetPhysicalAddress
+    NULL, // GetBlockSize
+    NULL, // Read
     NULL, // Write
     NULL, // EraseBlocks
     NULL, //ParentHandle
@@ -31,12 +31,17 @@ SPIInitialize (
   )
 {
   EFI_STATUS Status;
-  Status = gBS->InstallProtocolInterface(
-    ImageHandle,
-    &gEfiDevicePathProtocolGuid,
-    EFI_NATIVE_INTERFACE,
-    &FvbProtocol);
+  // Status = gBS->InstallProtocolInterface(
+  //   ImageHandle,
+  //   &gEfiDevicePathProtocolGuid,
+  //   EFI_NATIVE_INTERFACE,
+  //   &FvbProtocol);
   DEBUG((EFI_D_INFO, "SPI\n"));
+    Status = gBS->InstallMultipleProtocolInterfaces (
+                NULL,
+                &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
+                NULL
+                );
   if(EFI_ERROR (Status)) {
     DEBUG((
       EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
