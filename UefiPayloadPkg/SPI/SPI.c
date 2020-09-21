@@ -13,13 +13,13 @@
 #include "SPI.h"
 
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
-    NULL, // FvbGetAttributes, // GetAttributes
-    NULL, // FvbSetAttributes, // SetAttributes
-    NULL, // FvbGetPhysicalAddress,  // GetPhysicalAddress
-    NULL, // FvbGetBlockSize,  // GetBlockSize
-    NULL, // FvbRead,  // Read
-    NULL, // FvbWrite, // Write
-    NULL, // FvbEraseBlocks, // EraseBlocks
+    SPIInitialize, // FvbGetAttributes, // GetAttributes
+    SPIInitialize, // FvbSetAttributes, // SetAttributes
+    SPIInitialize, // FvbGetPhysicalAddress,  // GetPhysicalAddress
+    SPIInitialize, // FvbGetBlockSize,  // GetBlockSize
+    SPIInitialize, // FvbRead,  // Read
+    SPIInitialize, // FvbWrite, // Write
+    SPIInitialize, // FvbEraseBlocks, // EraseBlocks
     NULL, //ParentHandle
   };
 
@@ -37,7 +37,9 @@ SPIInitialize (
     EFI_NATIVE_INTERFACE,
     &FvbProtocol);
   DEBUG((EFI_D_INFO, "SPI\n"));
-  DEBUG((EFI_D_INFO, "%d\n", Status));
-  DEBUG((EFI_D_INFO, "%d\n", EFI_ERROR (Status)));
+  if(EFI_ERROR (Status)) {
+    DEBUG((
+      EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
+  }
   return EFI_SUCCESS;
 }
