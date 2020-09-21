@@ -452,10 +452,11 @@ FvbRead (
   IN OUT    UINT8                                 *Buffer
   )
 {
-  UINTN         BlockSize;
+  return EFI_SUCCESS;
+  /*UINTN         BlockSize;
   SMMSTORE_INSTANCE *Instance;
 
-  Instance = NULL; //INSTANCE_FROM_FVB_THIS(This);
+  Instance = INSTANCE_FROM_FVB_THIS(This);
 
   DEBUG ((DEBUG_BLKIO, "FvbRead(Parameters: Lba=%ld, Offset=0x%x, *NumBytes=0x%x, Buffer @ 0x%08x)\n", Lba, Offset, *NumBytes, Buffer));
 
@@ -478,7 +479,7 @@ FvbRead (
     return EFI_BAD_BUFFER_SIZE;
   }
 
-  return SMMStoreRead (Lba, Offset, NumBytes, Buffer);
+  return SMMStoreRead (Lba, Offset, NumBytes, Buffer);*/
 }
 
 /**
