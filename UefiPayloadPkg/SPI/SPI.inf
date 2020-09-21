@@ -18,8 +18,6 @@
 [Sources]
   SPI.h
   SPI.c
-  BlSMMStoreFvbDxe.c
-  SblSMMStore.c
 
 [Packages]
   MdePkg/MdePkg.dec

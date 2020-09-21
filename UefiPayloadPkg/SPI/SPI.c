@@ -13,13 +13,13 @@
 #include "SPI.h"
 
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
-    FvbGetAttributes, // GetAttributes
-    FvbSetAttributes, // SetAttributes
-    FvbGetPhysicalAddress,  // GetPhysicalAddress
-    FvbGetBlockSize,  // GetBlockSize
-    FvbRead,  // Read
-    FvbWrite, // Write
-    FvbEraseBlocks, // EraseBlocks
+    NULL, // GetAttributes
+    NULL, // SetAttributes
+    NULL,  // GetPhysicalAddress
+    NULL,  // GetBlockSize
+    NULL,  // Read
+    NULL, // Write
+    NULL, // EraseBlocks
     NULL, //ParentHandle
   };
 
