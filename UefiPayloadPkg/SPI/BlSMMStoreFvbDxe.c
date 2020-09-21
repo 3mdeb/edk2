@@ -20,7 +20,7 @@
 
 #include <Guid/VariableFormat.h>
 #include <Guid/SystemNvDataGuid.h>
-#include <Guid/NvVarStoreFormatted.h>
+#include <NvVarStoreFormatted.h>
 
 #include "BlSMMStoreDxe.h"
 
