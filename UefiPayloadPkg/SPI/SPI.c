@@ -40,6 +40,8 @@ SPIInitialize (
   if(EFI_ERROR (Status)) {
     DEBUG((
       EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
+  } else {
+    EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
   }
   return EFI_SUCCESS;
 }
