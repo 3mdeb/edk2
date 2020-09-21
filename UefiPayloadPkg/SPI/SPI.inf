@@ -30,9 +30,11 @@
   DebugLib
   BaseMemoryLib
 
+[Guids]
+  gEdkiiNvVarStoreFormattedGuid
+
 [Protocols]
   gEfiFirmwareVolumeBlockProtocolGuid                       ## PRODUCES
-  gEdkiiNvVarStoreFormattedGuid
 
 [Depex]
   TRUE
