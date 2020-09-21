@@ -114,21 +114,6 @@ FvbEraseBlocks(
   ...
   );
 
-/** @file  SMMStoreLib.h
-
-  Copyright (c) 2020, 9elements Agency GmbH<BR>
-
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
-
-#ifndef __SMM_STORE_LIB_H__
-#define __SMM_STORE_LIB_H__
-
-#include <Base.h>
-#include <Uefi/UefiBaseType.h>
-#include <Guid/SMMSTOREInfoGuid.h>
-
 #define SMMSTORE_COMBUF_SIZE 16
 
 /**
@@ -205,14 +190,22 @@ SMMStoreVirtualNotifyEvent (
   @retval EFI_SUCCESS           The SMMSTORE is supported.
 
 **/
+
+typedef struct {
+  UINT64    ComBuffer;
+  UINT32    ComBufferSize;
+  UINT32    NumBlocks;
+  UINT32    BlockSize;
+  UINT64    MmioAddress;
+  UINT8     ApmCmd;
+  UINT8     Reserved0[3];
+} SMMSTORE_INFO;
+
 EFI_STATUS
 SMMStoreInitialize (
     IN         VOID                      *Ptr,
     IN         SMMSTORE_INFO             *SmmStoreInfoHob
   );
-
-#endif /* __SMM_STORE_LIB_H__ */
-
 
 
 #endif /* __SPI_H__ */
