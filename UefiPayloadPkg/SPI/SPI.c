@@ -39,7 +39,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
     Status = gBS->InstallMultipleProtocolInterfaces (
                 &Handle,
-                &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
+                &gEfiFirmwareVolumeBlockProtocolGuid, NULL,
                 NULL
                 );
   if(EFI_ERROR (Status)) {
