@@ -455,7 +455,7 @@ FvbRead (
   UINTN         BlockSize;
   SMMSTORE_INSTANCE *Instance;
 
-  Instance = INSTANCE_FROM_FVB_THIS(This);
+  Instance = NULL; //INSTANCE_FROM_FVB_THIS(This);
 
   DEBUG ((DEBUG_BLKIO, "FvbRead(Parameters: Lba=%ld, Offset=0x%x, *NumBytes=0x%x, Buffer @ 0x%08x)\n", Lba, Offset, *NumBytes, Buffer));
 
