@@ -256,8 +256,15 @@ FvbGetAttributes(
 {
   EFI_FVB_ATTRIBUTES_2  FlashFvbAttributes;
   SMMSTORE_INSTANCE *Instance;
-  DEBUG ((DEBUG_BLKIO, "FvbGetAttributes(Parameters: This=0x%x, Attributes=0x%x)\n", This, Attributes));
+  DEBUG ((EFI_D_INFO, "FvbGetAttributes(Sig: 0x%x, SMMSTORE_SIGNATURE: 0x%x)\n", BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol)->Signature, SMMSTORE_SIGNATURE));
+
   Instance = INSTANCE_FROM_FVB_THIS(This);
+
+  // CR(Record, TYPE, Field, TestSignature)
+    //    (DebugAssertEnabled ()
+    // && (BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol)->Signature != SMMSTORE_SIGNATURE))
+    // ? (SMMSTORE_INSTANCE *) (_ASSERT (CR has Bad Signature), This)
+    // : BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol);
 
   FlashFvbAttributes = (EFI_FVB_ATTRIBUTES_2) (
 
