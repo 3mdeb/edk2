@@ -256,7 +256,7 @@ FvbGetAttributes(
 {
   EFI_FVB_ATTRIBUTES_2  FlashFvbAttributes;
   SMMSTORE_INSTANCE *Instance;
-
+  DEBUG ((DEBUG_BLKIO, "FvbGetAttributes(Parameters: This=0x%x, Attributes=0x%x)\n", This, Attributes));
   Instance = INSTANCE_FROM_FVB_THIS(This);
 
   FlashFvbAttributes = (EFI_FVB_ATTRIBUTES_2) (
