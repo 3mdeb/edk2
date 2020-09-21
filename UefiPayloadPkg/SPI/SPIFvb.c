@@ -258,7 +258,10 @@ FvbGetAttributes(
   SMMSTORE_INSTANCE *Instance;
   DEBUG ((EFI_D_INFO, "FvbGetAttributes(Sig: 0x%x, SMMSTORE_SIGNATURE: 0x%x)\n", BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol)->Signature, SMMSTORE_SIGNATURE));
 
-  Instance = INSTANCE_FROM_FVB_THIS(This);
+  //Instance = INSTANCE_FROM_FVB_THIS(This);
+  Instance = BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol);
+
+  // #define INSTANCE_FROM_FVB_THIS(a)                CR(a, SMMSTORE_INSTANCE, FvbProtocol, SMMSTORE_SIGNATURE)
 
   // CR(Record, TYPE, Field, TestSignature)
     //    (DebugAssertEnabled ()
