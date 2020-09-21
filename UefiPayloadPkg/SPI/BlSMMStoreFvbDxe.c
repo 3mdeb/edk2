@@ -16,7 +16,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DxeServicesTableLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Library/SMMStoreLib.h>
+#include <SMMStoreLib.h>
 
 #include <Guid/VariableFormat.h>
 #include <Guid/SystemNvDataGuid.h>
