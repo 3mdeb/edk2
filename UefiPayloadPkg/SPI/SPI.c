@@ -23,7 +23,7 @@ EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
     NULL, //ParentHandle
   };
 
-EFI_HANDLE Handle;
+EFI_HANDLE Handle = NULL;
 
 EFI_STATUS EFIAPI SPIInitialize (
   IN EFI_HANDLE                        ImageHandle,
