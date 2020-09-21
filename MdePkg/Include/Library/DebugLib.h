@@ -562,7 +562,7 @@ DebugPrintLevelEnabled (
 **/
 #if !defined(MDEPKG_NDEBUG)
   #define CR(Record, TYPE, Field, TestSignature)                                              \
-    (DebugAssertEnabled () && (BASE_CR (Record, TYPE, Field)->Signature != TestSignature)) ?  \
+    BASE_CR (Record, TYPE, Field); //(DebugAssertEnabled () && (BASE_CR (Record, TYPE, Field)->Signature != TestSignature)) ?  \
     (TYPE *) (_ASSERT (CR has Bad Signature), Record) :                                       \
     BASE_CR (Record, TYPE, Field)
 #else
