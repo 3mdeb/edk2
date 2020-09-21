@@ -29,9 +29,11 @@
   UefiDriverEntryPoint
   DebugLib
   BaseMemoryLib
+  SmmStoreLib
 
 [Guids]
   gEdkiiNvVarStoreFormattedGuid
+  gEfiSMMSTOREInfoHobGuid
 
 [Protocols]
   gEfiFirmwareVolumeBlockProtocolGuid                       ## PRODUCES
