@@ -29,7 +29,7 @@
   BaseMemoryLib
 
 [Protocols]
-  gEfiSmbusHcProtocolGuid                       ## PRODUCES
+  gEfiFirmwareVolumeBlockProtocolGuid                       ## PRODUCES
 
 [Depex]
   TRUE
