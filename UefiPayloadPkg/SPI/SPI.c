@@ -6,14 +6,6 @@
 
 **/
 
-#include <Library/UefiLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/MemoryAllocationLib.h>
-#include <Library/DxeServicesTableLib.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/PcdLib.h>
-#include <Library/HobLib.h>
-
 #include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -47,7 +39,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   DEBUG((EFI_D_INFO, "SPI\n"));
     Status = gBS->InstallMultipleProtocolInterfaces (
                 &Handle,
-                &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
+                NULL /*&gEfiFirmwareVolumeBlockProtocolGuid*/, &FvbProtocol,
                 NULL
                 );
   if(EFI_ERROR (Status)) {
