@@ -12,18 +12,17 @@
 #include <Protocol/FirmwareVolumeBlock.h>
 #include "SPI.h"
 
+EFI_HANDLE Handle = NULL;
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
-    NULL, // GetAttributes
-    NULL, // SetAttributes
-    NULL, // GetPhysicalAddress
-    NULL, // GetBlockSize
-    NULL, // Read
-    NULL, // Write
-    NULL, // EraseBlocks
+    FvbGetAttributes, // GetAttributes
+    FvbSetAttributes, // SetAttributes
+    FvbGetPhysicalAddress,  // GetPhysicalAddress
+    FvbGetBlockSize,  // GetBlockSize
+    FvbRead,  // Read
+    FvbWrite, // Write
+    FvbEraseBlocks, // EraseBlocks
     NULL, //ParentHandle
   };
-
-EFI_HANDLE Handle = NULL;
 
 EFI_STATUS EFIAPI SPIInitialize (
   IN EFI_HANDLE                        ImageHandle,
@@ -39,7 +38,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
     Status = gBS->InstallMultipleProtocolInterfaces (
                 &Handle,
-                &gEfiFirmwareVolumeBlockProtocolGuid, NULL,
+                &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
                 NULL
                 );
   if(EFI_ERROR (Status)) {
