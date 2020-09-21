@@ -136,7 +136,7 @@ ValidateFvHeader (
   UINTN                       BufferSizeReqested;
 
   BufferSizeReqested = sizeof(EFI_FIRMWARE_VOLUME_HEADER);
-  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEAD`ER*)AllocatePool(BufferSizeReqested);
+  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER*)AllocatePool(BufferSizeReqested);
   if (!FwVolHeader) {
     return EFI_OUT_OF_RESOURCES;
   }
