@@ -23,6 +23,8 @@ EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
     NULL, //ParentHandle
   };
 
+extern EFI_GUID gEfiFirmwareVolumeBlockProtocolGuid;
+
 EFI_HANDLE Handle;
 
 EFI_STATUS EFIAPI SPIInitialize (
