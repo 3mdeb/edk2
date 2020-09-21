@@ -16,7 +16,8 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DxeServicesTableLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-// #include <Library/SMMStoreLib.h>
+#include <Library/SMMStoreLib.h>
+#include <Library/DebugLib.h>
 
 #include <Guid/VariableFormat.h>
 #include <Guid/SystemNvDataGuid.h>
@@ -59,11 +60,7 @@ InitializeFvAndVariableStoreHeaders (
   Headers = AllocateZeroPool(HeadersLength);
 
   // FirmwareVolumeHeader->FvLength is declared to have the Variable area AND the FTW working area AND the FTW Spare contiguous.
-  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) + PcdGet32(PcdFlashNvStorageVariableSize) == PcdGet32(PcdFlashNvStorageFtwWorkingBase));
-  ASSERT(PcdGet32(PcdFlashNvStorageFtwWorkingBase) + PcdGet32(PcdFlashNvStorageFtwWorkingSize) == PcdGet32(PcdFlashNvStorageFtwSpareBase));
-
-  // Check if the size of the area is at least one block size
-  ASSERT((PcdGet32(PcdFlashNvStorageVariableSize) > 0) && (PcdGet32(PcdFlashNvStorageVariableSize) / Instance->Media.BlockSize > 0));
+  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) + PcdGInitializeFvAndVariableStoreHeaders& (PcdGet32(PcdFlashNvStorageVariableSize) / Instance->Media.BlockSize > 0));
   ASSERT((PcdGet32(PcdFlashNvStorageFtwWorkingSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwWorkingSize) / Instance->Media.BlockSize > 0));
   ASSERT((PcdGet32(PcdFlashNvStorageFtwSpareSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwSpareSize) / Instance->Media.BlockSize > 0));
 
