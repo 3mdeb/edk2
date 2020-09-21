@@ -6,6 +6,15 @@
 
 **/
 
+#include <Library/UefiLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/DxeServicesTableLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/PcdLib.h>
+#include <Library/SMMStoreLib.h>
+#include <Library/HobLib.h>
+
 #include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -22,8 +31,6 @@ EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
     NULL, // EraseBlocks
     NULL, //ParentHandle
   };
-
-extern EFI_GUID gEfiFirmwareVolumeBlockProtocolGuid;
 
 EFI_HANDLE Handle;
 
