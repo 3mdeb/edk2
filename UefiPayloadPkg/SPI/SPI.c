@@ -36,7 +36,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   //   &gEfiDevicePathProtocolGuid,
   //   EFI_NATIVE_INTERFACE,
   //   &FvbProtocol);
-  DEBUG((EFI_D_INFO, "SPI\n"));
+  DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
     Status = gBS->InstallMultipleProtocolInterfaces (
                 &Handle,
                 &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
