@@ -12,7 +12,6 @@
 #include <Library/DxeServicesTableLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/PcdLib.h>
-#include <Library/SMMStoreLib.h>
 #include <Library/HobLib.h>
 
 #include <Include/PiDxe.h>
