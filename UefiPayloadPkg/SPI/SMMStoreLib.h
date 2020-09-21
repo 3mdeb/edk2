@@ -11,7 +11,7 @@
 
 #include <Base.h>
 #include <Uefi/UefiBaseType.h>
-#include <Guid/SMMSTOREInfoGuid.h>
+#include <SMMSTOREInfoGuid.h>
 
 #define SMMSTORE_COMBUF_SIZE 16
 
