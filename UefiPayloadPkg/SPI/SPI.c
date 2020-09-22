@@ -96,9 +96,6 @@ EFI_STATUS EFIAPI SPIInitialize (
     DEBUG((EFI_D_INFO, "GUIDHOB IS NULLLLLL!!!!\n"));
   }
 
-  SMMSTORE_INSTANCE *a;
-  a = ((VOID *)INSTANCE_FROM_FVB_THIS(FvbProtocol));
-
   Status = gBS->InstallProtocolInterface(
     ImageHandle,
     &gEfiDevicePathProtocolGuid,

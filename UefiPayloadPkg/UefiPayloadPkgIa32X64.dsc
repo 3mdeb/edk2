@@ -633,9 +633,9 @@
   #
   # SMMSTORE
   #
-!if $(BOOTLOADER) == "COREBOOT"
-  UefiPayloadPkg/BlSMMStoreDxe/BlSMMStoreDxe.inf
-!endif
+# !if $(BOOTLOADER) == "COREBOOT"
+#   UefiPayloadPkg/BlSMMStoreDxe/BlSMMStoreDxe.inf
+# !endif
 
   #
   # Network Support
