@@ -49,6 +49,7 @@ InitializeFvAndVariableStoreHeaders (
   IN SMMSTORE_INSTANCE *Instance
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   EFI_STATUS                          Status;
   VOID*                               Headers;
   UINTN                               HeadersLength;
@@ -129,6 +130,7 @@ ValidateFvHeader (
   IN  SMMSTORE_INSTANCE *Instance
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   UINT16                      Checksum;
   EFI_FIRMWARE_VOLUME_HEADER  *FwVolHeader;
   VARIABLE_STORE_HEADER       *VariableStoreHeader;
@@ -257,6 +259,7 @@ FvbGetAttributes(
   OUT       EFI_FVB_ATTRIBUTES_2                   *Attributes
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   EFI_FVB_ATTRIBUTES_2  FlashFvbAttributes;
   SMMSTORE_INSTANCE *Instance;
 
@@ -313,6 +316,7 @@ FvbSetAttributes(
   IN OUT    EFI_FVB_ATTRIBUTES_2                 *Attributes
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   DEBUG ((DEBUG_BLKIO, "FvbSetAttributes(0x%X) is not supported\n",*Attributes));
   return EFI_UNSUPPORTED;
 }
@@ -341,6 +345,7 @@ FvbGetPhysicalAddress (
   OUT       EFI_PHYSICAL_ADDRESS                 *Address
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   ASSERT(Address != NULL);
 
   *Address = mFlashNvStorageVariableBase;
@@ -382,6 +387,7 @@ FvbGetBlockSize (
   OUT       UINTN                                *NumberOfBlocks
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   EFI_STATUS Status;
   SMMSTORE_INSTANCE *Instance;
 
@@ -455,6 +461,7 @@ FvbRead (
   IN OUT    UINT8                                 *Buffer
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   UINTN         BlockSize;
   SMMSTORE_INSTANCE *Instance;
 
@@ -548,6 +555,7 @@ FvbWrite (
   IN        UINT8                                 *Buffer
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   UINTN         BlockSize;
   SMMSTORE_INSTANCE *Instance;
 
@@ -625,6 +633,7 @@ FvbEraseBlocks (
   ...
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   EFI_STATUS  Status;
   VA_LIST     Args;
   EFI_LBA     StartingLba; // Lba from which we start erasing
@@ -731,6 +740,7 @@ FvbVirtualNotifyEvent (
   IN VOID             *Context
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   EfiConvertPointer (0x0, (VOID**)&mFlashNvStorageVariableBase);
   return;
 }
@@ -741,6 +751,7 @@ SMMStoreFvbInitialize (
   IN SMMSTORE_INSTANCE* Instance
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   EFI_STATUS  Status;
   UINT32      FvbNumLba;
   EFI_BOOT_MODE BootMode;

@@ -80,6 +80,7 @@ SMMStoreCreateInstance (
   OUT SMMSTORE_INSTANCE**  SMMStoreInstance
   )
 {
+  DEBUG((EFI_D_INFO, "STOREDXE ASDF\n", __FUNCTION__));
   EFI_STATUS Status;
   SMMSTORE_INSTANCE* Instance;
 
