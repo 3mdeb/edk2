@@ -36,6 +36,7 @@
 [Guids]
   gEdkiiNvVarStoreFormattedGuid
   gEfiSMMSTOREInfoHobGuid
+  gEfiEventVirtualAddressChangeGuid
 
 [Protocols]
   gEfiFirmwareVolumeBlockProtocolGuid                       ## PRODUCES
