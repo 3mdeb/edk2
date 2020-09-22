@@ -80,7 +80,6 @@ SMMStoreCreateInstance (
   OUT SMMSTORE_INSTANCE**  SMMStoreInstance
   )
 {
-  DEBUG((EFI_D_INFO, "STOREDXE ASDF\n", __FUNCTION__));
   EFI_STATUS Status;
   SMMSTORE_INSTANCE* Instance;
 
@@ -157,6 +156,7 @@ BlSMMSTOREInitialise (
   IN EFI_SYSTEM_TABLE   *SystemTable
   )
 {
+  DEBUG((EFI_D_INFO, "STOREDXE ASDF\n", __FUNCTION__));
   EFI_STATUS                              Status;
   VOID                                    *ComBuf;
   VOID                                    *GuidHob;
