@@ -37,11 +37,11 @@ EFI_STATUS EFIAPI SPIInitialize (
   if(GuidHob == NULL) {
     DEBUG((EFI_D_INFO, "GUIDHOB IS NULLLLLL!!!!\n"));
   }
-  // Status = gBS->InstallProtocolInterface(
-  //   ImageHandle,
-  //   &gEfiDevicePathProtocolGuid,
-  //   EFI_NATIVE_INTERFACE,
-  //   &FvbProtocol);
+  Status = gBS->InstallProtocolInterface(
+    ImageHandle,
+    &gEfiDevicePathProtocolGuid,
+    EFI_NATIVE_INTERFACE,
+    &FvbProtocol);
   DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
     Status = gBS->InstallMultipleProtocolInterfaces (
                 &Handle,
