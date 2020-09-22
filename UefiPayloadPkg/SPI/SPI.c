@@ -80,7 +80,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   IN EFI_SYSTEM_TABLE                  *SystemTable
   )
 {
-  SMMSTORE_INSTANCE* Instance;
+  SMMSTORE_INSTANCE *Instance;
   EFI_STATUS Status = EFI_SUCCESS;
   VOID *GuidHob;
   Instance = AllocateRuntimeCopyPool (sizeof(SMMSTORE_INSTANCE),&mSMMStoreInstanceTemplate);
@@ -95,6 +95,10 @@ EFI_STATUS EFIAPI SPIInitialize (
   if(GuidHob == NULL) {
     DEBUG((EFI_D_INFO, "GUIDHOB IS NULLLLLL!!!!\n"));
   }
+
+  SMMSTORE_INSTANCE *a;
+  a = ((VOID *)INSTANCE_FROM_FVB_THIS(FvbProtocol));
+
   Status = gBS->InstallProtocolInterface(
     ImageHandle,
     &gEfiDevicePathProtocolGuid,
