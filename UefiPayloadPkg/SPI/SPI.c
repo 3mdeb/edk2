@@ -12,6 +12,7 @@
 #include <Protocol/FirmwareVolumeBlock.h>
 #include <Guid/SMMSTOREInfoGuid.h>
 #include <Library/HobLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include "SPI.h"
 
 SMMSTORE_INSTANCE  mSMMStoreInstanceTemplate = {
