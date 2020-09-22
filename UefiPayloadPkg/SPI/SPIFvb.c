@@ -60,14 +60,14 @@ InitializeFvAndVariableStoreHeaders (
   Headers = AllocateZeroPool(HeadersLength);
 
   // FirmwareVolumeHeader->FvLength is declared to have the Variable area AND the FTW working area AND the FTW Spare contiguous.
-  /*ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) + PcdGInitializeFvAndVariableStoreHeaders& (PcdGet32(PcdFlashNvStorageVariableSize) / Instance->Media.BlockSize > 0));
+  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) + PcdGInitializeFvAndVariableStoreHeaders& (PcdGet32(PcdFlashNvStorageVariableSize) / Instance->Media.BlockSize > 0));
   ASSERT((PcdGet32(PcdFlashNvStorageFtwWorkingSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwWorkingSize) / Instance->Media.BlockSize > 0));
   ASSERT((PcdGet32(PcdFlashNvStorageFtwSpareSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwSpareSize) / Instance->Media.BlockSize > 0));
 
   // Ensure the Variable area Base Addresses are aligned on a block size boundaries
   ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) % Instance->Media.BlockSize == 0);
   ASSERT(PcdGet32(PcdFlashNvStorageFtwWorkingBase) % Instance->Media.BlockSize == 0);
-  ASSERT(PcdGet32(PcdFlashNvStorageFtwSpareBase) % Instance->Media.BlockSize == 0);*/
+  ASSERT(PcdGet32(PcdFlashNvStorageFtwSpareBase) % Instance->Media.BlockSize == 0);
 
   //
   // EFI_FIRMWARE_VOLUME_HEADER
@@ -259,7 +259,6 @@ FvbGetAttributes(
   DEBUG ((EFI_D_INFO, "FvbGetAttributes(Sig: 0x%x, SMMSTORE_SIGNATURE: 0x%x)\n", BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol)->Signature, SMMSTORE_SIGNATURE));
 
   Instance = INSTANCE_FROM_FVB_THIS(This);
-  Instance = BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol);
 
   // #define INSTANCE_FROM_FVB_THIS(a)                CR(a, SMMSTORE_INSTANCE, FvbProtocol, SMMSTORE_SIGNATURE)
 
