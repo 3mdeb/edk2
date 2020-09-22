@@ -24,19 +24,33 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   EmbeddedPkg/EmbeddedPkg.dec
+  UefiPayloadPkg/UefiPayloadPkg.dec
 
 [LibraryClasses]
-  UefiDriverEntryPoint
+  IoLib
+  BaseLib
   DebugLib
-  BaseMemoryLib
+  HobLib
   SmmStoreLib
+  UefiLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeLib
+  DxeServicesTableLib
 
 [Guids]
-  gEdkiiNvVarStoreFormattedGuid
-  # gEfiSMMSTOREInfoHobGuid
+  gEfiSystemNvDataFvGuid
+  gEfiVariableGuid
+  gEfiAuthenticatedVariableGuid
+  gEfiEventVirtualAddressChangeGuid
+  gEdkiiNvVarStoreFormattedGuid     ## PRODUCES ## PROTOCOL
+  gEfiSMMSTOREInfoHobGuid
 
 [Protocols]
-  gEfiFirmwareVolumeBlockProtocolGuid                       ## PRODUCES
+  gEfiBlockIoProtocolGuid
+  gEfiDevicePathProtocolGuid
+  gEfiFirmwareVolumeBlockProtocolGuid ## PRODUCES
+  gEfiDiskIoProtocolGuid
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase
@@ -48,4 +62,4 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
 
 [Depex]
-  TRUE
+  gEfiCpuArchProtocolGuid
