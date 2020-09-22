@@ -25,9 +25,6 @@
 
 #include "SPI.h"
 
-STATIC EFI_EVENT mFvbVirtualAddrChangeEvent;
-STATIC UINTN     mFlashNvStorageVariableBase;
-
 // STATIC EFI_EVENT mFvbVirtualAddrChangeEvent;
 // STATIC UINTN     mFlashNvStorageVariableBase;
 
