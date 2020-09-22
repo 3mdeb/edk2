@@ -33,7 +33,7 @@
 
 [Guids]
   gEdkiiNvVarStoreFormattedGuid
-  # gEfiSMMSTOREInfoHobGuid
+  gEfiSMMSTOREInfoHobGuid
 
 [Protocols]
   gEfiFirmwareVolumeBlockProtocolGuid                       ## PRODUCES

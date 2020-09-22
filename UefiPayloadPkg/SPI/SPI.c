@@ -10,6 +10,7 @@
 #include <Include/Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/FirmwareVolumeBlock.h>
+#include <Guid/SMMSTOREInfoGuid.h>
 #include "SPI.h"
 
 EFI_HANDLE Handle = NULL;
@@ -30,6 +31,11 @@ EFI_STATUS EFIAPI SPIInitialize (
   )
 {
   EFI_STATUS Status = EFI_SUCCESS;
+  VOID *GuidHob;
+  GuidHob = GetFirstGuidHob (&gEfiSMMSTOREInfoHobGuid);
+  if(GuidHob == NULL) {
+    DEBUG((EFI_D_INFO, "GUIDHOB IS NULLLLLL!!!!\n"));
+  }
   // Status = gBS->InstallProtocolInterface(
   //   ImageHandle,
   //   &gEfiDevicePathProtocolGuid,
