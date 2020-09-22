@@ -114,4 +114,12 @@ FvbEraseBlocks(
   ...
   );
 
+/////////////////////////////////////////////////////////
+
+struct spi_slave {
+	UINT32	bus;
+	UINT32	cs;
+	const struct spi_ctrlr *ctrlr;
+};
+
 #endif /* __SPI_H__ */
