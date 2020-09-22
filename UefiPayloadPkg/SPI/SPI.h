@@ -191,16 +191,6 @@ SMMStoreVirtualNotifyEvent (
 
 **/
 
-typedef struct {
-  UINT64    ComBuffer;
-  UINT32    ComBufferSize;
-  UINT32    NumBlocks;
-  UINT32    BlockSize;
-  UINT64    MmioAddress;
-  UINT8     ApmCmd;
-  UINT8     Reserved0[3];
-} SMMSTORE_INFO;
-
 EFI_STATUS
 SMMStoreInitialize (
     IN         VOID                      *Ptr,
