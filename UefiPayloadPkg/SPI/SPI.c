@@ -11,6 +11,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/FirmwareVolumeBlock.h>
 #include <Guid/SMMSTOREInfoGuid.h>
+#include <Library/HobLib.h>
 #include "SPI.h"
 
 EFI_HANDLE Handle = NULL;
