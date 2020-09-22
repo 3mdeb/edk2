@@ -51,66 +51,7 @@ InitializeFvAndVariableStoreHeaders (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  EFI_STATUS                          Status;
-  VOID*                               Headers;
-  UINTN                               HeadersLength;
-  EFI_FIRMWARE_VOLUME_HEADER          *FirmwareVolumeHeader;
-  VARIABLE_STORE_HEADER               *VariableStoreHeader;
-
-  HeadersLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY) + sizeof(VARIABLE_STORE_HEADER);
-  Headers = AllocateZeroPool(HeadersLength);
-
-  // FirmwareVolumeHeader->FvLength is declared to have the Variable area AND the FTW working area AND the FTW Spare contiguous.
-  /*ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) + PcdGInitializeFvAndVariableStoreHeaders& (PcdGet32(PcdFlashNvStorageVariableSize) / Instance->Media.BlockSize > 0));
-  ASSERT((PcdGet32(PcdFlashNvStorageFtwWorkingSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwWorkingSize) / Instance->Media.BlockSize > 0));
-  ASSERT((PcdGet32(PcdFlashNvStorageFtwSpareSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwSpareSize) / Instance->Media.BlockSize > 0));
-
-  // Ensure the Variable area Base Addresses are aligned on a block size boundaries
-  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) % Instance->Media.BlockSize == 0);
-  ASSERT(PcdGet32(PcdFlashNvStorageFtwWorkingBase) % Instance->Media.BlockSize == 0);
-  ASSERT(PcdGet32(PcdFlashNvStorageFtwSpareBase) % Instance->Media.BlockSize == 0);*/
-
-  //
-  // EFI_FIRMWARE_VOLUME_HEADER
-  //
-  FirmwareVolumeHeader = (EFI_FIRMWARE_VOLUME_HEADER*)Headers;
-  CopyGuid (&FirmwareVolumeHeader->FileSystemGuid, &gEfiSystemNvDataFvGuid);
-  FirmwareVolumeHeader->FvLength =
-      PcdGet32(PcdFlashNvStorageVariableSize) +
-      PcdGet32(PcdFlashNvStorageFtwWorkingSize) +
-      PcdGet32(PcdFlashNvStorageFtwSpareSize);
-  FirmwareVolumeHeader->Signature = EFI_FVH_SIGNATURE;
-  FirmwareVolumeHeader->Attributes = (EFI_FVB_ATTRIBUTES_2) (
-                                          EFI_FVB2_READ_ENABLED_CAP   | // Reads may be enabled
-                                          EFI_FVB2_READ_STATUS        | // Reads are currently enabled
-                                          EFI_FVB2_STICKY_WRITE       | // A block erase is required to flip bits into EFI_FVB2_ERASE_POLARITY
-                                          EFI_FVB2_MEMORY_MAPPED      | // It is memory mapped
-                                          EFI_FVB2_ERASE_POLARITY     | // After erasure all bits take this value (i.e. '1')
-                                          EFI_FVB2_WRITE_STATUS       | // Writes are currently enabled
-                                          EFI_FVB2_WRITE_ENABLED_CAP    // Writes may be enabled
-                                      );
-  FirmwareVolumeHeader->HeaderLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY);
-  FirmwareVolumeHeader->Revision = EFI_FVH_REVISION;
-  FirmwareVolumeHeader->BlockMap[0].NumBlocks = Instance->Media.LastBlock + 1;
-  FirmwareVolumeHeader->BlockMap[0].Length      = Instance->Media.BlockSize;
-  FirmwareVolumeHeader->BlockMap[1].NumBlocks = 0;
-  FirmwareVolumeHeader->BlockMap[1].Length      = 0;
-  FirmwareVolumeHeader->Checksum = CalculateCheckSum16 ((UINT16*)FirmwareVolumeHeader,FirmwareVolumeHeader->HeaderLength);
-
-  //
-  // VARIABLE_STORE_HEADER
-  //
-  VariableStoreHeader = (VARIABLE_STORE_HEADER*)((UINTN)Headers + FirmwareVolumeHeader->HeaderLength);
-  CopyGuid (&VariableStoreHeader->Signature, &gEfiVariableGuid);
-  VariableStoreHeader->Size = PcdGet32(PcdFlashNvStorageVariableSize) - FirmwareVolumeHeader->HeaderLength;
-  VariableStoreHeader->Format            = VARIABLE_STORE_FORMATTED;
-  VariableStoreHeader->State             = VARIABLE_STORE_HEALTHY;
-
-  // Install the combined super-header in the store
-  Status = FvbWrite (&Instance->FvbProtocol, 0, 0, &HeadersLength, Headers);
-
-  FreePool (Headers);
-  return Status;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -128,111 +69,6 @@ ValidateFvHeader (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  UINT16                      Checksum;
-  EFI_FIRMWARE_VOLUME_HEADER  *FwVolHeader;
-  VARIABLE_STORE_HEADER       *VariableStoreHeader;
-  UINTN                       VariableStoreLength;
-  UINTN                       FvLength;
-  EFI_STATUS                  TempStatus;
-  UINTN                       BufferSize;
-  UINTN                       BufferSizeReqested;
-
-  BufferSizeReqested = sizeof(EFI_FIRMWARE_VOLUME_HEADER);
-  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER*)AllocatePool(BufferSizeReqested);
-  if (!FwVolHeader) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-  BufferSize = BufferSizeReqested;
-  TempStatus = SMMStoreRead (0, 0, &BufferSize, (UINT8 *)FwVolHeader);
-  if (EFI_ERROR (TempStatus) || BufferSizeReqested != BufferSize) {
-    FreePool (FwVolHeader);
-    return EFI_DEVICE_ERROR;
-  }
-
-  FvLength = PcdGet32(PcdFlashNvStorageVariableSize) + PcdGet32(PcdFlashNvStorageFtwWorkingSize) +
-      PcdGet32(PcdFlashNvStorageFtwSpareSize);
-
-  //
-  // Verify the header revision, header signature, length
-  // Length of FvBlock cannot be 2**64-1
-  // HeaderLength cannot be an odd number
-  //
-  if (   (FwVolHeader->Revision  != EFI_FVH_REVISION)
-      || (FwVolHeader->Signature != EFI_FVH_SIGNATURE)
-      || (FwVolHeader->FvLength  != FvLength)
-      )
-  {
-    DEBUG ((EFI_D_INFO, "%a: No Firmware Volume header present\n",
-      __FUNCTION__));
-    FreePool (FwVolHeader);
-    return EFI_NOT_FOUND;
-  }
-
-  // Check the Firmware Volume Guid
-  if( CompareGuid (&FwVolHeader->FileSystemGuid, &gEfiSystemNvDataFvGuid) == FALSE ) {
-    DEBUG ((EFI_D_INFO, "%a: Firmware Volume Guid non-compatible\n",
-      __FUNCTION__));
-    FreePool (FwVolHeader);
-    return EFI_NOT_FOUND;
-  }
-
-  BufferSizeReqested = FwVolHeader->HeaderLength;
-  FreePool (FwVolHeader);
-  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER*)AllocatePool(BufferSizeReqested);
-  if (!FwVolHeader) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-  BufferSize = BufferSizeReqested;
-  TempStatus = SMMStoreRead (0, 0, &BufferSize, (UINT8 *)FwVolHeader);
-  if (EFI_ERROR (TempStatus) || BufferSizeReqested != BufferSize) {
-    FreePool (FwVolHeader);
-    return EFI_DEVICE_ERROR;
-  }
-
-  // Verify the header checksum
-  Checksum = CalculateSum16((UINT16*)FwVolHeader, FwVolHeader->HeaderLength);
-  if (Checksum != 0) {
-    DEBUG ((EFI_D_INFO, "%a: FV checksum is invalid (Checksum:0x%X)\n",
-      __FUNCTION__, Checksum));
-    FreePool (FwVolHeader);
-    return EFI_NOT_FOUND;
-  }
-
-  BufferSizeReqested = sizeof(VARIABLE_STORE_HEADER);
-  VariableStoreHeader = (VARIABLE_STORE_HEADER*)AllocatePool(BufferSizeReqested);
-  if (!VariableStoreHeader) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-  BufferSize = BufferSizeReqested;
-  TempStatus = SMMStoreRead (0, FwVolHeader->HeaderLength, &BufferSize, (UINT8 *)VariableStoreHeader);
-  if (EFI_ERROR (TempStatus) || BufferSizeReqested != BufferSize) {
-    FreePool (VariableStoreHeader);
-    FreePool (FwVolHeader);
-    return EFI_DEVICE_ERROR;
-  }
-
-  // Check the Variable Store Guid
-  if (!CompareGuid (&VariableStoreHeader->Signature, &gEfiVariableGuid) &&
-      !CompareGuid (&VariableStoreHeader->Signature, &gEfiAuthenticatedVariableGuid)) {
-    DEBUG ((EFI_D_INFO, "%a: Variable Store Guid non-compatible\n",
-      __FUNCTION__));
-    FreePool (FwVolHeader);
-    FreePool (VariableStoreHeader);
-    return EFI_NOT_FOUND;
-  }
-
-  VariableStoreLength = PcdGet32 (PcdFlashNvStorageVariableSize) - FwVolHeader->HeaderLength;
-  if (VariableStoreHeader->Size != VariableStoreLength) {
-    DEBUG ((EFI_D_INFO, "%a: Variable Store Length does not match\n",
-      __FUNCTION__));
-    FreePool (FwVolHeader);
-    FreePool (VariableStoreHeader);
-    return EFI_NOT_FOUND;
-  }
-
-  FreePool (FwVolHeader);
-  FreePool (VariableStoreHeader);
-
   return EFI_SUCCESS;
 }
 
@@ -257,42 +93,6 @@ FvbGetAttributes(
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  EFI_FVB_ATTRIBUTES_2  FlashFvbAttributes;
-  SMMSTORE_INSTANCE *Instance;
-  DEBUG ((EFI_D_INFO, "FvbGetAttributes(Sig: 0x%x, SMMSTORE_SIGNATURE: 0x%x)\n", BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol)->Signature, SMMSTORE_SIGNATURE));
-
-  Instance = INSTANCE_FROM_FVB_THIS(This);
-
-  // #define INSTANCE_FROM_FVB_THIS(a)                CR(a, SMMSTORE_INSTANCE, FvbProtocol, SMMSTORE_SIGNATURE)
-
-  // CR(Record, TYPE, Field, TestSignature)
-    //    (DebugAssertEnabled ()
-    // && (BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol)->Signature != SMMSTORE_SIGNATURE))
-    // ? (SMMSTORE_INSTANCE *) (_ASSERT (CR has Bad Signature), This)
-    // : BASE_CR (This, SMMSTORE_INSTANCE, FvbProtocol);
-
-  FlashFvbAttributes = (EFI_FVB_ATTRIBUTES_2) (
-
-      EFI_FVB2_READ_ENABLED_CAP | // Reads may be enabled
-      EFI_FVB2_READ_STATUS      | // Reads are currently enabled
-      EFI_FVB2_STICKY_WRITE     | // A block erase is required to flip bits into EFI_FVB2_ERASE_POLARITY
-      EFI_FVB2_MEMORY_MAPPED    | // It is memory mapped
-      EFI_FVB2_ERASE_POLARITY     // After erasure all bits take this value (i.e. '1')
-
-      );
-
-  // Check if it is write protected
-  if (Instance->Media.ReadOnly != TRUE) {
-
-    FlashFvbAttributes = FlashFvbAttributes         |
-                         EFI_FVB2_WRITE_STATUS      | // Writes are currently enabled
-                         EFI_FVB2_WRITE_ENABLED_CAP;  // Writes may be enabled
-  }
-
-  *Attributes = FlashFvbAttributes;
-
-  DEBUG ((DEBUG_BLKIO, "FvbGetAttributes(0x%X)\n", *Attributes));
-
   return EFI_SUCCESS;
 }
 
@@ -323,8 +123,7 @@ FvbSetAttributes(
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  DEBUG ((DEBUG_BLKIO, "FvbSetAttributes(0x%X) is not supported\n",*Attributes));
-  return EFI_UNSUPPORTED;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -352,9 +151,6 @@ FvbGetPhysicalAddress (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  ASSERT(Address != NULL);
-
-  *Address = mFlashNvStorageVariableBase;
   return EFI_SUCCESS;
 }
 
@@ -394,26 +190,7 @@ FvbGetBlockSize (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  EFI_STATUS Status;
-  SMMSTORE_INSTANCE *Instance;
-
-  Instance = INSTANCE_FROM_FVB_THIS(This);
-
-  DEBUG ((DEBUG_BLKIO, "FvbGetBlockSize(Lba=%ld, BlockSize=0x%x, LastBlock=%ld)\n", Lba, Instance->Media.BlockSize, Instance->Media.LastBlock));
-
-  if (Lba > Instance->Media.LastBlock) {
-    DEBUG ((EFI_D_ERROR, "FvbGetBlockSize: ERROR - Parameter LBA %ld is beyond the last Lba (%ld).\n", Lba, Instance->Media.LastBlock));
-    Status = EFI_INVALID_PARAMETER;
-  } else {
-    *BlockSize = (UINTN) Instance->Media.BlockSize;
-    *NumberOfBlocks = (UINTN) (Instance->Media.LastBlock - Lba + 1);
-
-    DEBUG ((DEBUG_BLKIO, "FvbGetBlockSize: *BlockSize=0x%x, *NumberOfBlocks=0x%x.\n", *BlockSize, *NumberOfBlocks));
-
-    Status = EFI_SUCCESS;
-  }
-
-  return Status;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -468,35 +245,7 @@ FvbRead (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  UINTN         BlockSize;
-  SMMSTORE_INSTANCE *Instance;
-
-  DEBUG ((DEBUG_BLKIO, "FvbRead(Parameters: This=0x%x, Lba=%ld, Offset=0x%x, *NumBytes=0x%x, Buffer @ 0x%08x)\n", This, Lba, Offset, *NumBytes, Buffer));
-
-  Instance = INSTANCE_FROM_FVB_THIS(This);
-
-  DEBUG ((DEBUG_BLKIO, "FvbRead(Parameters: Lba=%ld, Offset=0x%x, *NumBytes=0x%x, Buffer @ 0x%08x)\n", Lba, Offset, *NumBytes, Buffer));
-
-  // Cache the block size to avoid de-referencing pointers all the time
-  BlockSize = Instance->Media.BlockSize;
-
-  DEBUG ((DEBUG_BLKIO, "FvbRead: Check if (Offset=0x%x + NumBytes=0x%x) <= BlockSize=0x%x\n", Offset, *NumBytes, BlockSize ));
-
-  // The read must not span block boundaries.
-  // We need to check each variable individually because adding two large values together overflows.
-  if ((Offset               >= BlockSize) ||
-      (*NumBytes            >  BlockSize) ||
-      ((Offset + *NumBytes) >  BlockSize)) {
-    DEBUG ((EFI_D_ERROR, "FvbRead: ERROR - EFI_BAD_BUFFER_SIZE: (Offset=0x%x + NumBytes=0x%x) > BlockSize=0x%x\n", Offset, *NumBytes, BlockSize ));
-    return EFI_BAD_BUFFER_SIZE;
-  }
-
-  // We must have some bytes to read
-  if (*NumBytes == 0) {
-    return EFI_BAD_BUFFER_SIZE;
-  }
-
-  return SMMStoreRead (Lba, Offset, NumBytes, Buffer);
+  return EFI_SUCCESS;
 }
 
 /**
@@ -564,31 +313,7 @@ FvbWrite (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  UINTN         BlockSize;
-  SMMSTORE_INSTANCE *Instance;
-
-  Instance = INSTANCE_FROM_FVB_THIS(This);
-
-  DEBUG ((DEBUG_BLKIO, "FvbWrite(Parameters: Lba=%ld, Offset=0x%x, *NumBytes=0x%x, Buffer @ 0x%08x)\n", Lba, Offset, *NumBytes, Buffer));
-
-  // Cache the block size to avoid de-referencing pointers all the time
-  BlockSize = Instance->Media.BlockSize;
-
-  // The read must not span block boundaries.
-  // We need to check each variable individually because adding two large values together overflows.
-  if ((Offset               >= BlockSize) ||
-      (*NumBytes            >  BlockSize) ||
-      ((Offset + *NumBytes) >  BlockSize)) {
-    DEBUG ((EFI_D_ERROR, "FvbRead: ERROR - EFI_BAD_BUFFER_SIZE: (Offset=0x%x + NumBytes=0x%x) > BlockSize=0x%x\n", Offset, *NumBytes, BlockSize ));
-    return EFI_BAD_BUFFER_SIZE;
-  }
-
-  // We must have some bytes to read
-  if (*NumBytes == 0) {
-    return EFI_BAD_BUFFER_SIZE;
-  }
-
-  return SMMStoreWrite (Lba, Offset, NumBytes, Buffer);
+  return EFI_SUCCESS;
 }
 
 /**
@@ -642,95 +367,7 @@ FvbEraseBlocks (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  EFI_STATUS  Status;
-  VA_LIST     Args;
-  EFI_LBA     StartingLba; // Lba from which we start erasing
-  UINTN       NumOfLba; // Number of Lba blocks to erase
-  SMMSTORE_INSTANCE *Instance;
-
-  Instance = INSTANCE_FROM_FVB_THIS(This);
-
-  DEBUG ((DEBUG_BLKIO, "FvbEraseBlocks()\n"));
-
-  Status = EFI_SUCCESS;
-
-  // Detect WriteDisabled state
-  if (Instance->Media.ReadOnly == TRUE) {
-    // Firmware volume is in WriteDisabled state
-    DEBUG ((EFI_D_ERROR, "FvbEraseBlocks: ERROR - Device is in WriteDisabled state.\n"));
-    return EFI_ACCESS_DENIED;
-  }
-
-  // Before erasing, check the entire list of parameters to ensure all specified blocks are valid
-
-  VA_START (Args, This);
-  do {
-    // Get the Lba from which we start erasing
-    StartingLba = VA_ARG (Args, EFI_LBA);
-
-    // Have we reached the end of the list?
-    if (StartingLba == EFI_LBA_LIST_TERMINATOR) {
-      //Exit the while loop
-      break;
-    }
-
-    // How many Lba blocks are we requested to erase?
-    NumOfLba = VA_ARG (Args, UINTN);
-
-    // All blocks must be within range
-    DEBUG ((
-      DEBUG_BLKIO,
-      "FvbEraseBlocks: Check if: ( StartingLba=%ld + NumOfLba=%Lu - 1 ) > LastBlock=%ld.\n",
-      StartingLba,
-      (UINT64)NumOfLba,
-      Instance->Media.LastBlock
-      ));
-    if ((NumOfLba == 0) || ((StartingLba + NumOfLba - 1) > Instance->Media.LastBlock)) {
-      VA_END (Args);
-      DEBUG ((EFI_D_ERROR, "FvbEraseBlocks: ERROR - Lba range goes past the last Lba.\n"));
-      Status = EFI_INVALID_PARAMETER;
-      goto EXIT;
-    }
-  } while (TRUE);
-  VA_END (Args);
-
-  //
-  // To get here, all must be ok, so start erasing
-  //
-  VA_START (Args, This);
-  do {
-    // Get the Lba from which we start erasing
-    StartingLba = VA_ARG (Args, EFI_LBA);
-
-    // Have we reached the end of the list?
-    if (StartingLba == EFI_LBA_LIST_TERMINATOR) {
-      // Exit the while loop
-      break;
-    }
-
-    // How many Lba blocks are we requested to erase?
-    NumOfLba = VA_ARG (Args, UINTN);
-
-    // Go through each one and erase it
-    while (NumOfLba > 0) {
-      // Erase it
-      DEBUG ((DEBUG_BLKIO, "FvbEraseBlocks: Erasing Lba=%ld\n", StartingLba));
-      Status = SMMStoreEraseBlock (StartingLba);
-      if (EFI_ERROR(Status)) {
-        VA_END (Args);
-        Status = EFI_DEVICE_ERROR;
-        goto EXIT;
-      }
-
-      // Move to the next Lba
-      StartingLba++;
-      NumOfLba--;
-    }
-  } while (TRUE);
-  VA_END (Args);
-
-EXIT:
-  return Status;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -749,8 +386,7 @@ FvbVirtualNotifyEvent (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  EfiConvertPointer (0x0, (VOID**)&mFlashNvStorageVariableBase);
-  return;
+  return EFI_SUCCESS;
 }
 
 EFI_STATUS
@@ -760,73 +396,5 @@ SMMStoreFvbInitialize (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  EFI_STATUS  Status;
-  UINT32      FvbNumLba;
-  EFI_BOOT_MODE BootMode;
-
-  DEBUG((DEBUG_BLKIO,"NorFlashFvbInitialize\n"));
-  ASSERT((Instance != NULL));
-
-  mFlashNvStorageVariableBase = PcdGet32 (PcdFlashNvStorageVariableBase);
-
-  BootMode = GetBootModeHob ();
-  if (BootMode == BOOT_WITH_DEFAULT_SETTINGS) {
-    Status = EFI_INVALID_PARAMETER;
-  } else {
-    // Determine if there is a valid header at the beginning of the NorFlash
-    Status = ValidateFvHeader (Instance);
-  }
-
-  // Install the Default FVB header if required
-  if (EFI_ERROR(Status)) {
-    // There is no valid header, so time to install one.
-    DEBUG ((EFI_D_INFO, "%a: The FVB Header is not valid.\n", __FUNCTION__));
-    DEBUG ((EFI_D_INFO, "%a: Installing a correct one for this volume.\n",
-      __FUNCTION__));
-
-    // Erase all the NorFlash that is reserved for variable storage
-    FvbNumLba = (PcdGet32(PcdFlashNvStorageVariableSize) +
-        PcdGet32(PcdFlashNvStorageFtwWorkingSize) +
-        PcdGet32(PcdFlashNvStorageFtwSpareSize)) / Instance->Media.BlockSize;
-
-    Status = FvbEraseBlocks (&Instance->FvbProtocol, (EFI_LBA)0, FvbNumLba, EFI_LBA_LIST_TERMINATOR);
-    if (EFI_ERROR(Status)) {
-      return Status;
-    }
-
-    // Install all appropriate headers
-    Status = InitializeFvAndVariableStoreHeaders (Instance);
-    if (EFI_ERROR(Status)) {
-      return Status;
-    }
-  } else {
-    DEBUG((DEBUG_INFO, "%a: FVB header is valid\n", __FUNCTION__));
-  }
-
-  //
-  // The driver implementing the variable read service can now be dispatched;
-  // the varstore headers are in place.
-  //
-  Status = gBS->InstallProtocolInterface (
-                  &gImageHandle,
-                  &gEdkiiNvVarStoreFormattedGuid,
-                  EFI_NATIVE_INTERFACE,
-                  NULL
-                  );
-  ASSERT_EFI_ERROR (Status);
-
-  //
-  // Register for the virtual address change event
-  //
-  Status = gBS->CreateEventEx (
-                  EVT_NOTIFY_SIGNAL,
-                  TPL_NOTIFY,
-                  FvbVirtualNotifyEvent,
-                  NULL,
-                  &gEfiEventVirtualAddressChangeGuid,
-                  &mFvbVirtualAddrChangeEvent
-                  );
-  ASSERT_EFI_ERROR (Status);
-
-  return Status;
+  return EFI_SUCCESS;
 }
