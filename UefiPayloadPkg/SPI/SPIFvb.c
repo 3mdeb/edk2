@@ -386,7 +386,7 @@ FvbVirtualNotifyEvent (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_SUCCESS;
+  return;
 }
 
 EFI_STATUS
