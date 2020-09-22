@@ -81,9 +81,15 @@ EFI_STATUS EFIAPI SPIInitialize (
   )
 {
   SMMSTORE_INSTANCE* Instance;
-  Instance = AllocateRuntimeCopyPool (sizeof(SMMSTORE_INSTANCE),&mSMMStoreInstanceTemplate);
   EFI_STATUS Status = EFI_SUCCESS;
   VOID *GuidHob;
+  Instance = AllocateRuntimeCopyPool (sizeof(SMMSTORE_INSTANCE),&mSMMStoreInstanceTemplate);
+  Status = SMMStoreFvbInitialize (Instance);
+  if(EFI_ERROR (Status)) {
+    DEBUG((EFI_D_INFO, "%a Error during FVB init\n", __FUNCTION__));
+  } else {
+    DEBUG((EFI_D_INFO, "%a Successfull FVB init\n", __FUNCTION__));
+  }
 
   GuidHob = GetFirstGuidHob (&gEfiSMMSTOREInfoHobGuid);
   if(GuidHob == NULL) {
