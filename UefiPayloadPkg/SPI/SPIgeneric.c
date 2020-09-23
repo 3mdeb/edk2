@@ -2,8 +2,8 @@
 
 //#include <assert.h>
 //#include <commonlib/helpers.h>
-#include <stddef.h>
-#include <string.h>
+//#include <stddef.h>
+//#include <string.h>
 #include <Include/PiDxe.h>
 #include "SPIgeneric.h"
 
@@ -41,7 +41,7 @@ static INT32 spi_xfer_single_op(CONST struct spi_slave *slave,
 }
 
 static INT32 spi_xfer_vector_default(CONST struct spi_slave *slave,
-				struct spi_op vectors[], size_t count)
+				struct spi_op vectors[], __SIZE_TYPE__ count)
 {
 	__SIZE_TYPE__ i;
 	INT32 ret;
@@ -66,8 +66,8 @@ int spi_xfer_vector(const struct spi_slave *slave,
 	return spi_xfer_vector_default(slave, vectors, count);
 }
 
-UINT32 spi_xfer(CONST struct spi_slave *slave, CONST void *dout, size_t bytesout,
-	     VOID *din, size_t bytesin)
+UINT32 spi_xfer(CONST struct spi_slave *slave, CONST void *dout, __SIZE_TYPE__ bytesout,
+	     VOID *din, __SIZE_TYPE__ bytesin)
 {
 	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
 
