@@ -142,20 +142,20 @@ enum {
  * flash_protect: Protect a region of flash using the SPI flash controller.
  */
 struct spi_ctrlr {
-	int (*claim_bus)(const struct spi_slave *slave);
-	void (*release_bus)(const struct spi_slave *slave);
-	int (*setup)(const struct spi_slave *slave);
-	int (*xfer)(const struct spi_slave *slave, const void *dout,
-		    __SIZE_TYPE__ bytesout, void *din, __SIZE_TYPE__ bytesin);
-	int (*xfer_vector)(const struct spi_slave *slave,
+	INT32 (*claim_bus)(const struct spi_slave *slave);
+	VOID (*release_bus)(const struct spi_slave *slave);
+	INT32 (*setup)(const struct spi_slave *slave);
+	INT32 (*xfer)(const struct spi_slave *slave, const VOID *dout,
+		    __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin);
+	INT32 (*xfer_vector)(const struct spi_slave *slave,
 			struct spi_op vectors[], __SIZE_TYPE__ count);
-	int (*xfer_dual)(const struct spi_slave *slave, const void *dout,
-			 __SIZE_TYPE__ bytesout, void *din, __SIZE_TYPE__ bytesin);
-	uint32_t max_xfer_size;
-	uint32_t flags;
-	int (*flash_probe)(const struct spi_slave *slave,
+	INT32 (*xfer_dual)(const struct spi_slave *slave, const VOID *dout,
+			 __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin);
+	UINT32 max_xfer_size;
+	UINT32 flags;
+	INT32 (*flash_probe)(const struct spi_slave *slave,
 				struct spi_flash *flash);
-	int (*flash_protect)(const struct spi_flash *flash,
+	INT32 (*flash_protect)(const struct spi_flash *flash,
 				const struct region *region,
 				const enum ctrlr_prot_type type);
 };
@@ -169,8 +169,8 @@ struct spi_ctrlr {
  */
 struct spi_ctrlr_buses {
 	const struct spi_ctrlr *ctrlr;
-	unsigned int bus_start;
-	unsigned int bus_end;
+	UINT32 bus_start;
+	UINT32 bus_end;
 };
 
 /* Mapping of SPI buses to controllers - should be defined by platform. */
@@ -181,7 +181,7 @@ extern const __SIZE_TYPE__ spi_ctrlr_bus_map_count;
  * Initialization, must be called once on start up.
  *
  */
-void spi_init(void);
+VOID spi_init(VOID);
 
 /*
  * Get configuration of SPI bus.
@@ -192,7 +192,7 @@ void spi_init(void);
  * Returns:
  * 0 on success, -1 on error
  */
-int spi_get_config(const struct spi_slave *slave, struct spi_cfg *cfg);
+UINT32 spi_get_config(CONST struct spi_slave *slave, struct spi_cfg *cfg);
 
 /*-----------------------------------------------------------------------
  * Set up communications parameters for a SPI slave.
@@ -209,7 +209,7 @@ int spi_get_config(const struct spi_slave *slave, struct spi_cfg *cfg);
  * Returns:
  * 0 on success, -1 on error
  */
-int spi_setup_slave(unsigned int bus, unsigned int cs, struct spi_slave *slave);
+UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave);
 
 /*-----------------------------------------------------------------------
  * Claim the bus and prepare it for communication with a given slave.
@@ -225,7 +225,7 @@ int spi_setup_slave(unsigned int bus, unsigned int cs, struct spi_slave *slave);
  * Returns: 0 if the bus was claimed successfully, or a negative value
  * if it wasn't.
  */
-int spi_claim_bus(const struct spi_slave *slave);
+UINT32 spi_claim_bus(CONST struct spi_slave *slave);
 
 /*-----------------------------------------------------------------------
  * Release the SPI bus
@@ -236,7 +236,7 @@ int spi_claim_bus(const struct spi_slave *slave);
  *
  *   slave:	The SPI slave
  */
-void spi_release_bus(const struct spi_slave *slave);
+VOID spi_release_bus(CONST struct spi_slave *slave);
 
 /*-----------------------------------------------------------------------
  * SPI transfer
@@ -254,8 +254,8 @@ void spi_release_bus(const struct spi_slave *slave);
  *
  *   Returns: 0 on success, not 0 on failure
  */
-int spi_xfer(const struct spi_slave *slave, const void *dout, __SIZE_TYPE__ bytesout,
-	     void *din, __SIZE_TYPE__ bytesin);
+UINT32 spi_xfer(CONST struct spi_slave *slave, const VOID *dout, __SIZE_TYPE__ bytesout,
+	     VOID *din, __SIZE_TYPE__ bytesin);
 
 /*-----------------------------------------------------------------------
  * Vector of SPI transfer operations
@@ -267,7 +267,7 @@ int spi_xfer(const struct spi_slave *slave, const void *dout, __SIZE_TYPE__ byte
  *
  *   Returns: 0 on success, not 0 on failure
  */
-int spi_xfer_vector(const struct spi_slave *slave,
+INT32 spi_xfer_vector(CONST struct spi_slave *slave,
 		struct spi_op vectors[], __SIZE_TYPE__ count);
 
 /*-----------------------------------------------------------------------
@@ -276,8 +276,8 @@ int spi_xfer_vector(const struct spi_slave *slave,
  *
  * Returns: 0 on error, non-zero data size that can be xfered on success.
  */
-unsigned int spi_crop_chunk(const struct spi_slave *slave, unsigned int cmd_len,
-			unsigned int buf_len);
+UINT32 spi_crop_chunk(CONST struct spi_slave *slave, UINT32 cmd_len,
+			UINT32 buf_len);
 
 /*-----------------------------------------------------------------------
  * Write 8 bits, then read 8 bits.
@@ -288,11 +288,11 @@ unsigned int spi_crop_chunk(const struct spi_slave *slave, unsigned int cmd_len,
  *
  * TODO: This function probably shouldn't be inlined.
  */
-static inline int spi_w8r8(const struct spi_slave *slave, unsigned char byte)
+STATIC inline INT32 spi_w8r8(CONST struct spi_slave *slave, __u_char byte)
 {
-	unsigned char dout[2];
-	unsigned char din[2];
-	int ret;
+	__u_char dout[2];
+	__u_char din[2];
+	UINT32 ret;
 
 	dout[0] = byte;
 	dout[1] = 0;
