@@ -13,7 +13,6 @@
 #include <Guid/SMMSTOREInfoGuid.h>
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <string.h>
 #include "SPI.h"
 
 EFI_HANDLE Handle = NULL;
