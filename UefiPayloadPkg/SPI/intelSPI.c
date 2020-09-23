@@ -23,52 +23,6 @@
 #include "SPI.h"
 #include "SPIgeneric.h"
 
-CONST __SIZE_TYPE__ spi_ctrlr_bus_map_count = ARRAY_SIZE(spi_ctrlr_bus_map);
-
-/*-----------------------------------------------------------------------
- * Representation of a SPI controller. Note the xfer() and xfer_vector()
- * callbacks are meant to process full duplex transactions. If the
- * controller cannot handle these transactions then return an error when
- * din and dout are both set. See spi_xfer() below for more details.
- *
- * claim_bus:		Claim SPI bus and prepare for communication.
- * release_bus:	Release SPI bus.
- * setup:		Setup given SPI device bus.
- * xfer:		Perform one SPI transfer operation.
- * xfer_vector:	Vector of SPI transfer operations.
- * xfer_dual:		(optional) Perform one SPI transfer in Dual SPI mode.
- * max_xfer_size:	Maximum transfer size supported by the controller
- *			(0 = invalid,
- *			 SPI_CTRLR_DEFAULT_MAX_XFER_SIZE = unlimited)
- * flags:		See SPI_CNTRLR_* enums above.
- *
- * Following member is provided by specialized SPI controllers that are
- * actually SPI flash controllers.
- *
- * flash_probe:	Specialized probe function provided by SPI flash
- *			controllers.
- * flash_protect: Protect a region of flash using the SPI flash controller.
-
-struct spi_ctrlr {
-	int (*claim_bus)(const struct spi_slave *slave);
-	void (*release_bus)(const struct spi_slave *slave);
-	int (*setup)(const struct spi_slave *slave);
-	int (*xfer)(const struct spi_slave *slave, const void *dout,
-		    size_t bytesout, void *din, size_t bytesin);
-	int (*xfer_vector)(const struct spi_slave *slave,
-			struct spi_op vectors[], size_t count);
-	int (*xfer_dual)(const struct spi_slave *slave, const void *dout,
-			 size_t bytesout, void *din, size_t bytesin);
-	uint32_t max_xfer_size;
-	uint32_t flags;
-	int (*flash_probe)(const struct spi_slave *slave,
-				struct spi_flash *flash);
-	int (*flash_protect)(const struct spi_flash *flash,
-				const struct region *region,
-				const enum ctrlr_prot_type type);
-};
-*/
-
 static CONST struct spi_ctrlr spi_ctrlr = {
 	.xfer_vector = NULL,
 	.max_xfer_size = 0,
@@ -83,6 +37,8 @@ CONST struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {
 		.bus_end = 0,
 	},
 };
+
+CONST __SIZE_TYPE__ spi_ctrlr_bus_map_count = ARRAY_SIZE(spi_ctrlr_bus_map);
 
 // #define HSFC_FCYCLE_OFF		1	/* 1-2: FLASH Cycle */
 // #define HSFC_FCYCLE		(0x3 << HSFC_FCYCLE_OFF)
