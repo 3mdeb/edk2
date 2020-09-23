@@ -7,6 +7,14 @@
 #include <Include/PiDxe.h>
 #include "SPIgeneric.h"
 
+void * memset (void *dest, int ch, __SIZE_TYPE__ count)
+{
+  for(__SIZE_TYPE__ offset = 0; offset < count; ++offset) {
+    ((CHAR8 *)dest)[offset] = ch;
+  }
+  return dest;
+}
+
 UINT32 spi_claim_bus(CONST struct spi_slave *slave)
 {
 	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
@@ -92,7 +100,7 @@ UINT32 spi_crop_chunk(CONST struct spi_slave *slave, UINT32 cmd_len,
 	deduct_opcode_len = !!(ctrlr->flags & SPI_CNTRLR_DEDUCT_OPCODE_LEN);
 	ctrlr_max = ctrlr->max_xfer_size;
 
-	assert (ctrlr_max != 0);
+	//assert (ctrlr_max != 0);
 
 	/* Assume opcode is always one byte and deduct it from the cmd_len
 	   as the hardware has a separate register for the opcode. */
