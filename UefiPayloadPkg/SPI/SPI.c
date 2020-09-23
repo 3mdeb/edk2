@@ -13,6 +13,7 @@
 #include <Guid/SMMSTOREInfoGuid.h>
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include "SPIgeneric.h"
 #include "SPI.h"
 
 EFI_HANDLE Handle = NULL;
@@ -41,6 +42,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   )
 {
   EFI_STATUS Status;
+  struct spi_slave slave;
   Status = gBS->InstallProtocolInterface(
     ImageHandle,
     &gEfiDevicePathProtocolGuid,
@@ -54,6 +56,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
   DEBUG((EFI_D_INFO, "sizeof(unsigned int) 0x%X\n", sizeof(unsigned int)));
   DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(void *)));
+  spi_setup_slave(0, 0, &slave);
   Status = gBS->InstallMultipleProtocolInterfaces (
               &Handle,
               &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
