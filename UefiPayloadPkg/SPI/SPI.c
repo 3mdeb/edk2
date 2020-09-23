@@ -28,6 +28,14 @@ EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
     NULL, //ParentHandle
   };
 
+void * memset (void *dest, int ch, size_t count)
+{
+  for(UINT64 offset = 0; offset < count; ++offset) {
+    dest[offset] = ch;
+  }
+  return dest;
+}
+
 int spi_setup_slave(unsigned int bus, unsigned int cs, struct spi_slave *slave)
 {
 	__SIZE_TYPE__ i;

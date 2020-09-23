@@ -24,7 +24,7 @@
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeLib.h>
 
-#include "spi-generic.h"
+#include "SPIgeneric.h"
 
 #define SMMSTORE_SIGNATURE                       SIGNATURE_32('S', 'M', 'M', 'S')
 #define INSTANCE_FROM_FVB_THIS(a)                CR(a, SMMSTORE_INSTANCE, FvbProtocol, SMMSTORE_SIGNATURE)
