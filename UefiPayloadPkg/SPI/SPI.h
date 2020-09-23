@@ -49,7 +49,7 @@ struct _SMMSTORE_INSTANCE {
   NOR_FLASH_DEVICE_PATH               DevicePath;
 };
 
-void * memset (void *dest, int ch, __SIZE_TYPE__ count)
+void * memset (void *dest, int ch, __SIZE_TYPE__ count);
 
 //
 // BlSMMStoreFvbDxe.c
