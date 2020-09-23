@@ -21,6 +21,8 @@
   SPIFvb.c
   SPIgeneric.h
   SPIgeneric.c
+  intelSPI.h
+  intelSPI.c
 
 [Packages]
   MdePkg/MdePkg.dec
