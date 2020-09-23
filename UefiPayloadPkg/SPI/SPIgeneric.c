@@ -6,14 +6,7 @@
 //#include <string.h>
 #include <Include/PiDxe.h>
 #include "SPIgeneric.h"
-
-void * memset (void *dest, int ch, __SIZE_TYPE__ count)
-{
-  for(__SIZE_TYPE__ offset = 0; offset < count; ++offset) {
-    ((CHAR8 *)dest)[offset] = ch;
-  }
-  return dest;
-}
+#include "SPI.h"
 
 UINT32 spi_claim_bus(CONST struct spi_slave *slave)
 {
