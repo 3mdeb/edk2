@@ -117,6 +117,7 @@ FvbEraseBlocks(
 /////////////////////////////////////////////////////////
 
 struct spi_slave {
+  // sizeof(unsigned int) = 4
 	UINT32	bus;
 	UINT32	cs;
 	const struct spi_ctrlr *ctrlr;
