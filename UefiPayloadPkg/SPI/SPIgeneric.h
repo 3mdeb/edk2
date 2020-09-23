@@ -10,8 +10,6 @@
 #define SPI_FLASH_PROG_TIMEOUT_MS		200
 #define SPI_FLASH_PAGE_ERASE_TIMEOUT_MS		500
 
-#include <stdint.h>
-#include <stddef.h>
 
 /* SPI vendor IDs */
 #define VENDOR_ID_ADESTO			0x1f
@@ -58,10 +56,10 @@ enum spi_op_status {
  * bytesin:	Count of data in bytes to receive.
  */
 struct spi_op {
-	const void *dout;
-	size_t bytesout;
-	void *din;
-	size_t bytesin;
+	const VOID *dout;
+	__SIZE_TYPE__ bytesout;
+	VOID *din;
+	__SIZE_TYPE__ bytesin;
 	enum spi_op_status status;
 };
 
@@ -148,11 +146,11 @@ struct spi_ctrlr {
 	void (*release_bus)(const struct spi_slave *slave);
 	int (*setup)(const struct spi_slave *slave);
 	int (*xfer)(const struct spi_slave *slave, const void *dout,
-		    size_t bytesout, void *din, size_t bytesin);
+		    __SIZE_TYPE__ bytesout, void *din, __SIZE_TYPE__ bytesin);
 	int (*xfer_vector)(const struct spi_slave *slave,
-			struct spi_op vectors[], size_t count);
+			struct spi_op vectors[], __SIZE_TYPE__ count);
 	int (*xfer_dual)(const struct spi_slave *slave, const void *dout,
-			 size_t bytesout, void *din, size_t bytesin);
+			 __SIZE_TYPE__ bytesout, void *din, __SIZE_TYPE__ bytesin);
 	uint32_t max_xfer_size;
 	uint32_t flags;
 	int (*flash_probe)(const struct spi_slave *slave,
@@ -177,7 +175,7 @@ struct spi_ctrlr_buses {
 
 /* Mapping of SPI buses to controllers - should be defined by platform. */
 extern const struct spi_ctrlr_buses spi_ctrlr_bus_map[];
-extern const size_t spi_ctrlr_bus_map_count;
+extern const __SIZE_TYPE__ spi_ctrlr_bus_map_count;
 
 /*-----------------------------------------------------------------------
  * Initialization, must be called once on start up.
@@ -256,8 +254,8 @@ void spi_release_bus(const struct spi_slave *slave);
  *
  *   Returns: 0 on success, not 0 on failure
  */
-int spi_xfer(const struct spi_slave *slave, const void *dout, size_t bytesout,
-	     void *din, size_t bytesin);
+int spi_xfer(const struct spi_slave *slave, const void *dout, __SIZE_TYPE__ bytesout,
+	     void *din, __SIZE_TYPE__ bytesin);
 
 /*-----------------------------------------------------------------------
  * Vector of SPI transfer operations
@@ -270,7 +268,7 @@ int spi_xfer(const struct spi_slave *slave, const void *dout, size_t bytesout,
  *   Returns: 0 on success, not 0 on failure
  */
 int spi_xfer_vector(const struct spi_slave *slave,
-		struct spi_op vectors[], size_t count);
+		struct spi_op vectors[], __SIZE_TYPE__ count);
 
 /*-----------------------------------------------------------------------
  * Given command length and length of remaining data, return the maximum data
