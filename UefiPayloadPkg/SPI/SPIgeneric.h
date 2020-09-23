@@ -27,6 +27,11 @@
 
 struct spi_ctrlr;
 
+struct region {
+	__SIZE_TYPE__ offset;
+	__SIZE_TYPE__ size;
+};
+
 /*-----------------------------------------------------------------------
  * Representation of a SPI slave, i.e. what we're communicating with.
  *
