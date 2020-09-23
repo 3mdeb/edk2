@@ -288,10 +288,10 @@ UINT32 spi_crop_chunk(CONST struct spi_slave *slave, UINT32 cmd_len,
  *
  * TODO: This function probably shouldn't be inlined.
  */
-STATIC inline INT32 spi_w8r8(CONST struct spi_slave *slave, __u_char byte)
+STATIC inline INT32 spi_w8r8(CONST struct spi_slave *slave, unsigned char byte)
 {
-	__u_char dout[2];
-	__u_char din[2];
+	unsigned char dout[2];
+	unsigned char din[2];
 	UINT32 ret;
 
 	dout[0] = byte;
