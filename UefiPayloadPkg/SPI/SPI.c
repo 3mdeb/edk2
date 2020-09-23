@@ -35,32 +35,6 @@ void * memset (void *dest, int ch, __SIZE_TYPE__ count)
   return dest;
 }
 
-UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
-{
-	__SIZE_TYPE__ i;
-
-	memset(slave, 0, sizeof(*slave));
-
-	for (i = 0; i < spi_ctrlr_bus_map_count; i++) {
-		if ((spi_ctrlr_bus_map[i].bus_start <= bus) &&
-		    (spi_ctrlr_bus_map[i].bus_end >= bus)) {
-			slave->ctrlr = spi_ctrlr_bus_map[i].ctrlr;
-			break;
-		}
-	}
-
-	if (slave->ctrlr == NULL)
-		return -1;
-
-	slave->bus = bus;
-	slave->cs = cs;
-
-	if (slave->ctrlr->setup)
-		return slave->ctrlr->setup(slave);
-
-	return 0;
-}
-
 EFI_STATUS EFIAPI SPIInitialize (
   IN EFI_HANDLE                        ImageHandle,
   IN EFI_SYSTEM_TABLE                  *SystemTable
