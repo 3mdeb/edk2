@@ -186,7 +186,7 @@ extern const __SIZE_TYPE__ spi_ctrlr_bus_map_count;
  * Initialization, must be called once on start up.
  *
  */
-__attribute__((__weak__, __alias__("__spi_init")))
+__attribute__((__weak__))
 VOID spi_init(VOID);
 
 /*

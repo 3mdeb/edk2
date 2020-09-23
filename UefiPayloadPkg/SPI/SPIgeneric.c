@@ -7,26 +7,26 @@
 #include <Include/PiDxe.h>
 #include "SPIgeneric.h"
 
-int spi_claim_bus(const struct spi_slave *slave)
+UINT32 spi_claim_bus(CONST struct spi_slave *slave)
 {
-	const struct spi_ctrlr *ctrlr = slave->ctrlr;
+	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
 	if (ctrlr && ctrlr->claim_bus)
 		return ctrlr->claim_bus(slave);
 	return 0;
 }
 
-void spi_release_bus(const struct spi_slave *slave)
+VOID spi_release_bus(CONST struct spi_slave *slave)
 {
-	const struct spi_ctrlr *ctrlr = slave->ctrlr;
+	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
 	if (ctrlr && ctrlr->release_bus)
 		ctrlr->release_bus(slave);
 }
 
-static int spi_xfer_single_op(const struct spi_slave *slave,
+static INT32 spi_xfer_single_op(CONST struct spi_slave *slave,
 			struct spi_op *op)
 {
-	const struct spi_ctrlr *ctrlr = slave->ctrlr;
-	int ret;
+	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
+	INT32 ret;
 
 	if (!ctrlr || !ctrlr->xfer)
 		return -1;
@@ -40,11 +40,11 @@ static int spi_xfer_single_op(const struct spi_slave *slave,
 	return ret;
 }
 
-static int spi_xfer_vector_default(const struct spi_slave *slave,
+static INT32 spi_xfer_vector_default(CONST struct spi_slave *slave,
 				struct spi_op vectors[], size_t count)
 {
-	size_t i;
-	int ret;
+	__SIZE_TYPE__ i;
+	INT32 ret;
 
 	for (i = 0; i < count; i++) {
 		ret = spi_xfer_single_op(slave, &vectors[i]);
@@ -56,9 +56,9 @@ static int spi_xfer_vector_default(const struct spi_slave *slave,
 }
 
 int spi_xfer_vector(const struct spi_slave *slave,
-		struct spi_op vectors[], size_t count)
+		struct spi_op vectors[], __SIZE_TYPE__ count)
 {
-	const struct spi_ctrlr *ctrlr = slave->ctrlr;
+	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
 
 	if (ctrlr && ctrlr->xfer_vector)
 		return ctrlr->xfer_vector(slave, vectors, count);
@@ -66,10 +66,10 @@ int spi_xfer_vector(const struct spi_slave *slave,
 	return spi_xfer_vector_default(slave, vectors, count);
 }
 
-int spi_xfer(const struct spi_slave *slave, const void *dout, size_t bytesout,
-	     void *din, size_t bytesin)
+UINT32 spi_xfer(CONST struct spi_slave *slave, CONST void *dout, size_t bytesout,
+	     VOID *din, size_t bytesin)
 {
-	const struct spi_ctrlr *ctrlr = slave->ctrlr;
+	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
 
 	if (ctrlr && ctrlr->xfer)
 		return ctrlr->xfer(slave, dout, bytesout, din, bytesin);
@@ -77,11 +77,11 @@ int spi_xfer(const struct spi_slave *slave, const void *dout, size_t bytesout,
 	return -1;
 }
 
-unsigned int spi_crop_chunk(const struct spi_slave *slave, unsigned int cmd_len,
-			unsigned int buf_len)
+UINT32 spi_crop_chunk(CONST struct spi_slave *slave, UINT32 cmd_len,
+			UINT32 buf_len)
 {
-	const struct spi_ctrlr *ctrlr = slave->ctrlr;
-	unsigned int ctrlr_max;
+	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
+	UINT32 ctrlr_max;
 	BOOLEAN deduct_cmd_len;
 	BOOLEAN deduct_opcode_len;
 
@@ -112,7 +112,7 @@ VOID spi_init(VOID)
 
 UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
 {
-	size_t i;
+	__SIZE_TYPE__ i;
 
 	memset(slave, 0, sizeof(*slave));
 
