@@ -19,6 +19,8 @@
   SPI.h
   SPI.c
   SPIFvb.c
+  SPIgeneric.h
+  SPIgeneric.c
 
 [Packages]
   MdePkg/MdePkg.dec

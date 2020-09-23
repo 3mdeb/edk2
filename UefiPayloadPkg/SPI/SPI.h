@@ -24,6 +24,8 @@
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeLib.h>
 
+#include "spi-generic.h"
+
 #define SMMSTORE_SIGNATURE                       SIGNATURE_32('S', 'M', 'M', 'S')
 #define INSTANCE_FROM_FVB_THIS(a)                CR(a, SMMSTORE_INSTANCE, FvbProtocol, SMMSTORE_SIGNATURE)
 
@@ -113,14 +115,5 @@ FvbEraseBlocks(
   IN CONST  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL     *This,
   ...
   );
-
-/////////////////////////////////////////////////////////
-
-struct spi_slave {
-  // sizeof(unsigned int) = 4
-	UINT32	bus;
-	UINT32	cs;
-	const struct spi_ctrlr *ctrlr;
-};
 
 #endif /* __SPI_H__ */
