@@ -23,11 +23,42 @@
 #include "SPI.h"
 #include "SPIgeneric.h"
 
+/*-----------------------------------------------------------------------
+ * Representation of a SPI controller. Note the xfer() and xfer_vector()
+ * callbacks are meant to process full duplex transactions. If the
+ * controller cannot handle these transactions then return an error when
+ * din and dout are both set. See spi_xfer() below for more details.
+ *
+ * claim_bus:		Claim SPI bus and prepare for communication.
+ * release_bus:	Release SPI bus.
+ * setup:		Setup given SPI device bus.
+ * xfer:		Perform one SPI transfer operation.
+ * xfer_vector:	Vector of SPI transfer operations.
+ * xfer_dual:		(optional) Perform one SPI transfer in Dual SPI mode.
+ * max_xfer_size:	Maximum transfer size supported by the controller
+ *			(0 = invalid,
+ *			 SPI_CTRLR_DEFAULT_MAX_XFER_SIZE = unlimited)
+ * flags:		See SPI_CNTRLR_* enums above.
+ *
+ * Following member is provided by specialized SPI controllers that are
+ * actually SPI flash controllers.
+ *
+ * flash_probe:	Specialized probe function provided by SPI flash
+ *			controllers.
+ * flash_protect: Protect a region of flash using the SPI flash controller.
+ */
+
 static CONST struct spi_ctrlr spi_ctrlr = {
+	.claim_bus = spi_claim_bus,
+	.release_bus = spi_release_bus,
+	.setup = NULL,
+	.xfer = NULL,
 	.xfer_vector = NULL,
+	.xfer_dual  = NULL,
 	.max_xfer_size = 0,
+	.flags = 0,
 	.flash_probe = NULL,
-	.flash_protect = NULL,
+	.flash_protect = NULL
 };
 
 CONST struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {
