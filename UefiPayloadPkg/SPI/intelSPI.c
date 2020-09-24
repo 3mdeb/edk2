@@ -196,8 +196,8 @@ enum {
 	I2S_BASE = 0x702d1000
 };
 
-static uint32_t *timer_us_ptr = (void *)(TIMER_BASE + 0x10);
-static void udelay(unsigned int usecs)
+static uint32_t *timer_us_ptr = (VOID *)(TIMER_BASE + 0x10);
+static VOID udelay(UINT64 usecs)
 {
 	uint32_t start = read32(timer_us_ptr);
 	while (read32(timer_us_ptr) - start < usecs)
@@ -1255,11 +1255,11 @@ static INT32 spi_flash_programmer_probe(CONST struct spi_slave *spi,
 
 int spi_flash_vector_helper(const struct spi_slave *slave,
 	struct spi_op vectors[], __SIZE_TYPE__ count,
-	int (*func)(const struct spi_slave *slave, const void *dout,
-		    __SIZE_TYPE__ bytesout, void *din, __SIZE_TYPE__ bytesin))
+	int (*func)(const struct spi_slave *slave, const VOID *dout,
+		    __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin))
 {
 	int ret;
-	void *din;
+	VOID *din;
 	__SIZE_TYPE__ bytes_in;
 
 	if (count < 1 || count > 2)
