@@ -62,6 +62,19 @@
 #define pci_write_config16 pci_s_write_config16
 #define pci_write_config32 pci_s_write_config32
 
+typedef UINT32 pci_devfn_t;
+
+/* Convert pci_devfn_t to offset in MMCONF space.
+ * As it is one-to-one,  nothing needs to be done. */
+#define PCI_DEVFN_OFFSET(x) ((x))
+
+#define PCI_DEV(SEGBUS, DEV, FN) ( \
+	(((SEGBUS) & 0xFFF) << 20) | \
+	(((DEV) & 0x1F) << 15) | \
+	(((FN)  & 0x07) << 12))
+
+#define PCI_DEV_INVALID (0xffffffffU)
+
 typedef enum {
 	BS_PRE_DEVICE,
 	BS_DEV_INIT_CHIPS,
@@ -137,7 +150,7 @@ struct spi_flash_ops {
 
 /* By not assigning this to CONFIG_MMCONF_BASE_ADDRESS here we
  * prevent some sub-optimal constant folding. */
-extern u8 *const pci_mmconf;
+extern UINT8 *const pci_mmconf;
 
 /* Using a unique datatype for MMIO writes makes the pointers to _not_
  * qualify for pointer aliasing with any other objects in memory.
@@ -152,51 +165,51 @@ extern u8 *const pci_mmconf;
  * in the functions below.
  */
 union pci_bank {
-	uint8_t reg8[4096];
-	uint16_t reg16[4096 / sizeof(uint16_t)];
-	uint32_t reg32[4096 / sizeof(uint32_t)];
+	UINT8 reg8[4096];
+	UINT16 reg16[4096 / sizeof(UINT16)];
+	UINT32 reg32[4096 / sizeof(UINT32)];
 };
 
-static __always_inline
+static  __attribute__((always_inline))
 volatile union pci_bank *pcicfg(pci_devfn_t dev)
 {
 	return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
 }
 
-static __always_inline
-uint8_t pci_mmio_read_config8(pci_devfn_t dev, uint16_t reg)
+static  __attribute__((always_inline))
+UINT8 pci_mmio_read_config8(pci_devfn_t dev, UINT16 reg)
 {
 	return pcicfg(dev)->reg8[reg];
 }
 
-static __always_inline
-uint16_t pci_mmio_read_config16(pci_devfn_t dev, uint16_t reg)
+static  __attribute__((always_inline))
+UINT16 pci_mmio_read_config16(pci_devfn_t dev, UINT16 reg)
 {
-	return pcicfg(dev)->reg16[reg / sizeof(uint16_t)];
+	return pcicfg(dev)->reg16[reg / sizeof(UINT16)];
 }
 
-static __always_inline
-uint32_t pci_mmio_read_config32(pci_devfn_t dev, uint16_t reg)
+static  __attribute__((always_inline))
+UINT32 pci_mmio_read_config32(pci_devfn_t dev, UINT16 reg)
 {
-	return pcicfg(dev)->reg32[reg / sizeof(uint32_t)];
+	return pcicfg(dev)->reg32[reg / sizeof(UINT32)];
 }
 
-static __always_inline
-void pci_mmio_write_config8(pci_devfn_t dev, uint16_t reg, uint8_t value)
+static __attribute__((always_inline))
+void pci_mmio_write_config8(pci_devfn_t dev, UINT16 reg, UINT8 value)
 {
 	pcicfg(dev)->reg8[reg] = value;
 }
 
-static __always_inline
-void pci_mmio_write_config16(pci_devfn_t dev, uint16_t reg, uint16_t value)
+static  __attribute__((always_inline))
+void pci_mmio_write_config16(pci_devfn_t dev, UINT16 reg, UINT16 value)
 {
-	pcicfg(dev)->reg16[reg / sizeof(uint16_t)] = value;
+	pcicfg(dev)->reg16[reg / sizeof(UINT16)] = value;
 }
 
-static __always_inline
-void pci_mmio_write_config32(pci_devfn_t dev, uint16_t reg, uint32_t value)
+static  __attribute__((always_inline))
+void pci_mmio_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
 {
-	pcicfg(dev)->reg32[reg / sizeof(uint32_t)] = value;
+	pcicfg(dev)->reg32[reg / sizeof(UINT32)] = value;
 }
 
 /*
@@ -206,35 +219,22 @@ void pci_mmio_write_config32(pci_devfn_t dev, uint16_t reg, uint32_t value)
  * process. Thus, the pointer returned here must not be cached!
  */
 static __always_inline
-uint8_t *pci_mmio_config8_addr(pci_devfn_t dev, uint16_t reg)
+UINT8 *pci_mmio_config8_addr(pci_devfn_t dev, UINT16 reg)
 {
-	return (uint8_t *)&pcicfg(dev)->reg8[reg];
+	return (UINT8 *)&pcicfg(dev)->reg8[reg];
 }
 
 static __always_inline
-uint16_t *pci_mmio_config16_addr(pci_devfn_t dev, uint16_t reg)
+UINT16 *pci_mmio_config16_addr(pci_devfn_t dev, UINT16 reg)
 {
-	return (uint16_t *)&pcicfg(dev)->reg16[reg / sizeof(uint16_t)];
+	return (UINT16 *)&pcicfg(dev)->reg16[reg / sizeof(UINT16)];
 }
 
 static __always_inline
-uint32_t *pci_mmio_config32_addr(pci_devfn_t dev, uint16_t reg)
+UINT32 *pci_mmio_config32_addr(pci_devfn_t dev, UINT16 reg)
 {
-	return (uint32_t *)&pcicfg(dev)->reg32[reg / sizeof(uint32_t)];
+	return (UINT32 *)&pcicfg(dev)->reg32[reg / sizeof(UINT32)];
 }
-
-typedef UINT32 pci_devfn_t;
-
-/* Convert pci_devfn_t to offset in MMCONF space.
- * As it is one-to-one,  nothing needs to be done. */
-#define PCI_DEVFN_OFFSET(x) ((x))
-
-#define PCI_DEV(SEGBUS, DEV, FN) ( \
-	(((SEGBUS) & 0xFFF) << 20) | \
-	(((DEV) & 0x1F) << 15) | \
-	(((FN)  & 0x07) << 12))
-
-#define PCI_DEV_INVALID (0xffffffffU)
 
 struct ich7_spi_regs {
 	UINT16 spis;
@@ -358,34 +358,34 @@ enum {
 	SPI_OPCODE_TYPE_WRITE_WITH_ADDRESS =	3
 };
 
-static inline uint8_t read8(const void *addr)
+static inline UINT8 read8(const void *addr)
 {
-	return *(volatile uint8_t *)addr;
+	return *(volatile UINT8 *)addr;
 }
 
-static inline uint16_t read16(const void *addr)
+static inline UINT16 read16(const void *addr)
 {
-	return *(volatile uint16_t *)addr;
+	return *(volatile UINT16 *)addr;
 }
 
-static inline uint32_t read32(const void *addr)
+static inline UINT32 read32(const void *addr)
 {
-	return *(volatile uint32_t *)addr;
+	return *(volatile UINT32 *)addr;
 }
 
-static inline void write8(void *addr, uint8_t val)
+static inline void write8(void *addr, UINT8 val)
 {
-	*(volatile uint8_t *)addr = val;
+	*(volatile UINT8 *)addr = val;
 }
 
-static inline void write16(void *addr, uint16_t val)
+static inline void write16(void *addr, UINT16 val)
 {
-	*(volatile uint16_t *)addr = val;
+	*(volatile UINT16 *)addr = val;
 }
 
-static inline void write32(void *addr, uint32_t val)
+static inline void write32(void *addr, UINT32 val)
 {
-	*(volatile uint32_t *)addr = val;
+	*(volatile UINT32 *)addr = val;
 }
 
 #define DEBUG_SPI_FLASH
