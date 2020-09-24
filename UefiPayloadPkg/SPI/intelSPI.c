@@ -37,6 +37,23 @@
 #define SPI_OPCODE_WREN 0x06
 #define SPI_OPCODE_FAST_READ 0x0b
 
+/* Common commands */
+#define CMD_READ_ID			0x9f
+
+#define CMD_READ_ARRAY_SLOW		0x03
+#define CMD_READ_ARRAY_FAST		0x0b
+#define CMD_READ_ARRAY_LEGACY		0xe8
+
+#define CMD_READ_FAST_DUAL_OUTPUT	0x3b
+
+#define CMD_READ_STATUS			0x05
+#define CMD_WRITE_ENABLE		0x06
+
+#define CMD_BLOCK_ERASE			0xD8
+
+/* Common status */
+#define STATUS_WIP			0x01
+
 #define NSECS_PER_SEC 1000000000
 #define USECS_PER_SEC 1000000
 #define MSECS_PER_SEC 1000
@@ -75,7 +92,7 @@
 
 /* By not assigning this to CONFIG_MMCONF_BASE_ADDRESS here we
  * prevent some sub-optimal constant folding. */
-extern UINT8 *const pci_mmconf;
+extern UINT8 *CONST pci_mmconf;
 
 /* Using a unique datatype for MMIO writes makes the pointers to _not_
  * qualify for pointer aliasing with any other objects in memory.
@@ -95,7 +112,6 @@ union pci_bank {
 	UINT32 reg32[4096 / sizeof(UINT32)];
 };
 
-typedef unsigned long int	uintptr_t;
 typedef UINT32 pci_devfn_t;
 
 static  __attribute__((always_inline)) inline
@@ -196,10 +212,12 @@ enum {
 	I2S_BASE = 0x702d1000
 };
 
-static uint32_t *timer_us_ptr = (VOID *)(TIMER_BASE + 0x10);
+#define IDCODE_LEN 5
+
+static UINT32 *timer_us_ptr = (VOID *)(TIMER_BASE + 0x10);
 static VOID udelay(UINT64 usecs)
 {
-	uint32_t start = read32(timer_us_ptr);
+	UINT32 start = read32(timer_us_ptr);
 	while (read32(timer_us_ptr) - start < usecs)
 		;
 }
@@ -270,12 +288,12 @@ typedef UINT32 pci_devfn_t;
  * status:	Read flash status register.
  */
 struct spi_flash_ops {
-	int (*read)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
+	INT64 (*read)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
 			VOID *buf);
-	int (*write)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
+	INT64 (*write)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
 			CONST VOID *buf);
-	int (*erase)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
-	int (*status)(CONST struct spi_flash *flash, UINT8 *reg);
+	INT64 (*erase)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
+	INT64 (*status)(CONST struct spi_flash *flash, UINT8 *reg);
 };
 
 /*
@@ -424,17 +442,17 @@ enum {
 	SPI_OPCODE_TYPE_WRITE_WITH_ADDRESS =	3
 };
 
-static inline UINT8 read8(const VOID *addr)
+static inline UINT8 read8(CONST VOID *addr)
 {
 	return *(volatile UINT8 *)addr;
 }
 
-static inline UINT16 read16(const VOID *addr)
+static inline UINT16 read16(CONST VOID *addr)
 {
 	return *(volatile UINT16 *)addr;
 }
 
-static inline UINT32 read32(const VOID *addr)
+static inline UINT32 read32(CONST VOID *addr)
 {
 	return *(volatile UINT32 *)addr;
 }
@@ -830,7 +848,7 @@ static INT32 spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 		__SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin)
 {
 	UINT16 control;
-	int16_t opcode_index;
+	INT16 opcode_index;
 	INT32 with_address;
 	INT32 status;
 
@@ -1213,6 +1231,44 @@ static CONST struct spi_flash_ops spi_flash_ops = {
 	.erase = ich_hwseq_erase,
 };
 
+INT64 spi_flash_generic_probe(CONST struct spi_slave *spi,
+				struct spi_flash *flash)
+{
+	INT64 ret, i;
+	UINT8 idcode[IDCODE_LEN];
+	UINT8 manuf_id;
+	UINT16 id[2];
+
+	/* Read the ID codes */
+	ret = spi_flash_cmd(spi, CMD_READ_ID, idcode, sizeof(idcode));
+	if (ret)
+		return -1;
+
+	if (CONFIG(DEBUG_SPI_FLASH)) {
+		DEBUG((EFI_D_INFO, "%a SF: Got idcode: ", __FUNCTION__));
+		for (i = 0; i < sizeof(idcode); i++)
+			DEBUG((EFI_D_INFO, "%a %02x ", __FUNCTION__, idcode[i]));
+		DEBUG((EFI_D_INFO, "%a \n", __FUNCTION__));
+	}
+
+	manuf_id = idcode[0];
+
+	DEBUG((EFI_D_INFO, "%a Manufacturer: %02x\n", __FUNCTION__, manuf_id));
+
+	/* If no result from RDID command and STMicro parts are enabled attempt
+	   to wake the part from deep sleep and obtain alternative id info. */
+	if (CONFIG(SPI_FLASH_STMICRO) && manuf_id == 0xff) {
+		if (stmicro_release_deep_sleep_identify(spi, idcode))
+			return -1;
+		manuf_id = idcode[0];
+	}
+
+	id[0] = (idcode[1] << 8) | idcode[2];
+	id[1] = (idcode[3] << 8) | idcode[4];
+
+	return find_match(spi, flash, manuf_id, id);
+}
+
 static INT32 spi_flash_programmer_probe(CONST struct spi_slave *spi,
 					struct spi_flash *flash)
 {
@@ -1253,12 +1309,12 @@ static INT32 spi_flash_programmer_probe(CONST struct spi_slave *spi,
 	return 0;
 }
 
-int spi_flash_vector_helper(const struct spi_slave *slave,
+INT64 spi_flash_vector_helper(CONST struct spi_slave *slave,
 	struct spi_op vectors[], __SIZE_TYPE__ count,
-	int (*func)(const struct spi_slave *slave, const VOID *dout,
+	INT64 (*func)(CONST struct spi_slave *slave, CONST VOID *dout,
 		    __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin))
 {
-	int ret;
+	INT64 ret;
 	VOID *din;
 	__SIZE_TYPE__ bytes_in;
 
