@@ -62,44 +62,44 @@
 #define pci_write_config16 pci_s_write_config16
 #define pci_write_config32 pci_s_write_config32
 
-static __always_inline
-uint8_t pci_s_read_config8(pci_devfn_t dev, uint16_t reg)
+typedef unsigned long int	uintptr_t;
+typedef UINT32 pci_devfn_t;
+
+static __attribute__((always_inline))
+UINT8 pci_s_read_config8(pci_devfn_t dev, UINT16 reg)
 {
 	return pci_mmio_read_config8(dev, reg);
 }
 
-static __always_inline
-uint16_t pci_s_read_config16(pci_devfn_t dev, uint16_t reg)
+static __attribute__((always_inline))
+UINT16 pci_s_read_config16(pci_devfn_t dev, UINT16 reg)
 {
 	return pci_mmio_read_config16(dev, reg);
 }
 
-static __always_inline
-uint32_t pci_s_read_config32(pci_devfn_t dev, uint16_t reg)
+static __attribute__((always_inline))
+UINT32 pci_s_read_config32(pci_devfn_t dev, UINT16 reg)
 {
 	return pci_mmio_read_config32(dev, reg);
 }
 
-static __always_inline
-void pci_s_write_config8(pci_devfn_t dev, uint16_t reg, uint8_t value)
+static __attribute__((always_inline))
+VOID pci_s_write_config8(pci_devfn_t dev, UINT16 reg, UINT8 value)
 {
 	pci_mmio_write_config8(dev, reg, value);
 }
 
-static __always_inline
-void pci_s_write_config16(pci_devfn_t dev, uint16_t reg, uint16_t value)
+static __attribute__((always_inline))
+VOID pci_s_write_config16(pci_devfn_t dev, UINT16 reg, UINT16 value)
 {
 	pci_mmio_write_config16(dev, reg, value);
 }
 
-static __always_inline
-void pci_s_write_config32(pci_devfn_t dev, uint16_t reg, uint32_t value)
+static __attribute__((always_inline))
+VOID pci_s_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
 {
 	pci_mmio_write_config32(dev, reg, value);
 }
-
-typedef unsigned long int	uintptr_t;
-typedef UINT32 pci_devfn_t;
 
 /* Convert pci_devfn_t to offset in MMCONF space.
  * As it is one-to-one,  nothing needs to be done. */
@@ -133,8 +133,8 @@ typedef enum {
 } boot_state_sequence_t;
 
 struct boot_state_callback {
-	void *arg;
-	void (*callback)(void *arg);
+	VOID *arg;
+	VOID (*callback)(VOID *arg);
 	/* For use internal to the boot state machine. */
 	struct boot_state_callback *next;
 };
@@ -198,7 +198,7 @@ extern UINT8 *const pci_mmconf;
  * be also set for the build.
  *
  * Bottom 12 bits (4 KiB) are reserved to address the registers of a
- * single PCI function. Declare the bank as a union to avoid some casting
+ * single PCI function. Declare the bank as a union to aVOID some casting
  * in the functions below.
  */
 union pci_bank {
@@ -210,7 +210,7 @@ union pci_bank {
 static  __attribute__((always_inline))
 volatile union pci_bank *pcicfg(pci_devfn_t dev)
 {
-	return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
+	return (VOID *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
 }
 
 static  __attribute__((always_inline))
@@ -232,19 +232,19 @@ UINT32 pci_mmio_read_config32(pci_devfn_t dev, UINT16 reg)
 }
 
 static __attribute__((always_inline))
-void pci_mmio_write_config8(pci_devfn_t dev, UINT16 reg, UINT8 value)
+VOID pci_mmio_write_config8(pci_devfn_t dev, UINT16 reg, UINT8 value)
 {
 	pcicfg(dev)->reg8[reg] = value;
 }
 
 static  __attribute__((always_inline))
-void pci_mmio_write_config16(pci_devfn_t dev, UINT16 reg, UINT16 value)
+VOID pci_mmio_write_config16(pci_devfn_t dev, UINT16 reg, UINT16 value)
 {
 	pcicfg(dev)->reg16[reg / sizeof(UINT16)] = value;
 }
 
 static  __attribute__((always_inline))
-void pci_mmio_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
+VOID pci_mmio_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
 {
 	pcicfg(dev)->reg32[reg / sizeof(UINT32)] = value;
 }
@@ -395,32 +395,32 @@ enum {
 	SPI_OPCODE_TYPE_WRITE_WITH_ADDRESS =	3
 };
 
-static inline UINT8 read8(const void *addr)
+static inline UINT8 read8(const VOID *addr)
 {
 	return *(volatile UINT8 *)addr;
 }
 
-static inline UINT16 read16(const void *addr)
+static inline UINT16 read16(const VOID *addr)
 {
 	return *(volatile UINT16 *)addr;
 }
 
-static inline UINT32 read32(const void *addr)
+static inline UINT32 read32(const VOID *addr)
 {
 	return *(volatile UINT32 *)addr;
 }
 
-static inline void write8(void *addr, UINT8 val)
+static inline VOID write8(VOID *addr, UINT8 val)
 {
 	*(volatile UINT8 *)addr = val;
 }
 
-static inline void write16(void *addr, UINT16 val)
+static inline VOID write16(VOID *addr, UINT16 val)
 {
 	*(volatile UINT16 *)addr = val;
 }
 
-static inline void write32(void *addr, UINT32 val)
+static inline VOID write32(VOID *addr, UINT32 val)
 {
 	*(volatile UINT32 *)addr = val;
 }
