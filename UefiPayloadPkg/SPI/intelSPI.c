@@ -98,79 +98,79 @@ union pci_bank {
 typedef unsigned long int	uintptr_t;
 typedef UINT32 pci_devfn_t;
 
-static  __attribute__((always_inline))
+static  __attribute__((always_inline)) inline
 volatile union pci_bank *pcicfg(pci_devfn_t dev)
 {
 	return (VOID *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
 }
 
-static  __attribute__((always_inline))
+static  __attribute__((always_inline)) inline
 UINT8 pci_mmio_read_config8(pci_devfn_t dev, UINT16 reg)
 {
 	return pcicfg(dev)->reg8[reg];
 }
 
-static  __attribute__((always_inline))
+static  __attribute__((always_inline)) inline
 UINT16 pci_mmio_read_config16(pci_devfn_t dev, UINT16 reg)
 {
 	return pcicfg(dev)->reg16[reg / sizeof(UINT16)];
 }
 
-static  __attribute__((always_inline))
+static  __attribute__((always_inline)) inline
 UINT32 pci_mmio_read_config32(pci_devfn_t dev, UINT16 reg)
 {
 	return pcicfg(dev)->reg32[reg / sizeof(UINT32)];
 }
 
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 VOID pci_mmio_write_config8(pci_devfn_t dev, UINT16 reg, UINT8 value)
 {
 	pcicfg(dev)->reg8[reg] = value;
 }
 
-static  __attribute__((always_inline))
+static  __attribute__((always_inline)) inline
 VOID pci_mmio_write_config16(pci_devfn_t dev, UINT16 reg, UINT16 value)
 {
 	pcicfg(dev)->reg16[reg / sizeof(UINT16)] = value;
 }
 
-static  __attribute__((always_inline))
+static  __attribute__((always_inline)) inline
 VOID pci_mmio_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
 {
 	pcicfg(dev)->reg32[reg / sizeof(UINT32)] = value;
 }
 
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 UINT8 pci_s_read_config8(pci_devfn_t dev, UINT16 reg)
 {
 	return pci_mmio_read_config8(dev, reg);
 }
 
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 UINT16 pci_s_read_config16(pci_devfn_t dev, UINT16 reg)
 {
 	return pci_mmio_read_config16(dev, reg);
 }
 
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 UINT32 pci_s_read_config32(pci_devfn_t dev, UINT16 reg)
 {
 	return pci_mmio_read_config32(dev, reg);
 }
 
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 VOID pci_s_write_config8(pci_devfn_t dev, UINT16 reg, UINT8 value)
 {
 	pci_mmio_write_config8(dev, reg, value);
 }
 
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 VOID pci_s_write_config16(pci_devfn_t dev, UINT16 reg, UINT16 value)
 {
 	pci_mmio_write_config16(dev, reg, value);
 }
 
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 VOID pci_s_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
 {
 	pci_mmio_write_config32(dev, reg, value);
@@ -255,19 +255,19 @@ struct spi_flash_ops {
  * assigned PCI bus number of the requested device, which both can change during the boot
  * process. Thus, the pointer returned here must not be cached!
  */
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 UINT8 *pci_mmio_config8_addr(pci_devfn_t dev, UINT16 reg)
 {
 	return (UINT8 *)&pcicfg(dev)->reg8[reg];
 }
 
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 UINT16 *pci_mmio_config16_addr(pci_devfn_t dev, UINT16 reg)
 {
 	return (UINT16 *)&pcicfg(dev)->reg16[reg / sizeof(UINT16)];
 }
 
-static __attribute__((always_inline))
+static __attribute__((always_inline)) inline
 UINT32 *pci_mmio_config32_addr(pci_devfn_t dev, UINT16 reg)
 {
 	return (UINT32 *)&pcicfg(dev)->reg32[reg / sizeof(UINT32)];
@@ -1222,6 +1222,54 @@ static INT32 spi_flash_programmer_probe(CONST struct spi_slave *spi,
 	DEBUG((EFI_D_INFO, "%a flash size 0x%x bytes\n", __FUNCTION__, flash->size));
 
 	return 0;
+}
+
+int spi_flash_vector_helper(const struct spi_slave *slave,
+	struct spi_op vectors[], __SIZE_TYPE__ count,
+	int (*func)(const struct spi_slave *slave, const void *dout,
+		    __SIZE_TYPE__ bytesout, void *din, __SIZE_TYPE__ bytesin))
+{
+	int ret;
+	void *din;
+	__SIZE_TYPE__ bytes_in;
+
+	if (count < 1 || count > 2)
+		return -1;
+
+	/* SPI flash commands always have a command first... */
+	if (!vectors[0].dout || !vectors[0].bytesout)
+		return -1;
+	/* And not read any data during the command. */
+	if (vectors[0].din || vectors[0].bytesin)
+		return -1;
+
+	if (count == 2) {
+		/* If response bytes requested ensure the buffer is valid. */
+		if (vectors[1].bytesin && !vectors[1].din)
+			return -1;
+		/* No sends can accompany a receive. */
+		if (vectors[1].dout || vectors[1].bytesout)
+			return -1;
+		din = vectors[1].din;
+		bytes_in = vectors[1].bytesin;
+	} else {
+		din = NULL;
+		bytes_in = 0;
+	}
+
+	ret = func(slave, vectors[0].dout, vectors[0].bytesout, din, bytes_in);
+
+	if (ret) {
+		vectors[0].status = SPI_OP_FAILURE;
+		if (count == 2)
+			vectors[1].status = SPI_OP_FAILURE;
+	} else {
+		vectors[0].status = SPI_OP_SUCCESS;
+		if (count == 2)
+			vectors[1].status = SPI_OP_SUCCESS;
+	}
+
+	return ret;
 }
 
 static INT32 xfer_vectors(CONST struct spi_slave *slave,
