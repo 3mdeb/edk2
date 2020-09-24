@@ -216,6 +216,7 @@ struct boot_state_init_entry {
 		.next = NULL,				\
 	}
 
+#define BOOT_STATE_INIT_ATTR  __attribute__((unused))
 
 #define BOOT_STATE_INIT_ENTRY(state_, when_, func_, arg_)		\
 	static struct boot_state_init_entry func_ ##_## state_ ##_## when_ = \
@@ -225,7 +226,7 @@ struct boot_state_init_entry {
 		.bscb = BOOT_STATE_CALLBACK_INIT(func_, arg_),		\
 	};								\
 	static struct boot_state_init_entry *				\
-		bsie_ ## func_ ##_## state_ ##_## when_; \
+		bsie_ ## func_ ##_## state_ ##_## when_ \
 		BOOT_STATE_INIT_ATTR = \
 		&func_ ##_## state_ ##_## when_;
 
