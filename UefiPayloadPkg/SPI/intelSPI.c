@@ -62,6 +62,21 @@
 #define pci_write_config16 pci_s_write_config16
 #define pci_write_config32 pci_s_write_config32
 
+/* Convert pci_devfn_t to offset in MMCONF space.
+ * As it is one-to-one,  nothing needs to be done. */
+#define PCI_DEVFN_OFFSET(x) ((x))
+
+#define PCI_DEV(SEGBUS, DEV, FN) ( \
+	(((SEGBUS) & 0xFFF) << 20) | \
+	(((DEV) & 0x1F) << 15) | \
+	(((FN)  & 0x07) << 12))
+
+#define PCI_DEV_INVALID (0xffffffffU)
+
+/* By not assigning this to CONFIG_MMCONF_BASE_ADDRESS here we
+ * prevent some sub-optimal constant folding. */
+extern UINT8 *const pci_mmconf;
+
 /* Using a unique datatype for MMIO writes makes the pointers to _not_
  * qualify for pointer aliasing with any other objects in memory.
  *
@@ -161,17 +176,6 @@ VOID pci_s_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
 	pci_mmio_write_config32(dev, reg, value);
 }
 
-/* Convert pci_devfn_t to offset in MMCONF space.
- * As it is one-to-one,  nothing needs to be done. */
-#define PCI_DEVFN_OFFSET(x) ((x))
-
-#define PCI_DEV(SEGBUS, DEV, FN) ( \
-	(((SEGBUS) & 0xFFF) << 20) | \
-	(((DEV) & 0x1F) << 15) | \
-	(((FN)  & 0x07) << 12))
-
-#define PCI_DEV_INVALID (0xffffffffU)
-
 typedef enum {
 	BS_PRE_DEVICE,
 	BS_DEV_INIT_CHIPS,
@@ -244,10 +248,6 @@ struct spi_flash_ops {
 	int (*erase)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
 	int (*status)(CONST struct spi_flash *flash, UINT8 *reg);
 };
-
-/* By not assigning this to CONFIG_MMCONF_BASE_ADDRESS here we
- * prevent some sub-optimal constant folding. */
-extern UINT8 *const pci_mmconf;
 
 /*
  * The functions pci_mmio_config*_addr provide a way to determine the MMIO address of a PCI
