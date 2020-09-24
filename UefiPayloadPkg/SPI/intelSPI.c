@@ -176,6 +176,34 @@ VOID pci_s_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
 	pci_mmio_write_config32(dev, reg, value);
 }
 
+/* Function unit addresses. */
+enum {
+	UP_TAG_BASE = 0x60000000,
+	TIMER_BASE = 0x60005000,
+	CLK_RST_BASE = 0x60006000,
+	FLOW_CTLR_BASE = 0x60007000,
+	SECURE_BOOT_BASE = 0x6000C200,
+	TEGRA_EVP_BASE = 0x6000f000,
+	APB_MISC_BASE = 0x70000000,
+	PINMUX_BASE = 0x70003000,
+	PMC_CTLR_BASE = 0x7000e400,
+	MC_CTLR_BASE = 0x70019000,
+	FUSE_BASE = 0x7000F800,
+	TEGRA_SDMMC1_BASE = 0x700b0000,
+	TEGRA_SDMMC3_BASE = 0x700b0400,
+	EMC_BASE = 0x7001B000,
+	I2C5_BASE = 0x7000D000,
+	I2S_BASE = 0x702d1000
+};
+
+static uint32_t *timer_us_ptr = (void *)(TIMER_BASE + 0x10);
+static void udelay(unsigned int usecs)
+{
+	uint32_t start = read32(timer_us_ptr);
+	while (read32(timer_us_ptr) - start < usecs)
+		;
+}
+
 typedef enum {
 	BS_PRE_DEVICE,
 	BS_DEV_INIT_CHIPS,
