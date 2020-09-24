@@ -62,6 +62,7 @@
 #define pci_write_config16 pci_s_write_config16
 #define pci_write_config32 pci_s_write_config32
 
+typedef unsigned long int	uintptr_t;
 typedef UINT32 pci_devfn_t;
 
 /* Convert pci_devfn_t to offset in MMCONF space.
@@ -218,19 +219,19 @@ void pci_mmio_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
  * assigned PCI bus number of the requested device, which both can change during the boot
  * process. Thus, the pointer returned here must not be cached!
  */
-static __always_inline
+static __attribute__((always_inline))
 UINT8 *pci_mmio_config8_addr(pci_devfn_t dev, UINT16 reg)
 {
 	return (UINT8 *)&pcicfg(dev)->reg8[reg];
 }
 
-static __always_inline
+static __attribute__((always_inline))
 UINT16 *pci_mmio_config16_addr(pci_devfn_t dev, UINT16 reg)
 {
 	return (UINT16 *)&pcicfg(dev)->reg16[reg / sizeof(UINT16)];
 }
 
-static __always_inline
+static __attribute__((always_inline))
 UINT32 *pci_mmio_config32_addr(pci_devfn_t dev, UINT16 reg)
 {
 	return (UINT32 *)&pcicfg(dev)->reg32[reg / sizeof(UINT32)];
@@ -1345,23 +1346,6 @@ __attribute__((__weak__))
 VOID intel_southbridge_override_spi(struct intel_swseq_spi_config *spi_config)
 {
 }
-
-static CONST struct spi_ctrlr spi_ctrlr = {
-	.xfer_vector = xfer_vectors,
-	.max_xfer_size = member_size(struct ich9_spi_regs, fdata),
-	.flash_probe = spi_flash_programmer_probe,
-	.flash_protect = spi_flash_protect,
-};
-
-CONST struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {
-	{
-		.ctrlr = &spi_ctrlr,
-		.bus_start = 0,
-		.bus_end = 0,
-	},
-};
-
-CONST __SIZE_TYPE__ spi_ctrlr_bus_map_count = ARRAY_SIZE(spi_ctrlr_bus_map);
 
 
 /*-----------------------------------------------------------------------
