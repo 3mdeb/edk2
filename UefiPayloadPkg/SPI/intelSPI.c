@@ -212,16 +212,6 @@ enum {
 	I2S_BASE = 0x702d1000
 };
 
-#define IDCODE_LEN 5
-
-static UINT32 *timer_us_ptr = (VOID *)(TIMER_BASE + 0x10);
-static VOID udelay(UINT64 usecs)
-{
-	UINT32 start = read32(timer_us_ptr);
-	while (read32(timer_us_ptr) - start < usecs)
-		;
-}
-
 typedef enum {
 	BS_PRE_DEVICE,
 	BS_DEV_INIT_CHIPS,
@@ -472,6 +462,16 @@ static inline VOID write32(VOID *addr, UINT32 val)
 	*(volatile UINT32 *)addr = val;
 }
 
+#define IDCODE_LEN 5
+
+static UINT32 *timer_us_ptr = (VOID *)(TIMER_BASE + 0x10);
+static VOID udelay(UINT64 usecs)
+{
+	UINT32 start = read32(timer_us_ptr);
+	while (read32(timer_us_ptr) - start < usecs)
+		;
+}
+
 #define DEBUG_SPI_FLASH
 
 #ifdef DEBUG_SPI_FLASH
@@ -587,8 +587,8 @@ static VOID ich_set_bbar(UINT32 minaddr)
 
 static VOID *get_spi_bar(pci_devfn_t dev)
 {
-	uintptr_t rcba; /* Root Complex Register Block */
-	uintptr_t sbase;
+	unsigned long int rcba; /* Root Complex Register Block */
+	unsigned long int sbase;
 
 	if (CONFIG(SOUTHBRIDGE_INTEL_I82801GX)) {
 		rcba = pci_read_config32(dev, RCBA);
