@@ -55,6 +55,13 @@
 #define MENU_BYTES member_size(struct ich9_spi_regs, opmenu)
 #endif
 
+#define pci_read_config8 pci_s_read_config8
+#define pci_read_config16 pci_s_read_config16
+#define pci_read_config32 pci_s_read_config32
+#define pci_write_config8 pci_s_write_config8
+#define pci_write_config16 pci_s_write_config16
+#define pci_write_config32 pci_s_write_config32
+
 typedef enum {
 	BS_PRE_DEVICE,
 	BS_DEV_INIT_CHIPS,
@@ -128,6 +135,107 @@ struct spi_flash_ops {
 	int (*status)(CONST struct spi_flash *flash, UINT8 *reg);
 };
 
+/* By not assigning this to CONFIG_MMCONF_BASE_ADDRESS here we
+ * prevent some sub-optimal constant folding. */
+extern u8 *const pci_mmconf;
+
+/* Using a unique datatype for MMIO writes makes the pointers to _not_
+ * qualify for pointer aliasing with any other objects in memory.
+ *
+ * MMIO offset is a value originally derived from 'struct device *'
+ * in ramstage. For the compiler to not discard this MMIO offset value
+ * from CPU registers after any MMIO writes, -fstrict-aliasing has to
+ * be also set for the build.
+ *
+ * Bottom 12 bits (4 KiB) are reserved to address the registers of a
+ * single PCI function. Declare the bank as a union to avoid some casting
+ * in the functions below.
+ */
+union pci_bank {
+	uint8_t reg8[4096];
+	uint16_t reg16[4096 / sizeof(uint16_t)];
+	uint32_t reg32[4096 / sizeof(uint32_t)];
+};
+
+static __always_inline
+volatile union pci_bank *pcicfg(pci_devfn_t dev)
+{
+	return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
+}
+
+static __always_inline
+uint8_t pci_mmio_read_config8(pci_devfn_t dev, uint16_t reg)
+{
+	return pcicfg(dev)->reg8[reg];
+}
+
+static __always_inline
+uint16_t pci_mmio_read_config16(pci_devfn_t dev, uint16_t reg)
+{
+	return pcicfg(dev)->reg16[reg / sizeof(uint16_t)];
+}
+
+static __always_inline
+uint32_t pci_mmio_read_config32(pci_devfn_t dev, uint16_t reg)
+{
+	return pcicfg(dev)->reg32[reg / sizeof(uint32_t)];
+}
+
+static __always_inline
+void pci_mmio_write_config8(pci_devfn_t dev, uint16_t reg, uint8_t value)
+{
+	pcicfg(dev)->reg8[reg] = value;
+}
+
+static __always_inline
+void pci_mmio_write_config16(pci_devfn_t dev, uint16_t reg, uint16_t value)
+{
+	pcicfg(dev)->reg16[reg / sizeof(uint16_t)] = value;
+}
+
+static __always_inline
+void pci_mmio_write_config32(pci_devfn_t dev, uint16_t reg, uint32_t value)
+{
+	pcicfg(dev)->reg32[reg / sizeof(uint32_t)] = value;
+}
+
+/*
+ * The functions pci_mmio_config*_addr provide a way to determine the MMIO address of a PCI
+ * config register. The address returned is dependent of both the MMCONF base address and the
+ * assigned PCI bus number of the requested device, which both can change during the boot
+ * process. Thus, the pointer returned here must not be cached!
+ */
+static __always_inline
+uint8_t *pci_mmio_config8_addr(pci_devfn_t dev, uint16_t reg)
+{
+	return (uint8_t *)&pcicfg(dev)->reg8[reg];
+}
+
+static __always_inline
+uint16_t *pci_mmio_config16_addr(pci_devfn_t dev, uint16_t reg)
+{
+	return (uint16_t *)&pcicfg(dev)->reg16[reg / sizeof(uint16_t)];
+}
+
+static __always_inline
+uint32_t *pci_mmio_config32_addr(pci_devfn_t dev, uint16_t reg)
+{
+	return (uint32_t *)&pcicfg(dev)->reg32[reg / sizeof(uint32_t)];
+}
+
+typedef UINT32 pci_devfn_t;
+
+/* Convert pci_devfn_t to offset in MMCONF space.
+ * As it is one-to-one,  nothing needs to be done. */
+#define PCI_DEVFN_OFFSET(x) ((x))
+
+#define PCI_DEV(SEGBUS, DEV, FN) ( \
+	(((SEGBUS) & 0xFFF) << 20) | \
+	(((DEV) & 0x1F) << 15) | \
+	(((FN)  & 0x07) << 12))
+
+#define PCI_DEV_INVALID (0xffffffffU)
+
 struct ich7_spi_regs {
 	UINT16 spis;
 	UINT16 spic;
@@ -139,7 +247,7 @@ struct ich7_spi_regs {
 	UINT16 optype;
 	UINT8 opmenu[8];
 	UINT32 pbr[3];
-} __packed;
+} __attribute__((packed));
 
 struct ich9_spi_regs {
 	UINT32 bfpr;
@@ -172,7 +280,7 @@ struct ich9_spi_regs {
 	UINT32 srdl;
 	UINT32 srdc;
 	UINT32 srd;
-} __packed;
+} __attribute__((packed));
 
 struct ich_spi_controller {
 	INT32 locked;
@@ -250,6 +358,36 @@ enum {
 	SPI_OPCODE_TYPE_WRITE_WITH_ADDRESS =	3
 };
 
+static inline uint8_t read8(const void *addr)
+{
+	return *(volatile uint8_t *)addr;
+}
+
+static inline uint16_t read16(const void *addr)
+{
+	return *(volatile uint16_t *)addr;
+}
+
+static inline uint32_t read32(const void *addr)
+{
+	return *(volatile uint32_t *)addr;
+}
+
+static inline void write8(void *addr, uint8_t val)
+{
+	*(volatile uint8_t *)addr = val;
+}
+
+static inline void write16(void *addr, uint16_t val)
+{
+	*(volatile uint16_t *)addr = val;
+}
+
+static inline void write32(void *addr, uint32_t val)
+{
+	*(volatile uint32_t *)addr = val;
+}
+
 #define DEBUG_SPI_FLASH
 
 #ifdef DEBUG_SPI_FLASH
@@ -259,7 +397,7 @@ static UINT8 readb_(CONST VOID *addr)
 	UINT8 v = read8(addr);
 
 	DEBUG((EFI_D_INFO, "%a read %2.2x from %4.4x\n",
-	       __FUNCTION__, v, ((UINT32) addr & 0xffff) - 0xf020));
+	       __FUNCTION__, v, ((UINT64) addr & 0xffff) - 0xf020));
 	return v;
 }
 
@@ -268,7 +406,7 @@ static UINT16 readw_(CONST VOID *addr)
 	UINT16 v = read16(addr);
 
 	DEBUG((EFI_D_INFO, "%a read %4.4x from %4.4x\n",
-	       __FUNCTION__, v, ((UINT32) addr & 0xffff) - 0xf020));
+	       __FUNCTION__, v, ((UINT64) addr & 0xffff) - 0xf020));
 	return v;
 }
 
@@ -277,7 +415,7 @@ static UINT32 readl_(CONST VOID *addr)
 	UINT32 v = read32(addr);
 
 	DEBUG((EFI_D_INFO, "%a read %8.8x from %4.4x\n",
-	       __FUNCTION__, v, ((UINT32) addr & 0xffff) - 0xf020));
+	       __FUNCTION__, v, ((UINT64) addr & 0xffff) - 0xf020));
 	return v;
 }
 
@@ -285,21 +423,21 @@ static VOID writeb_(UINT8 b, VOID *addr)
 {
 	write8(addr, b);
 	DEBUG((EFI_D_INFO, "%a wrote %2.2x to %4.4x\n",
-	       __FUNCTION__, b, ((UINT32) addr & 0xffff) - 0xf020));
+	       __FUNCTION__, b, ((UINT64) addr & 0xffff) - 0xf020));
 }
 
 static VOID writew_(UINT16 b, VOID *addr)
 {
 	write16(addr, b);
 	DEBUG((EFI_D_INFO, "%a wrote %4.4x to %4.4x\n",
-	       __FUNCTION__, b, ((UINT32) addr & 0xffff) - 0xf020));
+	       __FUNCTION__, b, ((UINT64) addr & 0xffff) - 0xf020));
 }
 
 static VOID writel_(UINT32 b, VOID *addr)
 {
 	write32(addr, b);
 	DEBUG((EFI_D_INFO, "%a wrote %8.8x to %4.4x\n",
-	       __FUNCTION__, b, ((UINT32) addr & 0xffff) - 0xf020));
+	       __FUNCTION__, b, ((UINT64) addr & 0xffff) - 0xf020));
 }
 
 #else /* CONFIG_DEBUG_SPI_FLASH ^^^ enabled  vvv NOT enabled */
