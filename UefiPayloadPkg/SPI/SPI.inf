@@ -23,6 +23,7 @@
   SPIgeneric.c
   intelSPI.h
   intelSPI.c
+  helpers.h
 
 [Packages]
   MdePkg/MdePkg.dec

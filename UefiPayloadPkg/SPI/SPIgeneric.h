@@ -103,7 +103,29 @@ struct spi_cfg {
  */
 #define SPI_CTRLR_DEFAULT_MAX_XFER_SIZE	(UINT32_MAX)
 
-struct spi_flash;
+struct spi_flash {
+	struct spi_slave spi;
+	UINT8 vendor;
+	union {
+		UINT8 raw;
+		struct {
+			UINT8 dual_spi	: 1;
+			UINT8 _reserved	: 7;
+		};
+	} flags;
+	UINT16 model;
+	UINT32 size;
+	UINT32 sector_size;
+	UINT32 page_size;
+	UINT8 erase_cmd;
+	UINT8 status_cmd;
+	UINT8 pp_cmd; /* Page program command. */
+	UINT8 wren_cmd; /* Write Enable command. */
+	const struct spi_flash_ops *ops;
+	/* If !NULL all protection callbacks exist. */
+	const struct spi_flash_protection_ops *prot_ops;
+	const struct spi_flash_part_id *part;
+};
 
 enum ctrlr_prot_type {
 	READ_PROTECT = 1,
