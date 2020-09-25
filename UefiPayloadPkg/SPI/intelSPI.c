@@ -1233,6 +1233,48 @@ static CONST struct spi_flash_ops spi_flash_ops = {
 	.erase = ich_hwseq_erase,
 };
 
+int spi_flash_cmd(const struct spi_slave *spi, u8 cmd, void *response, size_t len)
+{
+	int ret = do_spi_flash_cmd(spi, &cmd, sizeof(cmd), response, len);
+	if (ret)
+		DEBUG((EFI_D_INFO, "%a SF: Failed to send command %02x: %d\n",
+		__FUNCTION__, cmd, ret));
+
+	return ret;
+}
+
+/* M25Pxx-specific commands */
+#define CMD_M25PXX_WREN		0x06	/* Write Enable */
+#define CMD_M25PXX_WRDI		0x04	/* Write Disable */
+#define CMD_M25PXX_RDSR		0x05	/* Read Status Register */
+#define CMD_M25PXX_WRSR		0x01	/* Write Status Register */
+#define CMD_M25PXX_READ		0x03	/* Read Data Bytes */
+#define CMD_M25PXX_FAST_READ	0x0b	/* Read Data Bytes at Higher Speed */
+#define CMD_M25PXX_PP		0x02	/* Page Program */
+#define CMD_M25PXX_SSE		0x20	/* Subsector Erase */
+#define CMD_M25PXX_SE		0xd8	/* Sector Erase */
+#define CMD_M25PXX_BE		0xc7	/* Bulk Erase */
+#define CMD_M25PXX_DP		0xb9	/* Deep Power-down */
+#define CMD_M25PXX_RES		0xab	/* Release from DP, and Read Signature */
+
+int stmicro_release_deep_sleep_identify(const struct spi_slave *spi, UINT8 *idcode)
+{
+	if (spi_flash_cmd(spi, CMD_M25PXX_RES, idcode, 4))
+		return -1;
+
+	/* Assuming ST parts identify with 0x1X to release from deep
+	   power down and read electronic signature. */
+	if ((idcode[3] & 0xf0) != 0x10)
+		return -1;
+
+	/* Fix up the idcode to mimic rdid jedec instruction. */
+	idcode[0] = 0x20;
+	idcode[1] = 0x20;
+	idcode[2] = idcode[3] + 1;
+
+	return 0;
+}
+
 INT64 spi_flash_generic_probe(CONST struct spi_slave *spi,
 				struct spi_flash *flash)
 {
