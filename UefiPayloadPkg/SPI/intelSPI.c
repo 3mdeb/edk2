@@ -271,22 +271,6 @@ static INT32 spi_is_multichip(VOID);
 typedef UINT32 pci_devfn_t;
 
 /*
- * Representation of SPI flash operations:
- * read:	Flash read operation.
- * write:	Flash write operation.
- * erase:	Flash erase operation.
- * status:	Read flash status register.
- */
-struct spi_flash_ops {
-	int (*read)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
-			VOID *buf);
-	int (*write)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
-			CONST VOID *buf);
-	int (*erase)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
-	int (*status)(CONST struct spi_flash *flash, UINT8 *reg);
-};
-
-/*
  * The functions pci_mmio_config*_addr provide a way to determine the MMIO address of a PCI
  * config register. The address returned is dependent of both the MMCONF base address and the
  * assigned PCI bus number of the requested device, which both can change during the boot
@@ -1046,7 +1030,7 @@ static INT32 ich_hwseq_wait_for_cycle_complete(UINT32 timeout,
 }
 
 
-static int ich_hwseq_erase(const struct spi_flash *flash, UINT32 offset,
+static int ich_hwseq_erase(CONST struct spi_flash *flash, UINT32 offset,
 			__SIZE_TYPE__ len)
 {
 	UINT32 start, end, erase_size;
@@ -1109,7 +1093,7 @@ static VOID ich_read_data(UINT8 *data, INT32 len)
 	}
 }
 
-static int ich_hwseq_read(const struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
+static int ich_hwseq_read(CONST struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
 			VOID *buf)
 {
 	UINT16 hsfc;
@@ -1178,8 +1162,8 @@ static VOID ich_fill_data(CONST UINT8 *data, INT32 len)
 		writel_(temp32, cntlr.data + (i - (i % 4)));
 }
 
-static int ich_hwseq_write(const struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
-			const VOID *buf)
+static int ich_hwseq_write(CONST struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
+			CONST VOID *buf)
 {
 	UINT16 hsfc;
 	UINT16 timeout = 100 * 60;
@@ -1233,7 +1217,38 @@ static CONST struct spi_flash_ops spi_flash_ops = {
 	.erase = ich_hwseq_erase,
 };
 
-int spi_flash_cmd(const struct spi_slave *spi, UINT8 cmd, VOID *response, __SIZE_TYPE__ len)
+static int do_spi_flash_cmd(CONST struct spi_slave *spi, CONST VOID *dout,
+			    __SIZE_TYPE__ bytes_out, VOID *din, __SIZE_TYPE__ bytes_in)
+{
+	int ret;
+	/*
+	 * SPI flash requires command-response kind of behavior. Thus, two
+	 * separate SPI vectors are required -- first to transmit dout and other
+	 * to receive in din. If some specialized SPI flash controllers
+	 * (e.g. x86) can perform both command and response together, it should
+	 * be handled at SPI flash controller driver level.
+	 */
+	struct spi_op vectors[] = {
+		[0] = { .dout = dout, .bytesout = bytes_out,
+			.din = NULL, .bytesin = 0, },
+		[1] = { .dout = NULL, .bytesout = 0,
+			.din = din, .bytesin = bytes_in },
+	};
+	__SIZE_TYPE__ count = ARRAY_SIZE(vectors);
+	if (!bytes_in)
+		count = 1;
+
+	ret = spi_claim_bus(spi);
+	if (ret)
+		return ret;
+
+	ret = spi_xfer_vector(spi, vectors, count);
+
+	spi_release_bus(spi);
+	return ret;
+}
+
+int spi_flash_cmd(CONST struct spi_slave *spi, UINT8 cmd, VOID *response, __SIZE_TYPE__ len)
 {
 	int ret = do_spi_flash_cmd(spi, &cmd, sizeof(cmd), response, len);
 	if (ret)
@@ -1257,7 +1272,7 @@ int spi_flash_cmd(const struct spi_slave *spi, UINT8 cmd, VOID *response, __SIZE
 #define CMD_M25PXX_DP		0xb9	/* Deep Power-down */
 #define CMD_M25PXX_RES		0xab	/* Release from DP, and Read Signature */
 
-int stmicro_release_deep_sleep_identify(const struct spi_slave *spi, UINT8 *idcode)
+int stmicro_release_deep_sleep_identify(CONST struct spi_slave *spi, UINT8 *idcode)
 {
 	if (spi_flash_cmd(spi, CMD_M25PXX_RES, idcode, 4))
 		return -1;
@@ -1273,6 +1288,70 @@ int stmicro_release_deep_sleep_identify(const struct spi_slave *spi, UINT8 *idco
 	idcode[2] = idcode[3] + 1;
 
 	return 0;
+}
+
+static const struct spi_flash_vendor_info *spi_flash_vendors[] = {
+#if CONFIG(SPI_FLASH_ADESTO)
+	&spi_flash_adesto_vi,
+#endif
+#if CONFIG(SPI_FLASH_AMIC)
+	&spi_flash_amic_vi,
+#endif
+#if CONFIG(SPI_FLASH_ATMEL)
+	&spi_flash_atmel_vi,
+#endif
+#if CONFIG(SPI_FLASH_EON)
+	&spi_flash_eon_vi,
+#endif
+#if CONFIG(SPI_FLASH_GIGADEVICE)
+	&spi_flash_gigadevice_vi,
+#endif
+#if CONFIG(SPI_FLASH_MACRONIX)
+	&spi_flash_macronix_vi,
+#endif
+#if CONFIG(SPI_FLASH_SPANSION)
+	&spi_flash_spansion_ext1_vi,
+	&spi_flash_spansion_ext2_vi,
+	&spi_flash_spansion_vi,
+#endif
+#if CONFIG(SPI_FLASH_SST)
+	&spi_flash_sst_ai_vi,
+	&spi_flash_sst_vi,
+#endif
+#if CONFIG(SPI_FLASH_STMICRO)
+	&spi_flash_stmicro1_vi,
+	&spi_flash_stmicro2_vi,
+	&spi_flash_stmicro3_vi,
+	&spi_flash_stmicro4_vi,
+#endif
+#if CONFIG(SPI_FLASH_WINBOND)
+	&spi_flash_winbond_vi,
+#endif
+};
+
+static int find_match(CONST struct spi_slave *spi, struct spi_flash *flash,
+			UINT8 manuf_id, uint16_t id[2])
+{
+	int i;
+
+	for (i = 0; i < (int)ARRAY_SIZE(spi_flash_vendors); i++) {
+		CONST struct spi_flash_vendor_info *vi;
+		CONST struct spi_flash_part_id *part;
+
+		vi = spi_flash_vendors[i];
+
+		if (manuf_id != vi->id)
+			continue;
+
+		part = find_part(vi, id);
+
+		if (part == NULL)
+			continue;
+
+		return fill_spi_flash(spi, flash, vi, part);
+	}
+
+	return -1;
 }
 
 INT64 spi_flash_generic_probe(CONST struct spi_slave *spi,

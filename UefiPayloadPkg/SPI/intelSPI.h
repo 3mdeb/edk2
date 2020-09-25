@@ -12,12 +12,12 @@ enum optype {
 };
 
 struct intel_spi_op {
-	u8 op;
+	UINT8 op;
 	enum optype type;
 };
 
 struct intel_swseq_spi_config {
-	u8 opprefixes[2];
+	UINT8 opprefixes[2];
 	struct intel_spi_op ops[8];
 };
 

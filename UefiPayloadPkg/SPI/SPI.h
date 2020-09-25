@@ -31,6 +31,22 @@
 
 typedef struct _SMMSTORE_INSTANCE                SMMSTORE_INSTANCE;
 
+/*
+ * Representation of SPI flash operations:
+ * read:	Flash read operation.
+ * write:	Flash write operation.
+ * erase:	Flash erase operation.
+ * status:	Read flash status register.
+ */
+struct spi_flash_ops {
+	int (*read)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
+			VOID *buf);
+	int (*write)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
+			CONST VOID *buf);
+	int (*erase)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
+	int (*status)(CONST struct spi_flash *flash, UINT8 *reg);
+};
+
 #pragma pack (1)
 typedef struct {
   VENDOR_DEVICE_PATH                  Vendor;
