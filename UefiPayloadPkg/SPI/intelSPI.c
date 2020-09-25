@@ -830,7 +830,7 @@ static INT32 spi_is_multichip(VOID)
 	return !!((cntlr.flmap0 >> 8) & 3);
 }
 
-static INT32 spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
+static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 		__SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin)
 {
 	UINT16 control;
@@ -1491,7 +1491,7 @@ static INT32 spi_flash_programmer_probe(CONST struct spi_slave *spi,
 
 INT64 spi_flash_vector_helper(CONST struct spi_slave *slave,
 	struct spi_op vectors[], __SIZE_TYPE__ count,
-	INT64 (*func)(CONST struct spi_slave *slave, CONST VOID *dout,
+	int (*func)(CONST struct spi_slave *slave, CONST VOID *dout,
 		    __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin))
 {
 	INT64 ret;
