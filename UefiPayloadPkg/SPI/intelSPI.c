@@ -1741,11 +1741,143 @@ struct mmap_helper_region_device {
 	struct region_device rdev;
 };
 
+#define container_of(ptr, type, member) ({			\
+	const __typeof__(((type *)0)->member) *__mptr = (ptr);	\
+	(type *)((char *)__mptr - offsetof(type, member)); })
+
+void mem_pool_free(struct mem_pool *mp, void *p)
+{
+	/* Determine if p was the most recent allocation. */
+	if (p == NULL || mp->last_alloc != p)
+		return;
+
+	mp->free_offset = mp->last_alloc - mp->buf;
+	/* No way to track allocation before this one. */
+	mp->last_alloc = NULL;
+}
+
 VOID mmap_helper_device_init(struct mmap_helper_region_device *mdev,
 				VOID *cache, __SIZE_TYPE__ cache_size)
 {
 	mem_pool_init(&mdev->pool, cache, cache_size);
 }
+
+void *mmap_helper_rdev_mmap(const struct region_device *rd, __SIZE_TYPE__ offset,
+				__SIZE_TYPE__ size)
+{
+	struct mmap_helper_region_device *mdev;
+	void *mapping;
+
+	mdev = container_of((void *)rd, __typeof__(*mdev), rdev);
+
+	mapping = mem_pool_alloc(&mdev->pool, size);
+
+	if (mapping == NULL)
+		return NULL;
+
+	if (rd->ops->readat(rd, mapping, offset, size) != size) {
+		mem_pool_free(&mdev->pool, mapping);
+		return NULL;
+	}
+
+	return mapping;
+}
+
+int mmap_helper_rdev_munmap(const struct region_device *rd, void *mapping)
+{
+	struct mmap_helper_region_device *mdev;
+
+	mdev = container_of((void *)rd, __typeof__(*mdev), rdev);
+
+	mem_pool_free(&mdev->pool, mapping);
+
+	return 0;
+}
+
+static __SIZE_TYPE__ spi_writeat(const struct region_device *rd, const void *b,
+				__SIZE_TYPE__ offset, __SIZE_TYPE__ size)
+{
+	if (spi_flash_write(&sfg, offset, size, b))
+		return -1;
+
+	return size;
+}
+
+static struct spi_flash sfg;
+
+static __SIZE_TYPE__ spi_readat(const struct region_device *rd, void *b,
+				__SIZE_TYPE__ offset, __SIZE_TYPE__ size)
+{
+	if (spi_flash_read(&sfg, offset, size, b))
+		return -1;
+
+	return size;
+}
+
+static __SIZE_TYPE__ spi_eraseat(const struct region_device *rd,
+				__SIZE_TYPE__ offset, __SIZE_TYPE__ size)
+{
+	if (spi_flash_erase(&sfg, offset, size))
+		return -1;
+
+	return size;
+}
+
+/* Provide all operations on the same device. */
+static const struct region_device_ops spi_ops = {
+	.mmap = mmap_helper_rdev_mmap,
+	.munmap = mmap_helper_rdev_munmap,
+	.readat = spi_readat,
+	.writeat = spi_writeat,
+	.eraseat = spi_eraseat,
+};
+
+#define REGION_DEV_INIT(ops_, offset_, size_)		\
+	{						\
+		.root = NULL,				\
+		.ops = (ops_),				\
+		.region = {				\
+			.offset = (offset_),		\
+			.size = (size_),		\
+		},					\
+	}
+
+#define MMAP_HELPER_REGION_INIT(ops_, offset_, size_)			\
+	{								\
+		.rdev = REGION_DEV_INIT((ops_), (offset_), (size_)),	\
+	}
+
+#define REGION_SIZE(name) (_e##name - _##name)
+
+#define DECLARE_REGION(name)	\
+	extern UINT8 _##name[];	\
+	extern UINT8 _e##name[];
+
+/*
+ * Regions can be declared optional if not all configurations provide them in
+ * memlayout and you want code to be able to check for their existence at
+ * runtime. Not every region that is architecture or platform-specific should
+ * use this -- only declare regions optional if the code *accessing* them runs
+ * both on configurations that have the region and those that don't.  That code
+ * should then check (REGION_SIZE(name) != 0) before accessing it.
+ */
+#define DECLARE_OPTIONAL_REGION(name)	\
+	__attribute__((__weak__)) extern UINT8 _##name[];	\
+	__attribute__((__weak__)) extern UINT8 _e##name[];
+
+DECLARE_REGION(sram)
+DECLARE_OPTIONAL_REGION(timestamp)
+DECLARE_REGION(preram_cbmem_console)
+DECLARE_REGION(cbmem_init_hooks)
+DECLARE_REGION(stack)
+DECLARE_REGION(preram_cbfs_cache)
+DECLARE_REGION(postram_cbfs_cache)
+DECLARE_REGION(cbfs_cache)
+DECLARE_REGION(fmap_cache)
+DECLARE_REGION(tpm_tcpa_log)
+
+static struct mmap_helper_region_device mdev =
+	MMAP_HELPER_REGION_INIT(&spi_ops, 0, CONFIG_ROM_SIZE);
 
 VOID boot_device_init(VOID)
 {
