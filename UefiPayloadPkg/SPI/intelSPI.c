@@ -1351,7 +1351,7 @@ static CONST struct spi_flash_part_id *find_part(CONST struct spi_flash_vendor_i
 	return NULL;
 }
 
-void *memcpy (VOID *destination, CONST VOID *source, __SIZE_TYPE__ num ) {
+VOID *memcpy (VOID *destination, CONST VOID *source, __SIZE_TYPE__ num ) {
 	for(__SIZE_TYPE__ index = 0; index < num; ++index) {
 		((char *)destination)[index] = ((char *)source)[index];
 	}
@@ -1569,12 +1569,12 @@ static UINT32 spi_fpr(UINT32 base, UINT32 limit)
 	return ret;
 }
 
-static inline __SIZE_TYPE__ region_offset(const struct region *r)
+static inline __SIZE_TYPE__ region_offset(CONST struct region *r)
 {
 	return r->offset;
 }
 
-static inline __SIZE_TYPE__ region_sz(const struct region *r)
+static inline __SIZE_TYPE__ region_sz(CONST struct region *r)
 {
 	return r->size;
 }
@@ -1641,6 +1641,134 @@ static INT32 spi_flash_protect(CONST struct spi_flash *flash,
 	DEBUG((EFI_D_INFO, "%a: FPR %d is enabled for range 0x%08x-0x%08x\n",
 	       __FUNCTION__, fpr, start, end));
 	return 0;
+}
+
+static struct spi_flash spi_flash_info;
+static BOOLEAN spi_flash_init_done;
+
+int spi_flash_probe(unsigned int bus, unsigned int cs, struct spi_flash *flash)
+{
+	struct spi_slave spi;
+	int ret = -1;
+
+	if (spi_setup_slave(bus, cs, &spi)) {
+		DEBUG((EFI_D_INFO, "%a SF: Failed to set up slave\n", __FUNCTION__));
+		return -1;
+	}
+
+	/* Try special programmer probe if any. */
+	if (spi.ctrlr->flash_probe)
+		ret = spi.ctrlr->flash_probe(&spi, flash);
+
+	/* If flash is not found, try generic spi flash probe. */
+	if (ret)
+		ret = spi_flash_generic_probe(&spi, flash);
+
+	/* Give up -- nothing more to try if flash is not found. */
+	if (ret) {
+		DEBUG((EFI_D_INFO, "%a SF: Unsupported manufacturer!\n", __FUNCTION__));
+		return -1;
+	}
+
+	#define CONFIG_BOOT_DEVICE_SPI_FLASH_BUS 0
+	#define CONFIG_ROM_SIZE 8196
+
+	CONST char *mode_string = "";
+	if (flash->flags.dual_spi && spi.ctrlr->xfer_dual)
+		mode_string = " (Dual SPI mode)";
+	DEBUG((EFI_D_INFO,
+		"%a SF: Detected %02x %04x with sector size 0x%x, total 0x%x%s\n",
+		__FUNCTION__, flash->vendor, flash->model,
+		flash->sector_size, flash->size, mode_string));
+	if (bus == CONFIG_BOOT_DEVICE_SPI_FLASH_BUS
+			&& flash->size != CONFIG_ROM_SIZE) {
+		DEBUG((EFI_D_INFO, "%a SF size 0x%x does not correspond to"
+			" CONFIG_ROM_SIZE 0x%x!!\n", __FUNCTION__, flash->size,
+			CONFIG_ROM_SIZE));
+	}
+	return 0;
+}
+
+struct mem_pool {
+	UINT8 *buf;
+	__SIZE_TYPE__ size;
+	UINT8 *last_alloc;
+	__SIZE_TYPE__ free_offset;
+};
+
+#define MEM_POOL_INIT(buf_, size_)	\
+	{				\
+		.buf = (buf_),		\
+		.size = (size_),	\
+		.last_alloc = NULL,	\
+		.free_offset = 0,	\
+	}
+
+static inline VOID mem_pool_reset(struct mem_pool *mp)
+{
+	mp->last_alloc = NULL;
+	mp->free_offset = 0;
+}
+
+/* Initialize a memory pool. */
+static inline VOID mem_pool_init(struct mem_pool *mp, VOID *buf, __SIZE_TYPE__ sz)
+{
+	mp->buf = buf;
+	mp->size = sz;
+	mem_pool_reset(mp);
+}
+
+/* A region_device operations. */
+struct region_device_ops {
+	VOID *(*mmap)(CONST struct region_device *, __SIZE_TYPE__, __SIZE_TYPE__);
+	int (*munmap)(CONST struct region_device *, VOID *);
+	__SIZE_TYPE__ (*readat)(CONST struct region_device *, VOID *, __SIZE_TYPE__, __SIZE_TYPE__);
+	__SIZE_TYPE__ (*writeat)(CONST struct region_device *, CONST VOID *, __SIZE_TYPE__,
+		__SIZE_TYPE__);
+	__SIZE_TYPE__ (*eraseat)(CONST struct region_device *, __SIZE_TYPE__, __SIZE_TYPE__);
+};
+
+struct region_device {
+	CONST struct region_device *root;
+	CONST struct region_device_ops *ops;
+	struct region region;
+};
+
+struct mmap_helper_region_device {
+	struct mem_pool pool;
+	struct region_device rdev;
+};
+
+VOID mmap_helper_device_init(struct mmap_helper_region_device *mdev,
+				VOID *cache, __SIZE_TYPE__ cache_size)
+{
+	mem_pool_init(&mdev->pool, cache, cache_size);
+}
+
+VOID boot_device_init(VOID)
+{
+	int bus = CONFIG_BOOT_DEVICE_SPI_FLASH_BUS;
+	int cs = 0;
+
+	if (spi_flash_init_done == TRUE)
+		return;
+
+	if (spi_flash_probe(bus, cs, &spi_flash_info))
+		return;
+
+	spi_flash_init_done = TRUE;
+
+	mmap_helper_device_init(&mdev, _cbfs_cache, REGION_SIZE(cbfs_cache));
+}
+
+CONST struct spi_flash *boot_device_spi_flash(VOID)
+{
+	boot_device_init();
+
+	if (spi_flash_init_done != TRUE)
+		return NULL;
+
+	return &spi_flash_info;
 }
 
 VOID spi_finalize_ops(VOID)
