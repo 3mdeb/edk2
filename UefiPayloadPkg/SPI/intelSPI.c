@@ -824,13 +824,6 @@ static INT32 ich_status_poll(UINT16 bitmask, INT32 wait_til_set)
 	return -1;
 }
 
-static INT32 spi_is_multichip(VOID)
-{
-	if (!(cntlr.hsfs & HSFS_FDV))
-		return 0;
-	return !!((cntlr.flmap0 >> 8) & 3);
-}
-
 static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 		__SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin)
 {
@@ -1214,12 +1207,6 @@ static int ich_hwseq_write(CONST struct spi_flash *flash, UINT32 addr, __SIZE_TY
 	return 0;
 }
 
-static CONST struct spi_flash_ops spi_flash_ops = {
-	.read = ich_hwseq_read,
-	.write = ich_hwseq_write,
-	.erase = ich_hwseq_erase,
-};
-
 static int do_spi_flash_cmd(CONST struct spi_slave *spi, CONST VOID *dout,
 			    __SIZE_TYPE__ bytes_out, VOID *din, __SIZE_TYPE__ bytes_in)
 {
@@ -1506,23 +1493,6 @@ INT64 spi_flash_vector_helper(CONST struct spi_slave *slave,
 #define ICH9_SPI_FPR_LIMIT_SHIFT	16
 #define ICH9_SPI_FPR_RPE		(1 << 15) /* Read Protect */
 #define SPI_FPR_WPE			(1 << 31) /* Write Protect */
-
-static UINT32 spi_fpr(UINT32 base, UINT32 limit)
-{
-	UINT32 ret;
-	UINT32 mask, limit_shift;
-
-	if (CONFIG(SOUTHBRIDGE_INTEL_I82801GX)) {
-		mask = ICH7_SPI_FPR_MASK;
-		limit_shift = ICH7_SPI_FPR_LIMIT_SHIFT;
-	} else {
-		mask = ICH9_SPI_FPR_MASK;
-		limit_shift = ICH9_SPI_FPR_LIMIT_SHIFT;
-	}
-	ret = ((limit >> SPI_FPR_SHIFT) & mask) << limit_shift;
-	ret |= ((base >> SPI_FPR_SHIFT) & mask) << SPI_FPR_BASE_SHIFT;
-	return ret;
-}
 
 static inline __SIZE_TYPE__ region_offset(CONST struct region *r)
 {
