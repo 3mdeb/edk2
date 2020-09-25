@@ -1386,26 +1386,6 @@ static int fill_spi_flash(CONST struct spi_slave *spi, struct spi_flash *flash,
 	return 0;
 }
 
-static CONST struct spi_flash_part_id *find_part(CONST struct spi_flash_vendor_info *vi,
-						UINT16 id[2])
-{
-	__SIZE_TYPE__ i;
-	CONST UINT16 lid[2] = {
-		[0] = id[0] & vi->match_id_mask[0],
-		[1] = id[1] & vi->match_id_mask[1],
-	};
-
-
-	for (i = 0; i < vi->nr_part_ids; i++) {
-		CONST struct spi_flash_part_id *part = &vi->ids[i];
-
-		if (part->id[0] == lid[0] && part->id[1] == lid[1])
-			return part;
-	}
-
-	return NULL;
-}
-
 static int find_match(CONST struct spi_slave *spi, struct spi_flash *flash,
 			UINT8 manuf_id, UINT16 id[2])
 {
