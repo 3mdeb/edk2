@@ -2000,6 +2000,11 @@ CONST struct spi_flash *boot_device_spi_flash(VOID)
 	return &spi_flash_info;
 }
 
+__attribute__((__weak__))
+VOID intel_southbridge_override_spi(struct intel_swseq_spi_config *spi_config)
+{
+}
+
 VOID spi_finalize_ops(VOID)
 {
 	UINT16 spi_opprefix;
@@ -2056,11 +2061,6 @@ VOID spi_finalize_ops(VOID)
 		writeb_(spi_config->ops[i].op, &cntlr.opmenu[i]);
 	}
 	writew_(optype, cntlr.optype);
-}
-
-__attribute__((__weak__))
-VOID intel_southbridge_override_spi(struct intel_swseq_spi_config *spi_config)
-{
 }
 
 
