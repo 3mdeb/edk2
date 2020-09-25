@@ -43,20 +43,9 @@ EFI_STATUS EFIAPI SPIInitialize (
 {
   EFI_STATUS Status;
   struct spi_slave slave;
-  Status = gBS->InstallProtocolInterface(
-    ImageHandle,
-    &gEfiDevicePathProtocolGuid,
-    EFI_NATIVE_INTERFACE,
-    &FvbProtocol);
-  if(EFI_ERROR (Status)) {
-    DEBUG((EFI_D_INFO, "%a Error during single protocol installation\n", __FUNCTION__));
-  } else {
-    DEBUG((EFI_D_INFO, "%a Successfull signgle protocol installation\n", __FUNCTION__));
-  }
   DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
   DEBUG((EFI_D_INFO, "sizeof(unsigned int) 0x%X\n", sizeof(unsigned int)));
   DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(void *)));
-  DEBUG((EFI_D_INFO, "spi_setup_slave() returned 0x%X\n", spi_setup_slave(0, 0, &slave)));
   Status = gBS->InstallMultipleProtocolInterfaces (
               &Handle,
               &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
@@ -67,7 +56,24 @@ EFI_STATUS EFIAPI SPIInitialize (
   } else {
     DEBUG((EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
   }
-  struct spi_slave slave;
-  spi_setup_slave(0, 0, &slave);
+  DEBUG((EFI_D_INFO, "spi_setup_slave() returned 0x%X\n", spi_setup_slave(0, 0, &slave)));
+  /*-----------------------------------------------------------------------
+ * SPI transfer
+ *
+ * spi_xfer() interface:
+ *   slave:	The SPI slave which will be sending/receiving the data.
+ *   dout:	Pointer to a string of bytes to send out.
+ *   bytesout:	How many bytes to write.
+ *   din:	Pointer to a string of bytes that will be filled in.
+ *   bytesin:	How many bytes to read.
+ *
+ * Note that din and dout are transferred simultaneously in a full duplex
+ * transaction. The number of clocks within one transaction is calculated
+ * as: MAX(bytesout*8, bytesin*8).
+ *
+ *   Returns: 0 on success, not 0 on failure
+ */
+  char fill[255];
+  DEBUG((EFI_D_INFO, "spi_xfer() returned 0x%X\n", spi_xfer(&slave, "asdf", 4, &fill, 0)));
   return EFI_SUCCESS;
 }
