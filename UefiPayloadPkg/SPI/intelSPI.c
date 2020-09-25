@@ -1720,7 +1720,7 @@ static inline VOID mem_pool_init(struct mem_pool *mp, VOID *buf, __SIZE_TYPE__ s
 }
 
 /* A region_device operations. */
-struct region_device_ops;
+struct region_device;
 struct region_device_ops {
 	VOID *(*mmap)(CONST struct region_device *, __SIZE_TYPE__, __SIZE_TYPE__);
 	int (*munmap)(CONST struct region_device *, VOID *);
