@@ -1742,10 +1742,10 @@ struct mmap_helper_region_device {
 };
 
 #define container_of(ptr, type, member) ({			\
-	const __typeof__(((type *)0)->member) *__mptr = (ptr);	\
+	CONST __typeof__(((type *)0)->member) *__mptr = (ptr);	\
 	(type *)((char *)__mptr - offsetof(type, member)); })
 
-void mem_pool_free(struct mem_pool *mp, void *p)
+VOID mem_pool_free(struct mem_pool *mp, VOID *p)
 {
 	/* Determine if p was the most recent allocation. */
 	if (p == NULL || mp->last_alloc != p)
@@ -1762,13 +1762,32 @@ VOID mmap_helper_device_init(struct mmap_helper_region_device *mdev,
 	mem_pool_init(&mdev->pool, cache, cache_size);
 }
 
-void *mmap_helper_rdev_mmap(const struct region_device *rd, __SIZE_TYPE__ offset,
+VOID *mem_pool_alloc(struct mem_pool *mp, __SIZE_TYPE__ sz)
+{
+	VOID *p;
+
+	/* Make all allocations be at least 8 byte aligned. */
+	sz = ALIGN_UP(sz, 8);
+
+	/* Determine if any space available. */
+	if ((mp->size - mp->free_offset) < sz)
+		return NULL;
+
+	p = &mp->buf[mp->free_offset];
+
+	mp->free_offset += sz;
+	mp->last_alloc = p;
+
+	return p;
+}
+
+VOID *mmap_helper_rdev_mmap(CONST struct region_device *rd, __SIZE_TYPE__ offset,
 				__SIZE_TYPE__ size)
 {
 	struct mmap_helper_region_device *mdev;
-	void *mapping;
+	VOID *mapping;
 
-	mdev = container_of((void *)rd, __typeof__(*mdev), rdev);
+	mdev = container_of((VOID *)rd, __typeof__(*mdev), rdev);
 
 	mapping = mem_pool_alloc(&mdev->pool, size);
 
@@ -1783,18 +1802,57 @@ void *mmap_helper_rdev_mmap(const struct region_device *rd, __SIZE_TYPE__ offset
 	return mapping;
 }
 
-int mmap_helper_rdev_munmap(const struct region_device *rd, void *mapping)
+int mmap_helper_rdev_munmap(CONST struct region_device *rd, VOID *mapping)
 {
 	struct mmap_helper_region_device *mdev;
 
-	mdev = container_of((void *)rd, __typeof__(*mdev), rdev);
+	mdev = container_of((VOID *)rd, __typeof__(*mdev), rdev);
 
 	mem_pool_free(&mdev->pool, mapping);
 
 	return 0;
 }
 
-static __SIZE_TYPE__ spi_writeat(const struct region_device *rd, const void *b,
+int spi_flash_write(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
+		CONST VOID *buf)
+{
+	int ret;
+
+	if (spi_flash_volatile_group_begin(flash))
+		return -1;
+
+	ret = flash->ops->write(flash, offset, len, buf);
+
+	if (spi_flash_volatile_group_end(flash))
+		return -1;
+
+	return ret;
+}
+
+int spi_flash_read(const struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
+		void *buf)
+{
+	return flash->ops->read(flash, offset, len, buf);
+}
+
+int spi_flash_erase(const struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len)
+{
+	int ret;
+
+	if (spi_flash_volatile_group_begin(flash))
+		return -1;
+
+	ret = flash->ops->erase(flash, offset, len);
+
+	if (spi_flash_volatile_group_end(flash))
+		return -1;
+
+	return ret;
+}
+
+static struct spi_flash sfg;
+
+static __SIZE_TYPE__ spi_writeat(CONST struct region_device *rd, CONST VOID *b,
 				__SIZE_TYPE__ offset, __SIZE_TYPE__ size)
 {
 	if (spi_flash_write(&sfg, offset, size, b))
@@ -1803,9 +1861,7 @@ static __SIZE_TYPE__ spi_writeat(const struct region_device *rd, const void *b,
 	return size;
 }
 
-static struct spi_flash sfg;
-
-static __SIZE_TYPE__ spi_readat(const struct region_device *rd, void *b,
+static __SIZE_TYPE__ spi_readat(CONST struct region_device *rd, VOID *b,
 				__SIZE_TYPE__ offset, __SIZE_TYPE__ size)
 {
 	if (spi_flash_read(&sfg, offset, size, b))
@@ -1814,17 +1870,17 @@ static __SIZE_TYPE__ spi_readat(const struct region_device *rd, void *b,
 	return size;
 }
 
-static __SIZE_TYPE__ spi_eraseat(const struct region_device *rd,
+static __SIZE_TYPE__ spi_eraseat(CONST struct region_device *rd,
 				__SIZE_TYPE__ offset, __SIZE_TYPE__ size)
 {
-	if (spi_flash_erase(&sfg, offset, size))
+	if (__SIZE_TYPE__(&sfg, offset, size))
 		return -1;
 
 	return size;
 }
 
 /* Provide all operations on the same device. */
-static const struct region_device_ops spi_ops = {
+static CONST struct region_device_ops spi_ops = {
 	.mmap = mmap_helper_rdev_mmap,
 	.munmap = mmap_helper_rdev_munmap,
 	.readat = spi_readat,
