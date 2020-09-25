@@ -1643,19 +1643,6 @@ static INT32 spi_flash_protect(CONST struct spi_flash *flash,
 	return 0;
 }
 
-static BOOLEAN spi_flash_init_done;
-static struct spi_flash spi_flash_info;
-
-const struct spi_flash *boot_device_spi_flash(void)
-{
-	boot_device_init();
-
-	if (spi_flash_init_done != TRUE)
-		return NULL;
-
-	return &spi_flash_info;
-}
-
 VOID spi_finalize_ops(VOID)
 {
 	UINT16 spi_opprefix;
