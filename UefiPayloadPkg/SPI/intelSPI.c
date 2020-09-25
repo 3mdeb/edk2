@@ -23,6 +23,8 @@
 #include "SPI.h"
 #include "SPIgeneric.h"
 #include "helpers.h"
+#include "spi_winbond.h"
+#include "spi_flash_internal.h"
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
@@ -1330,7 +1332,7 @@ static const struct spi_flash_vendor_info *spi_flash_vendors[] = {
 };
 
 static int find_match(CONST struct spi_slave *spi, struct spi_flash *flash,
-			UINT8 manuf_id, uint16_t id[2])
+			UINT8 manuf_id, UINT16 id[2])
 {
 	int i;
 
@@ -1390,6 +1392,13 @@ INT64 spi_flash_generic_probe(CONST struct spi_slave *spi,
 	id[1] = (idcode[3] << 8) | idcode[4];
 
 	return find_match(spi, flash, manuf_id, id);
+}
+
+void *memcpy (VOID *destination, CONST VOID *source, __SIZE_TYPE__ num ) {
+	for(__SIZE_TYPE__ index = 0; index < num; ++index) {
+		((char *)destination)[index] = ((char *)source)[index];
+	}
+	return destination;
 }
 
 static INT32 spi_flash_programmer_probe(CONST struct spi_slave *spi,

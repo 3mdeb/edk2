@@ -21,3 +21,5 @@
 
 /* tw: Maximum time to write a flash cell in milliseconds */
 #define WINBOND_FLASH_TIMEOUT 30
+
+CONST struct spi_flash_vendor_info spi_flash_winbond_vi;
