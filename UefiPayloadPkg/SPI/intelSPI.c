@@ -589,6 +589,7 @@ static VOID *get_spi_bar(pci_devfn_t dev)
 		rcba = pci_read_config32(dev, RCBA);
 		return (VOID *)((rcba & 0xffffc000) + 0x3800);
 	}
+	return NULL;
 }
 
 VOID spi_init(VOID)
@@ -1719,6 +1720,7 @@ static inline VOID mem_pool_init(struct mem_pool *mp, VOID *buf, __SIZE_TYPE__ s
 }
 
 /* A region_device operations. */
+struct region_device_ops;
 struct region_device_ops {
 	VOID *(*mmap)(CONST struct region_device *, __SIZE_TYPE__, __SIZE_TYPE__);
 	int (*munmap)(CONST struct region_device *, VOID *);
