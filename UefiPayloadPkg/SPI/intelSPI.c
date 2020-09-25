@@ -278,12 +278,12 @@ typedef UINT32 pci_devfn_t;
  * status:	Read flash status register.
  */
 struct spi_flash_ops {
-	INT64 (*read)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
+	int (*read)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
 			VOID *buf);
-	INT64 (*write)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
+	int (*write)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
 			CONST VOID *buf);
-	INT64 (*erase)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
-	INT64 (*status)(CONST struct spi_flash *flash, UINT8 *reg);
+	int (*erase)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
+	int (*status)(CONST struct spi_flash *flash, UINT8 *reg);
 };
 
 /*
@@ -1046,13 +1046,13 @@ static INT32 ich_hwseq_wait_for_cycle_complete(UINT32 timeout,
 }
 
 
-static INT32 ich_hwseq_erase(CONST struct spi_flash *flash, UINT32 offset,
+static int ich_hwseq_erase(const struct spi_flash *flash, UINT32 offset,
 			__SIZE_TYPE__ len)
 {
 	UINT32 start, end, erase_size;
-	INT32 ret;
+	int ret;
 	UINT16 hsfc;
-	UINT32 timeout = 1000 * USECS_PER_MSEC; /* 1 second timeout */
+	unsigned int timeout = 1000 * USECS_PER_MSEC; /* 1 second timeout */
 
 	erase_size = flash->sector_size;
 	if (offset % erase_size || len % erase_size) {
@@ -1109,18 +1109,19 @@ static VOID ich_read_data(UINT8 *data, INT32 len)
 	}
 }
 
-static INT32 ich_hwseq_read(CONST struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
-			VOID *buf)
+static int ich_hwseq_read(const struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
+			void *buf)
 {
 	UINT16 hsfc;
 	UINT16 timeout = 100 * 60;
-	UINT8 block_len;
+	uint8_t block_len;
 
 	if (addr + len > flash->size) {
-		DEBUG((EFI_D_INFO, "%a Attempt to read %x-%x which is out of chip\n",
+		DEBUG((EFI_D_INFO,
+			"%a Attempt to read %x-%x which is out of chip\n",
 			__FUNCTION__,
-			(UINT32) addr,
-			(UINT32) addr+(UINT32) len));
+			(unsigned int) addr,
+			(unsigned int) addr+(unsigned int) len));
 		return -1;
 	}
 
@@ -1177,17 +1178,18 @@ static VOID ich_fill_data(CONST UINT8 *data, INT32 len)
 		writel_(temp32, cntlr.data + (i - (i % 4)));
 }
 
-static INT32 ich_hwseq_write(CONST struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
-			CONST VOID *buf)
+static int ich_hwseq_write(const struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
+			const void *buf)
 {
 	UINT16 hsfc;
 	UINT16 timeout = 100 * 60;
-	UINT8 block_len;
-	UINT32 start = addr;
+	uint8_t block_len;
+	uint32_t start = addr;
 
 	if (addr + len > flash->size) {
-		DEBUG((EFI_D_INFO, "%a Attempt to write 0x%x-0x%x which is out of chip\n",
-			__FUNCTION__, (UINT32)addr, (UINT32) (addr+len)));
+		printk(BIOS_ERR,
+			"Attempt to write 0x%x-0x%x which is out of chip\n",
+			(unsigned int)addr, (unsigned int) (addr+len));
 		return -1;
 	}
 
@@ -1212,16 +1214,16 @@ static INT32 ich_hwseq_write(CONST struct spi_flash *flash, UINT32 addr, __SIZE_
 		writew_(hsfc, &cntlr.ich9_spi->hsfc);
 
 		if (ich_hwseq_wait_for_cycle_complete(timeout, block_len)) {
-			DEBUG((EFI_D_INFO, "%a SF: write failure at %x\n",
-				__FUNCTION__, addr));
+			printk(BIOS_ERR, "SF: write failure at %x\n",
+				addr);
 			return -1;
 		}
 		addr += block_len;
 		buf += block_len;
 		len -= block_len;
 	}
-	DEBUG((EFI_D_INFO, "%a SF: Successfully written %u bytes @ %#x\n",
-	       __FUNCTION__, (UINT32) (addr - start), start));
+	printk(BIOS_DEBUG, "SF: Successfully written %u bytes @ %#x\n",
+	       (unsigned int) (addr - start), start);
 	return 0;
 }
 
