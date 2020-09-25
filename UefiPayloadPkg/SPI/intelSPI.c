@@ -1825,7 +1825,7 @@ int spi_flash_volatile_group_begin(const struct spi_flash *flash)
 
 	count = volatile_group_count;
 	if (count == 0)
-		ret = chipset_volatile_group_begin(flash);
+		ret = 0;
 
 	count++;
 	volatile_group_count = count;
@@ -1841,12 +1841,13 @@ int spi_flash_volatile_group_end(const struct spi_flash *flash)
 		return ret;
 
 	count = volatile_group_count;
-	assert(count == 0);
+	//assert(count == 0);
 	count--;
 	volatile_group_count = count;
 
 	if (count == 0)
-		ret = chipset_volatile_group_end(flash);
+		ret = 0;
+		//ret = chipset_volatile_group_end(flash);
 
 	return ret;
 }
