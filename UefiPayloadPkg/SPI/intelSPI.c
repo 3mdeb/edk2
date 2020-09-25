@@ -268,8 +268,6 @@ struct boot_state_init_entry {
 		BOOT_STATE_INIT_ATTR = \
 		&func_ ##_## state_ ##_## when_;
 
-static INT32 spi_is_multichip(VOID);
-
 typedef UINT32 pci_devfn_t;
 
 /*
@@ -1025,57 +1023,6 @@ static INT32 ich_hwseq_wait_for_cycle_complete(UINT32 timeout,
 	return 0;
 }
 
-
-static int ich_hwseq_erase(CONST struct spi_flash *flash, UINT32 offset,
-			__SIZE_TYPE__ len)
-{
-	UINT32 start, end, erase_size;
-	int ret;
-	UINT16 hsfc;
-	unsigned int timeout = 1000 * USECS_PER_MSEC; /* 1 second timeout */
-
-	erase_size = flash->sector_size;
-	if (offset % erase_size || len % erase_size) {
-		DEBUG((EFI_D_INFO, "%a SF: Erase offset/length not multiple of erase size\n", __FUNCTION__));
-		return -1;
-	}
-
-	ret = spi_claim_bus(&flash->spi);
-	if (ret) {
-		DEBUG((EFI_D_INFO, "%a SF: Unable to claim SPI bus\n", __FUNCTION__));
-		return ret;
-	}
-
-	start = offset;
-	end = start + len;
-
-	while (offset < end) {
-		/* make sure FDONE, FCERR, AEL are cleared by writing 1 to them */
-		writew_(readw_(&cntlr.ich9_spi->hsfs), &cntlr.ich9_spi->hsfs);
-
-		ich_hwseq_set_addr(offset);
-
-		offset += erase_size;
-
-		hsfc = readw_(&cntlr.ich9_spi->hsfc);
-		hsfc &= ~HSFC_FCYCLE; /* clear operation */
-		hsfc |= (0x3 << HSFC_FCYCLE_OFF); /* set erase operation */
-		hsfc |= HSFC_FGO; /* start */
-		writew_(hsfc, &cntlr.ich9_spi->hsfc);
-		if (ich_hwseq_wait_for_cycle_complete(timeout, len)) {
-			DEBUG((EFI_D_INFO, "%a SF: Erase failed at %x\n", __FUNCTION__, offset - erase_size));
-			ret = -1;
-			goto out;
-		}
-	}
-
-	DEBUG((EFI_D_INFO, "%a SF: Successfully erased %zu bytes @ %#x\n", __FUNCTION__, len, start));
-
-out:
-	spi_release_bus(&flash->spi);
-	return ret;
-}
-
 static VOID ich_read_data(UINT8 *data, INT32 len)
 {
 	INT32 i;
@@ -1087,48 +1034,6 @@ static VOID ich_read_data(UINT8 *data, INT32 len)
 
 		data[i] = (temp32 >> ((i % 4) * 8)) & 0xff;
 	}
-}
-
-static int ich_hwseq_read(CONST struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
-			VOID *buf)
-{
-	UINT16 hsfc;
-	UINT16 timeout = 100 * 60;
-	UINT8 block_len;
-
-	if (addr + len > flash->size) {
-		DEBUG((EFI_D_INFO,
-			"%a Attempt to read %x-%x which is out of chip\n",
-			__FUNCTION__,
-			(unsigned int) addr,
-			(unsigned int) addr+(unsigned int) len));
-		return -1;
-	}
-
-	/* clear FDONE, FCERR, AEL by writing 1 to them (if they are set) */
-	writew_(readw_(&cntlr.ich9_spi->hsfs), &cntlr.ich9_spi->hsfs);
-
-	while (len > 0) {
-		block_len = MIN(len, cntlr.databytes);
-		if (block_len > (~addr & 0xff))
-			block_len = (~addr & 0xff) + 1;
-		ich_hwseq_set_addr(addr);
-		hsfc = readw_(&cntlr.ich9_spi->hsfc);
-		hsfc &= ~HSFC_FCYCLE; /* set read operation */
-		hsfc &= ~HSFC_FDBC; /* clear byte count */
-		/* set byte count */
-		hsfc |= (((block_len - 1) << HSFC_FDBC_OFF) & HSFC_FDBC);
-		hsfc |= HSFC_FGO; /* start */
-		writew_(hsfc, &cntlr.ich9_spi->hsfc);
-
-		if (ich_hwseq_wait_for_cycle_complete(timeout, block_len))
-			return 1;
-		ich_read_data(buf, block_len);
-		addr += block_len;
-		buf += block_len;
-		len -= block_len;
-	}
-	return 0;
 }
 
 /* Fill len bytes from the data array into the fdata/spid registers.
@@ -1156,55 +1061,6 @@ static VOID ich_fill_data(CONST UINT8 *data, INT32 len)
 	i--;
 	if ((i % 4) != 3) /* Write remaining data to regs. */
 		writel_(temp32, cntlr.data + (i - (i % 4)));
-}
-
-static int ich_hwseq_write(CONST struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
-			CONST VOID *buf)
-{
-	UINT16 hsfc;
-	UINT16 timeout = 100 * 60;
-	UINT8 block_len;
-	UINT32 start = addr;
-
-	if (addr + len > flash->size) {
-		DEBUG((EFI_D_INFO,
-			"%a Attempt to write 0x%x-0x%x which is out of chip\n",
-			__FUNCTION__, (unsigned int)addr, (unsigned int) (addr+len)));
-		return -1;
-	}
-
-	/* clear FDONE, FCERR, AEL by writing 1 to them (if they are set) */
-	writew_(readw_(&cntlr.ich9_spi->hsfs), &cntlr.ich9_spi->hsfs);
-
-	while (len > 0) {
-		block_len = MIN(len, cntlr.databytes);
-		if (block_len > (~addr & 0xff))
-			block_len = (~addr & 0xff) + 1;
-
-		ich_hwseq_set_addr(addr);
-
-		ich_fill_data(buf, block_len);
-		hsfc = readw_(&cntlr.ich9_spi->hsfc);
-		hsfc &= ~HSFC_FCYCLE; /* clear operation */
-		hsfc |= (0x2 << HSFC_FCYCLE_OFF); /* set write operation */
-		hsfc &= ~HSFC_FDBC; /* clear byte count */
-		/* set byte count */
-		hsfc |= (((block_len - 1) << HSFC_FDBC_OFF) & HSFC_FDBC);
-		hsfc |= HSFC_FGO; /* start */
-		writew_(hsfc, &cntlr.ich9_spi->hsfc);
-
-		if (ich_hwseq_wait_for_cycle_complete(timeout, block_len)) {
-			DEBUG((EFI_D_INFO, "%a SF: write failure at %x\n",
-				__FUNCTION__, addr));
-			return -1;
-		}
-		addr += block_len;
-		buf += block_len;
-		len -= block_len;
-	}
-	DEBUG((EFI_D_INFO, "%a SF: Successfully written %u bytes @ %#x\n",
-	       __FUNCTION__, (unsigned int) (addr - start), start));
-	return 0;
 }
 
 static int do_spi_flash_cmd(CONST struct spi_slave *spi, CONST VOID *dout,
