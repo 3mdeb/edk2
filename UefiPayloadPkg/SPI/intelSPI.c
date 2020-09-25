@@ -1569,6 +1569,16 @@ static UINT32 spi_fpr(UINT32 base, UINT32 limit)
 	return ret;
 }
 
+static inline __SIZE_TYPE__ region_offset(const struct region *r)
+{
+	return r->offset;
+}
+
+static inline __SIZE_TYPE__ region_sz(const struct region *r)
+{
+	return r->size;
+}
+
 /*
  * Protect range of SPI flash defined by [start, start+size-1] using Flash
  * Protected Range (FPR) register if available.
@@ -1631,6 +1641,19 @@ static INT32 spi_flash_protect(CONST struct spi_flash *flash,
 	DEBUG((EFI_D_INFO, "%a: FPR %d is enabled for range 0x%08x-0x%08x\n",
 	       __FUNCTION__, fpr, start, end));
 	return 0;
+}
+
+static BOOLEAN spi_flash_init_done;
+static struct spi_flash spi_flash_info;
+
+const struct spi_flash *boot_device_spi_flash(void)
+{
+	boot_device_init();
+
+	if (spi_flash_init_done != TRUE)
+		return NULL;
+
+	return &spi_flash_info;
 }
 
 VOID spi_finalize_ops(VOID)
