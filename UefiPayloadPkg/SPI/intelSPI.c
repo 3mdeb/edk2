@@ -1450,46 +1450,6 @@ INT64 spi_flash_generic_probe(CONST struct spi_slave *spi,
 	return find_match(spi, flash, manuf_id, id);
 }
 
-static INT32 spi_flash_programmer_probe(CONST struct spi_slave *spi,
-					struct spi_flash *flash)
-{
-
-	if (CONFIG(SOUTHBRIDGE_INTEL_I82801GX))
-		return spi_flash_generic_probe(spi, flash);
-
-	/* Try generic probing first if spi_is_multichip returns 0. */
-	if (!spi_is_multichip() && !spi_flash_generic_probe(spi, flash))
-		return 0;
-
-	memcpy(&flash->spi, spi, sizeof(*spi));
-
-	ich_hwseq_set_addr(0);
-	switch ((cntlr.hsfs >> 3) & 3) {
-	case 0:
-		flash->sector_size = 256;
-		break;
-	case 1:
-		flash->sector_size = 4096;
-		break;
-	case 2:
-		flash->sector_size = 8192;
-		break;
-	case 3:
-		flash->sector_size = 65536;
-		break;
-	}
-
-	flash->size = 1 << (19 + (cntlr.flcomp & 7));
-
-	flash->ops = &spi_flash_ops;
-
-	if ((cntlr.hsfs & HSFS_FDV) && ((cntlr.flmap0 >> 8) & 3))
-		flash->size += 1 << (19 + ((cntlr.flcomp >> 3) & 7));
-	DEBUG((EFI_D_INFO, "%a flash size 0x%x bytes\n", __FUNCTION__, flash->size));
-
-	return 0;
-}
-
 INT64 spi_flash_vector_helper(CONST struct spi_slave *slave,
 	struct spi_op vectors[], __SIZE_TYPE__ count,
 	int (*func)(CONST struct spi_slave *slave, CONST VOID *dout,
@@ -1538,12 +1498,6 @@ INT64 spi_flash_vector_helper(CONST struct spi_slave *slave,
 	return ret;
 }
 
-static INT32 xfer_vectors(CONST struct spi_slave *slave,
-			struct spi_op vectors[], __SIZE_TYPE__ count)
-{
-	return spi_flash_vector_helper(slave, vectors, count, spi_ctrlr_xfer);
-}
-
 #define SPI_FPR_SHIFT			12
 #define ICH7_SPI_FPR_MASK		0xfff
 #define ICH9_SPI_FPR_MASK		0x1fff
@@ -1578,70 +1532,6 @@ static inline __SIZE_TYPE__ region_offset(CONST struct region *r)
 static inline __SIZE_TYPE__ region_sz(CONST struct region *r)
 {
 	return r->size;
-}
-
-/*
- * Protect range of SPI flash defined by [start, start+size-1] using Flash
- * Protected Range (FPR) register if available.
- * Returns 0 on success, -1 on failure of programming fpr registers.
- */
-static INT32 spi_flash_protect(CONST struct spi_flash *flash,
-			CONST struct region *region,
-			CONST enum ctrlr_prot_type type)
-{
-	UINT32 start = region_offset(region);
-	UINT32 end = start + region_sz(region) - 1;
-	UINT32 reg;
-	UINT32 protect_mask = 0;
-	INT32 fpr;
-	UINT32 *fpr_base;
-
-	fpr_base = cntlr.fpr;
-
-	/* Find first empty FPR */
-	for (fpr = 0; fpr < cntlr.fpr_max; fpr++) {
-		reg = read32(&fpr_base[fpr]);
-		if (reg == 0)
-			break;
-	}
-
-	if (fpr == cntlr.fpr_max) {
-		DEBUG((EFI_D_INFO, "%a ERROR: No SPI FPR free!\n", __FUNCTION__));
-		return -1;
-	}
-
-	switch (type) {
-	case WRITE_PROTECT:
-		protect_mask |= SPI_FPR_WPE;
-		break;
-	case READ_PROTECT:
-		if (CONFIG(SOUTHBRIDGE_INTEL_I82801GX))
-			return -1;
-		protect_mask |= ICH9_SPI_FPR_RPE;
-		break;
-	case READ_WRITE_PROTECT:
-		if (CONFIG(SOUTHBRIDGE_INTEL_I82801GX))
-			return -1;
-		protect_mask |= (ICH9_SPI_FPR_RPE | SPI_FPR_WPE);
-		break;
-	default:
-		DEBUG((EFI_D_INFO, "%a ERROR: Seeking invalid protection!\n", __FUNCTION__));
-		return -1;
-	}
-
-	/* Set protected range base and limit */
-	reg = spi_fpr(start, end) | protect_mask;
-
-	/* Set the FPR register and verify it is protected */
-	write32(&fpr_base[fpr], reg);
-	if (reg != read32(&fpr_base[fpr])) {
-		DEBUG((EFI_D_INFO, "%a ERROR: Unable to set SPI FPR %d\n", __FUNCTION__, fpr));
-		return -1;
-	}
-
-	DEBUG((EFI_D_INFO, "%a: FPR %d is enabled for range 0x%08x-0x%08x\n",
-	       __FUNCTION__, fpr, start, end));
-	return 0;
 }
 
 static struct spi_flash spi_flash_info;
