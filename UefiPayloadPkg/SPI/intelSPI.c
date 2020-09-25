@@ -1292,7 +1292,7 @@ int stmicro_release_deep_sleep_identify(CONST struct spi_slave *spi, UINT8 *idco
 	return 0;
 }
 
-static const struct spi_flash_vendor_info *spi_flash_vendors[] = {
+static CONST struct spi_flash_vendor_info *spi_flash_vendors[] = {
 #if CONFIG(SPI_FLASH_ADESTO)
 	&spi_flash_adesto_vi,
 #endif
@@ -1330,6 +1330,74 @@ static const struct spi_flash_vendor_info *spi_flash_vendors[] = {
 	&spi_flash_winbond_vi,
 #endif
 };
+
+static CONST struct spi_flash_part_id *find_part(CONST struct spi_flash_vendor_info *vi,
+						uint16_t id[2])
+{
+	__SIZE_TYPE__ i;
+	CONST uint16_t lid[2] = {
+		[0] = id[0] & vi->match_id_mask[0],
+		[1] = id[1] & vi->match_id_mask[1],
+	};
+
+
+	for (i = 0; i < vi->nr_part_ids; i++) {
+		CONST struct spi_flash_part_id *part = &vi->ids[i];
+
+		if (part->id[0] == lid[0] && part->id[1] == lid[1])
+			return part;
+	}
+
+	return NULL;
+}
+
+static int fill_spi_flash(CONST struct spi_slave *spi, struct spi_flash *flash,
+	CONST struct spi_flash_vendor_info *vi,
+	CONST struct spi_flash_part_id *part)
+{
+	memcpy(&flash->spi, spi, sizeof(*spi));
+	flash->vendor = vi->id;
+	flash->model = part->id[0];
+
+	flash->page_size = 1U << vi->page_size_shift;
+	flash->sector_size = (1U << vi->sector_size_kib_shift) * KiB;
+	flash->size = flash->sector_size * (1U << part->nr_sectors_shift);
+	flash->erase_cmd = vi->desc->erase_cmd;
+	flash->status_cmd = vi->desc->status_cmd;
+	flash->pp_cmd = vi->desc->pp_cmd;
+	flash->wren_cmd = vi->desc->wren_cmd;
+
+	flash->flags.dual_spi = part->fast_read_dual_output_support;
+
+	flash->ops = &vi->desc->ops;
+	flash->prot_ops = vi->prot_ops;
+	flash->part = part;
+
+	if (vi->after_probe)
+		return vi->after_probe(flash);
+
+	return 0;
+}
+
+static CONST struct spi_flash_part_id *find_part(CONST struct spi_flash_vendor_info *vi,
+						uint16_t id[2])
+{
+	__SIZE_TYPE__ i;
+	CONST uint16_t lid[2] = {
+		[0] = id[0] & vi->match_id_mask[0],
+		[1] = id[1] & vi->match_id_mask[1],
+	};
+
+
+	for (i = 0; i < vi->nr_part_ids; i++) {
+		CONST struct spi_flash_part_id *part = &vi->ids[i];
+
+		if (part->id[0] == lid[0] && part->id[1] == lid[1])
+			return part;
+	}
+
+	return NULL;
+}
 
 static int find_match(CONST struct spi_slave *spi, struct spi_flash *flash,
 			UINT8 manuf_id, UINT16 id[2])
