@@ -1813,6 +1813,44 @@ int mmap_helper_rdev_munmap(CONST struct region_device *rd, VOID *mapping)
 	return 0;
 }
 
+static UINT32 volatile_group_count;
+
+int spi_flash_volatile_group_begin(const struct spi_flash *flash)
+{
+	UINT32 count;
+	int ret = 0;
+
+	if (!CONFIG(SPI_FLASH_HAS_VOLATILE_GROUP))
+		return ret;
+
+	count = volatile_group_count;
+	if (count == 0)
+		ret = chipset_volatile_group_begin(flash);
+
+	count++;
+	volatile_group_count = count;
+	return ret;
+}
+
+int spi_flash_volatile_group_end(const struct spi_flash *flash)
+{
+	UINT32 count;
+	int ret = 0;
+
+	if (!CONFIG(SPI_FLASH_HAS_VOLATILE_GROUP))
+		return ret;
+
+	count = volatile_group_count;
+	assert(count == 0);
+	count--;
+	volatile_group_count = count;
+
+	if (count == 0)
+		ret = chipset_volatile_group_end(flash);
+
+	return ret;
+}
+
 int spi_flash_write(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
 		CONST VOID *buf)
 {
@@ -1873,7 +1911,7 @@ static __SIZE_TYPE__ spi_readat(CONST struct region_device *rd, VOID *b,
 static __SIZE_TYPE__ spi_eraseat(CONST struct region_device *rd,
 				__SIZE_TYPE__ offset, __SIZE_TYPE__ size)
 {
-	if (__SIZE_TYPE__(&sfg, offset, size))
+	if (spi_flash_erase(&sfg, offset, size))
 		return -1;
 
 	return size;
