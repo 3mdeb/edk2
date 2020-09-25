@@ -67,5 +67,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   } else {
     DEBUG((EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
   }
+  struct spi_slave slave;
+  spi_setup_slave(0, 0, &slave);
   return EFI_SUCCESS;
 }
