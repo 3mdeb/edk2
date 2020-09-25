@@ -1110,7 +1110,7 @@ static VOID ich_read_data(UINT8 *data, INT32 len)
 }
 
 static int ich_hwseq_read(const struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
-			void *buf)
+			VOID *buf)
 {
 	UINT16 hsfc;
 	UINT16 timeout = 100 * 60;
@@ -1179,7 +1179,7 @@ static VOID ich_fill_data(CONST UINT8 *data, INT32 len)
 }
 
 static int ich_hwseq_write(const struct spi_flash *flash, UINT32 addr, __SIZE_TYPE__ len,
-			const void *buf)
+			const VOID *buf)
 {
 	UINT16 hsfc;
 	UINT16 timeout = 100 * 60;
@@ -1233,7 +1233,7 @@ static CONST struct spi_flash_ops spi_flash_ops = {
 	.erase = ich_hwseq_erase,
 };
 
-int spi_flash_cmd(const struct spi_slave *spi, u8 cmd, void *response, size_t len)
+int spi_flash_cmd(const struct spi_slave *spi, UINT8 cmd, VOID *response, __SIZE_TYPE__ len)
 {
 	int ret = do_spi_flash_cmd(spi, &cmd, sizeof(cmd), response, len);
 	if (ret)
