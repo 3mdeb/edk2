@@ -1332,10 +1332,10 @@ static CONST struct spi_flash_vendor_info *spi_flash_vendors[] = {
 };
 
 static CONST struct spi_flash_part_id *find_part(CONST struct spi_flash_vendor_info *vi,
-						uint16_t id[2])
+						UINT16 id[2])
 {
 	__SIZE_TYPE__ i;
-	CONST uint16_t lid[2] = {
+	CONST UINT16 lid[2] = {
 		[0] = id[0] & vi->match_id_mask[0],
 		[1] = id[1] & vi->match_id_mask[1],
 	};
@@ -1349,6 +1349,13 @@ static CONST struct spi_flash_part_id *find_part(CONST struct spi_flash_vendor_i
 	}
 
 	return NULL;
+}
+
+void *memcpy (VOID *destination, CONST VOID *source, __SIZE_TYPE__ num ) {
+	for(__SIZE_TYPE__ index = 0; index < num; ++index) {
+		((char *)destination)[index] = ((char *)source)[index];
+	}
+	return destination;
 }
 
 static int fill_spi_flash(CONST struct spi_slave *spi, struct spi_flash *flash,
@@ -1380,10 +1387,10 @@ static int fill_spi_flash(CONST struct spi_slave *spi, struct spi_flash *flash,
 }
 
 static CONST struct spi_flash_part_id *find_part(CONST struct spi_flash_vendor_info *vi,
-						uint16_t id[2])
+						UINT16 id[2])
 {
 	__SIZE_TYPE__ i;
-	CONST uint16_t lid[2] = {
+	CONST UINT16 lid[2] = {
 		[0] = id[0] & vi->match_id_mask[0],
 		[1] = id[1] & vi->match_id_mask[1],
 	};
@@ -1460,13 +1467,6 @@ INT64 spi_flash_generic_probe(CONST struct spi_slave *spi,
 	id[1] = (idcode[3] << 8) | idcode[4];
 
 	return find_match(spi, flash, manuf_id, id);
-}
-
-void *memcpy (VOID *destination, CONST VOID *source, __SIZE_TYPE__ num ) {
-	for(__SIZE_TYPE__ index = 0; index < num; ++index) {
-		((char *)destination)[index] = ((char *)source)[index];
-	}
-	return destination;
 }
 
 static INT32 spi_flash_programmer_probe(CONST struct spi_slave *spi,
