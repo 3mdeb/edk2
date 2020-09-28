@@ -861,12 +861,12 @@ static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 
 	/* There has to always at least be an opcode. */
 	if (!bytesout || !dout) {
-		DEBUG((EFI_D_INFO, "%a ICH SPI: No opcode for transfer\n", __FUNCTION__));;
+		DEBUG((EFI_D_INFO, "%a ICH SPI: No opcode for transfer\n", __FUNCTION__));
 		return -1;
 	}
 	/* Make sure if we read something we have a place to put it. */
 	if (bytesin != 0 && !din) {
-		DEBUG((EFI_D_INFO, "%a ICH SPI: Read but no target buffer\n", __FUNCTION__));;
+		DEBUG((EFI_D_INFO, "%a ICH SPI: Read but no target buffer\n", __FUNCTION__));
 		return -1;
 	}
 
@@ -918,7 +918,7 @@ static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 			return -1;
 
 		if (status & SPIS_FCERR) {
-			DEBUG((EFI_D_INFO, "%a ICH SPI: Command transaction error\n", __FUNCTION__));;
+			DEBUG((EFI_D_INFO, "%a ICH SPI: Command transaction error\n", __FUNCTION__));
 			return -1;
 		}
 
@@ -977,7 +977,7 @@ static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 			return -1;
 
 		if (status & SPIS_FCERR) {
-			DEBUG((EFI_D_INFO, "%a ICH SPI: Data transaction error\n", __FUNCTION__));;
+			DEBUG((EFI_D_INFO, "%a ICH SPI: Data transaction error\n", __FUNCTION__));
 			return -1;
 		}
 
