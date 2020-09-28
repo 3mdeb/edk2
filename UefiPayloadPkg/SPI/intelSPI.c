@@ -638,6 +638,29 @@ VOID spi_init(VOID)
 			writel_(0x1000, &ich9_spi->fdoc);
 			cntlr.flcomp = readl_(&ich9_spi->fdod);
 		}
+		DEBUG((EFI_D_INFO, "------\n"
+		"%a SETTING UP CONTROLLER\n"
+		"SOUTHBRIDGE_INTEL_I82801GX: 0x%X\n"
+		"ich7_spi: 0x%X\n"
+		"ich9_spi: 0x%X\n"
+		"hsfs: 0x%X\n"
+		"opmenu: 0x%X\n"
+		"menubytes: 0x%X\n"
+		"optype: 0x%X\n"
+		"addr: 0x%X\n"
+		"data: 0x%X\n"
+		"databytes: 0x%X\n"
+		"status: 0x%X\n"
+		"control: 0x%X\n"
+		"bbar: 0x%X\n"
+		"preop: 0x%X\n"
+		"fpr: 0x%X\n"
+		"fpr_max: 0x%X\n"
+		"------\n",
+	  __FUNCTION__, cntlr.ich7_spi, cntlr.ich9_spi, cntlr.hsfs, cntlr.opmenu,
+		cntlr.menubytes, cntlr.optype, cntlr.addr, cntlr.data, cntlr.databytes,
+		cntlr.status, cntlr.control, cntlr.bbar, cntlr.preop, cntlr.fpr,
+		cntlr.fpr_max));
 	}
 
 	ich_set_bbar(0);
