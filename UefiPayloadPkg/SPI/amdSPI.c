@@ -2,6 +2,7 @@
 #include <Include/Library/DebugLib.h>
 
 #include "amdSPI.h"
+#include "lpc.h"
 
 void spi_init(void)
 {
