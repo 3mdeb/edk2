@@ -106,10 +106,11 @@ UINT32 spi_crop_chunk(CONST struct spi_slave *slave, UINT32 cmd_len,
 	return MIN(ctrlr_max, buf_len);
 }
 
-VOID spi_init(VOID)
-{
-	/* Default weak implementation - do nothing. */
-}
+// __attribute__((__weak__))
+// VOID spi_init(VOID)
+// {
+// 	/* Default weak implementation - do nothing. */
+// }
 
 UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
 {

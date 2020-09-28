@@ -15,6 +15,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include "SPIgeneric.h"
 #include "SPI.h"
+#include "intelSPI.h"
 
 EFI_HANDLE Handle = NULL;
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
@@ -56,7 +57,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   } else {
     DEBUG((EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
   }
-  DEBUG((EFI_D_INFO, "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\n"));
+  DEBUG((EFI_D_INFO, "calling spi_init()\n"));
   spi_init();
   DEBUG((EFI_D_INFO, "spi_init() was called\n"));
   DEBUG((EFI_D_INFO, "spi_setup_slave() returned 0x%X\n", spi_setup_slave(0, 0, &slave)));
