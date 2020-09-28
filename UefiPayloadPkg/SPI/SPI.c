@@ -56,6 +56,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   } else {
     DEBUG((EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
   }
+  DEBUG((EFI_D_INFO, "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\n"));
   spi_init();
   DEBUG((EFI_D_INFO, "spi_init() was called\n"));
   DEBUG((EFI_D_INFO, "spi_setup_slave() returned 0x%X\n", spi_setup_slave(0, 0, &slave)));
