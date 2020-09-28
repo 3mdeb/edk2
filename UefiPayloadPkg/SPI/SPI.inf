@@ -18,12 +18,12 @@
 [Sources]
   SPI.h
   SPI.c
-  SPIFvb.c
   SPIgeneric.h
   SPIgeneric.c
-  intelSPI.h
-  intelSPI.c
-  helpers.h
+  lpc.h
+  lpc.c
+  amdSPI.h
+  amdSPI.c
 
 [Packages]
   MdePkg/MdePkg.dec
