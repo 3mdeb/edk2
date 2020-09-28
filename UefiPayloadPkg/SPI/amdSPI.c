@@ -1,6 +1,8 @@
 #include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
 
+#include "amdSPI.h"
+
 void spi_init(void)
 {
 	DEBUG((EFI_D_INFO, "%a: SPI BAR at 0x%08lx\n", __FUNCTION__, spi_get_bar()));
