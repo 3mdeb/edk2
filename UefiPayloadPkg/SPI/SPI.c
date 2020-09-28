@@ -15,7 +15,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include "SPIgeneric.h"
 #include "SPI.h"
-#include "intelSPI.h"
+#include "amdSPI.h"
 
 EFI_HANDLE Handle = NULL;
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
