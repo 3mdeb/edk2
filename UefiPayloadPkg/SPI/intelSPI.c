@@ -925,6 +925,8 @@ static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 		goto spi_xfer_exit;
 	}
 
+	DEBUG((EFI_D_INFO, "---\n%a\ntrans.bytesout: 0x%X\ncntlr.bytesout\n---\n",
+		__FUNCTION__, trans.bytesout, cntlr.databytes));
 	/*
 	 * Check if this is a write command attempting to transfer more bytes
 	 * than the controller can handle. Iterations for writes are not
