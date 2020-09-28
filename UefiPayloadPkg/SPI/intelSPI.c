@@ -925,7 +925,7 @@ static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 		goto spi_xfer_exit;
 	}
 
-	DEBUG((EFI_D_INFO, "---\n%a\ntrans.bytesout: 0x%X\ncntlr.bytesout\n---\n",
+	DEBUG((EFI_D_INFO, "---\n%a\ntrans.bytesout: 0x%X\ncntlr.bytesout: 0x%X\n---\n",
 		__FUNCTION__, trans.bytesout, cntlr.databytes));
 	/*
 	 * Check if this is a write command attempting to transfer more bytes
