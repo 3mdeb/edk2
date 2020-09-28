@@ -43,7 +43,7 @@ EFI_STATUS EFIAPI SPIInitialize (
 {
   EFI_STATUS Status;
   struct spi_slave slave;
-  DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
+  DEBUG((EFI_D_INFO, "SPI IS HERE BLAHBLAH\n"));
   DEBUG((EFI_D_INFO, "sizeof(unsigned int) 0x%X\n", sizeof(unsigned int)));
   DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(void *)));
   Status = gBS->InstallMultipleProtocolInterfaces (
