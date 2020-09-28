@@ -656,7 +656,7 @@ VOID spi_init(VOID)
 		"preop: 0x%X\n"
 		"fpr: 0x%X\n"
 		"fpr_max: 0x%X\n"
-		"------\n",
+		"------\n\n\n\n\n\n\n\n\n********\n",
 	  __FUNCTION__, cntlr.ich7_spi, cntlr.ich9_spi, cntlr.hsfs, cntlr.opmenu,
 		cntlr.menubytes, cntlr.optype, cntlr.addr, cntlr.data, cntlr.databytes,
 		cntlr.status, cntlr.control, cntlr.bbar, cntlr.preop, cntlr.fpr,
