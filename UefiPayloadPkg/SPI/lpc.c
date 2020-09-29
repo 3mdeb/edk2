@@ -2,6 +2,7 @@
 
 #include "lpc.h"
 #include "pci_ops.h"
+#include "utils.h"
 
 UINT32 *lpc_get_spibase(void)
 {

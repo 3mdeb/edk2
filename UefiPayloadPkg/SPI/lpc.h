@@ -13,10 +13,6 @@
 #define SPI_ROM_ALT_ENABLE	BIT(0)
 #define SPI_PRESERVE_BITS		(BIT(0) | BIT(1) | BIT(2) | BIT(3))
 
-#if !defined(__SIMPLE_DEVICE__)
-#define _LPCB_DEV pcidev_on_root(0x14, 0x3)
-#else
 #define _LPCB_DEV PCI_DEV(0, 0x14, 0x3)
-#endif
 
 UINT32 *lpc_get_spibase(void);
