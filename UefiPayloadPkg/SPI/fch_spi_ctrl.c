@@ -2,6 +2,9 @@
 #include <Include/PiDxe.h>
 
 #include "kconfig.h"
+#include "SPI.h"
+#include "utils.h"
+#include "stopwatch.h"
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 
@@ -25,7 +28,7 @@
 #define   SPI_FIFO_RD_PTR_SHIFT		16
 #define   SPI_FIFO_RD_PTR_MASK		0x7f
 
-static VOID dump_state(const char *str, UINT8 phase)
+static VOID dump_state(CONST char *str, UINT8 phase)
 {
 	UINT8 dump_size;
 	UINT32 addr;
@@ -53,7 +56,7 @@ static VOID dump_state(const char *str, UINT8 phase)
 
 static int wait_for_ready(VOID)
 {
-	const uint32_t timeout_ms = 500;
+	CONST uint32_t timeout_ms = 500;
 	struct stopwatch sw;
 
 	stopwatch_init_msecs_expire(&sw, timeout_ms);
@@ -73,8 +76,8 @@ static int execute_command(VOID)
 	spi_write8(SPI_CMD_TRIGGER, SPI_CMD_TRIGGER_EXECUTE);
 
 	if (wait_for_ready())
-		printk(BIOS_ERR,
-			"FCH_SC Error: Timeout executing command\n");
+		DEBUG((EFI_D_INFO,
+      "%a: FCH_SC Error: Timeout executing command\n", __FUNCTION__));
 
 	dump_state("Transaction finished", 1);
 
@@ -86,17 +89,17 @@ VOID spi_init(VOID)
 	DEBUG((EFI_D_INFO, "%a: %s: SPI BAR at 0x%08lx\n", __FUNCTION__, __func__, spi_get_bar()));
 }
 
-static int spi_ctrlr_xfer(const struct spi_slave *slave, const VOID *dout,
+static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 			__SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin)
 {
 	__SIZE_TYPE__ count;
 	uint8_t cmd;
 	uint8_t *bufin = din;
-	const uint8_t *bufout = dout;
+	CONST uint8_t *bufout = dout;
 
 	if (CONFIG(SOC_AMD_COMMON_BLOCK_SPI_DEBUG))
-		printk(BIOS_DEBUG, "%s(%zx, %zx)\n", __func__, bytesout,
-			bytesin);
+		DEBUG((EFI_D_INFO, "%a(%zx, %zx)\n", __FUNCTION__, bytesout,
+			bytesin));
 
 	/* First byte is cmd which cannot be sent through FIFO */
 	cmd = bufout[0];
@@ -110,7 +113,8 @@ static int spi_ctrlr_xfer(const struct spi_slave *slave, const VOID *dout,
 	 * and followed by other SPI commands.
 	 */
 	if (bytesout + bytesin > SPI_FIFO_DEPTH) {
-		printk(BIOS_WARNING, "FCH_SC: Too much to transfer, code error!\n");
+		DEBUG((EFI_D_INFO,
+      "%a: FCH_SC: Too much to transfer, code error!\n", __FUNCTION__));
 		return -1;
 	}
 
@@ -133,7 +137,7 @@ static int spi_ctrlr_xfer(const struct spi_slave *slave, const VOID *dout,
 	return 0;
 }
 
-static int xfer_vectors(const struct spi_slave *slave,
+static int xfer_vectors(CONST struct spi_slave *slave,
 			struct spi_op vectors[], __SIZE_TYPE__ count)
 {
 	return spi_flash_vector_helper(slave, vectors, count, spi_ctrlr_xfer);
@@ -170,8 +174,8 @@ static int protect_a_range(UINT32 value)
  * and second region is read protection, it's best to define first region as read and write
  * protection.
  */
-static int fch_spi_flash_protect(const struct spi_flash *flash, const struct region *region,
-				 const enum ctrlr_prot_type type)
+static int fch_spi_flash_protect(CONST struct spi_flash *flash, CONST struct region *region,
+				 CONST enum ctrlr_prot_type type)
 {
 	int ret;
 	UINT32 reg32, rom_base, range_base;
@@ -247,14 +251,14 @@ static int fch_spi_flash_protect(const struct spi_flash *flash, const struct reg
 	return 0;
 }
 
-static const struct spi_ctrlr fch_spi_flash_ctrlr = {
+static CONST struct spi_ctrlr fch_spi_flash_ctrlr = {
 	.xfer_vector = xfer_vectors,
 	.max_xfer_size = SPI_FIFO_DEPTH,
 	.flags = SPI_CNTRLR_DEDUCT_CMD_LEN | SPI_CNTRLR_DEDUCT_OPCODE_LEN,
 	.flash_protect = fch_spi_flash_protect,
 };
 
-const struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {
+CONST struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {
 	{
 		.ctrlr = &fch_spi_flash_ctrlr,
 		.bus_start = 0,
@@ -262,4 +266,4 @@ const struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {
 	},
 };
 
-const __SIZE_TYPE__ spi_ctrlr_bus_map_count = ARRAY_SIZE(spi_ctrlr_bus_map);
+CONST __SIZE_TYPE__ spi_ctrlr_bus_map_count = ARRAY_SIZE(spi_ctrlr_bus_map);

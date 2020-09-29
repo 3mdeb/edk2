@@ -33,6 +33,7 @@
   fch_spi_util.c
   mmio.h
   mmio.c
+  stopwatch.h
 
 [Packages]
   MdePkg/MdePkg.dec
