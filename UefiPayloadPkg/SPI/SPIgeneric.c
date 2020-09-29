@@ -6,7 +6,6 @@
 //#include <string.h>
 #include <Include/PiDxe.h>
 #include "SPIgeneric.h"
-#include "SPI.h"
 
 UINT32 spi_claim_bus(CONST struct spi_slave *slave)
 {

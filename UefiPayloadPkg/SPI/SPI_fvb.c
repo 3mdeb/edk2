@@ -14,7 +14,6 @@
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include "SPIgeneric.h"
-#include "SPI.h"
 #include "amdSPI.h"
 
 EFI_HANDLE Handle = NULL;
@@ -46,7 +45,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   struct spi_slave slave;
   DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
   DEBUG((EFI_D_INFO, "sizeof(unsigned int) 0x%X\n", sizeof(unsigned int)));
-  DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(void *)));
+  DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(VOID *)));
   Status = gBS->InstallMultipleProtocolInterfaces (
               &Handle,
               &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,

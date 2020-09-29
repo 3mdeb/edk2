@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 #include <Include/PiDxe.h>
 #include "mmio.h"
+#include "fch_spi_util.h"
 
 static uintptr_t spi_base;
 
