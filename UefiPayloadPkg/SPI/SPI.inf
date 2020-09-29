@@ -17,7 +17,7 @@
 
 [Sources]
   SPI.h
-  SPI.c
+  # SPI.c
   SPIgeneric.h
   SPIgeneric.c
   lpc.h
@@ -27,6 +27,14 @@
   pci_type.h
   device.h
   kconfig.h
+  fch_spi_ctrl.h
+  fch_spi_ctrl.c
+  SPI_fvb.h
+  SPI_fvb.c
+  fch_spi_util.h
+  fch_spi_util.c
+  mmio.h
+  mmio.c
 
 [Packages]
   MdePkg/MdePkg.dec

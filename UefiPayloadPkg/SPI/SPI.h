@@ -1,154 +1,111 @@
-/** @file  BlSMMStoreDxe.h
+/* SPDX-License-Identifier: GPL-2.0-only */
 
-  Copyright (c) 2020, 9elements Agency GmbH<BR>
+#ifndef __AMDBLOCKS_SPI_H__
+#define __AMDBLOCKS_SPI_H__
 
-  SPDX-License-Identifier: BSD-2-Clause-Patent
+#include <types.h>
 
-**/
+#define SPI_CNTRL0			0x00
+#define   SPI_BUSY			BIT(31)
 
-#ifndef __SPI_H__
-#define __SPI_H__
+enum spi_read_mode {
+	SPI_READ_MODE_NORMAL33M = 0,
+	/* 1 is reserved. */
+	SPI_READ_MODE_DUAL112 = 2,
+	SPI_READ_MODE_QUAD114 = 3,
+	SPI_READ_MODE_DUAL122 = 4,
+	SPI_READ_MODE_QUAD144 = 5,
+	SPI_READ_MODE_NORMAL66M = 6,
+	SPI_READ_MODE_FAST_READ = 7,
+};
+/*
+ * SPI read mode is split into bits 18, 29, 30 such that [30:29:18] correspond to bits [2:0] for
+ * SpiReadMode.
+ */
+#define   SPI_READ_MODE_MASK		(BIT(30) | BIT(29) | BIT(18))
+#define   SPI_READ_MODE_UPPER_BITS(x)	((((x) >> 1) & 0x3) << 29)
+#define   SPI_READ_MODE_LOWER_BITS(x)	(((x) & 0x1) << 18)
+#define   SPI_READ_MODE(x)		(SPI_READ_MODE_UPPER_BITS(x) | \
+					 SPI_READ_MODE_LOWER_BITS(x))
+#define   SPI_ACCESS_MAC_ROM_EN		BIT(22)
 
+#define SPI100_ENABLE			0x20
+#define   SPI_USE_SPI100		BIT(0)
 
-#include <Base.h>
-#include <PiDxe.h>
+/* Use SPI_SPEED_16M-SPI_SPEED_66M below for the southbridge */
+#define SPI100_SPEED_CONFIG		0x22
+enum spi100_speed {
+	SPI_SPEED_66M = 0,
+	SPI_SPEED_33M = 1,
+	SPI_SPEED_22M = 2,
+	SPI_SPEED_16M = 3,
+	SPI_SPEED_100M = 4,
+	SPI_SPEED_800K = 5,
+};
 
-#include <Guid/EventGroup.h>
+#define   SPI_SPEED_MASK		0xf
+#define   SPI_SPEED_MODE(x, shift)	(((x) & SPI_SPEED_MASK) << shift)
+#define   SPI_NORM_SPEED(x)		SPI_SPEED_MODE(x, 12)
+#define   SPI_FAST_SPEED(x)		SPI_SPEED_MODE(x, 8)
+#define   SPI_ALT_SPEED(x)		SPI_SPEED_MODE(x, 4)
+#define   SPI_TPM_SPEED(x)		SPI_SPEED_MODE(x, 0)
 
-#include <Protocol/BlockIo.h>
-#include <Protocol/DiskIo.h>
-#include <Protocol/FirmwareVolumeBlock.h>
+#define   SPI_SPEED_CFG(n, f, a, t)	(SPI_NORM_SPEED(n) | SPI_FAST_SPEED(f) | \
+					 SPI_ALT_SPEED(a) | SPI_TPM_SPEED(t))
 
-#include <Library/DebugLib.h>
-#include <Library/IoLib.h>
-#include <Library/UefiLib.h>
-#include <Library/UefiRuntimeLib.h>
+#define SPI100_HOST_PREF_CONFIG		0x2c
+#define   SPI_RD4DW_EN_HOST		BIT(15)
 
-#include "SPIgeneric.h"
+#define SPI_FIFO			0x80
+#define SPI_FIFO_LAST_BYTE		0xc7
+#define SPI_FIFO_DEPTH			(SPI_FIFO_LAST_BYTE - SPI_FIFO)
 
-#define SMMSTORE_SIGNATURE                       SIGNATURE_32('S', 'M', 'M', 'S')
-#define INSTANCE_FROM_FVB_THIS(a)                CR(a, SMMSTORE_INSTANCE, FvbProtocol, SMMSTORE_SIGNATURE)
-
-typedef struct _SMMSTORE_INSTANCE                SMMSTORE_INSTANCE;
+struct spi_config {
+	/*
+	 * Default values if not overridden by mainboard:
+	 * Read mode - Normal 33MHz
+	 * Normal speed - 66MHz
+	 * Fast speed - 66MHz
+	 * Alt speed - 66MHz
+	 * TPM speed - 66MHz
+	 */
+	enum spi_read_mode read_mode;
+	enum spi100_speed normal_speed;
+	enum spi100_speed fast_speed;
+	enum spi100_speed altio_speed;
+	enum spi100_speed tpm_speed;
+};
 
 /*
- * Representation of SPI flash operations:
- * read:	Flash read operation.
- * write:	Flash write operation.
- * erase:	Flash erase operation.
- * status:	Read flash status register.
+ * Perform early SPI initialization:
+ * 1. Sets SPI ROM base and enables SPI ROM
+ * 2. Enables SPI ROM prefetching
+ * 3. Disables 4dw burst
+ * 4. Configures SPI speed and read mode.
+ *
+ * This function expects SoC to include soc_amd_common_config in chip SoC config and uses
+ * settings from mainboard devicetree to configure speed and read mode.
  */
-struct spi_flash_ops {
-	int (*read)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
-			VOID *buf);
-	int (*write)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len,
-			CONST VOID *buf);
-	int (*erase)(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
-	int (*status)(CONST struct spi_flash *flash, UINT8 *reg);
-};
+void fch_spi_early_init(void);
 
-#pragma pack (1)
-typedef struct {
-  VENDOR_DEVICE_PATH                  Vendor;
-  UINT8                               Index;
-  EFI_DEVICE_PATH_PROTOCOL            End;
-} NOR_FLASH_DEVICE_PATH;
-#pragma pack ()
+/*
+ * Configure SPI speed and read mode.
+ *
+ * This function expects SoC to include soc_amd_common_config in chip SoC config and uses
+ * settings from mainboard devicetree to configure speed and read mode.
+ */
+void fch_spi_config_modes(void);
 
-struct _SMMSTORE_INSTANCE {
-  UINT32                              Signature;
-  EFI_HANDLE                          Handle;
-  EFI_BLOCK_IO_MEDIA                  Media;
+/* Set the SPI base address variable */
+void spi_set_base(void *base);
 
-  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol;
+/* Get the SPI base address variable's value */
+uintptr_t spi_get_bar(void);
+uint8_t spi_read8(uint8_t reg);
+uint16_t spi_read16(uint8_t reg);
+uint32_t spi_read32(uint8_t reg);
+void spi_write8(uint8_t reg, uint8_t val);
+void spi_write16(uint8_t reg, uint16_t val);
+void spi_write32(uint8_t reg, uint32_t val);
 
-  NOR_FLASH_DEVICE_PATH               DevicePath;
-};
-
-enum optype {
-	READ_NO_ADDR = 0,
-	WRITE_NO_ADDR = 1,
-	READ_WITH_ADDR = 2,
-	WRITE_WITH_ADDR = 3
-};
-
-struct intel_spi_op {
-	UINT8 op;
-	enum optype type;
-};
-
-struct intel_swseq_spi_config {
-	UINT8 opprefixes[2];
-	struct intel_spi_op ops[8];
-};
-
-void * memset (void *dest, int ch, __SIZE_TYPE__ count);
-
-//
-// BlSMMStoreFvbDxe.c
-//
-
-EFI_STATUS
-EFIAPI
-SMMStoreFvbInitialize (
-  IN SMMSTORE_INSTANCE*                            Instance
-  );
-
-EFI_STATUS
-EFIAPI
-FvbGetAttributes(
-  IN CONST  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL     *This,
-  OUT       EFI_FVB_ATTRIBUTES_2                    *Attributes
-  );
-
-EFI_STATUS
-EFIAPI
-FvbSetAttributes(
-  IN CONST  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL     *This,
-  IN OUT    EFI_FVB_ATTRIBUTES_2                    *Attributes
-  );
-
-EFI_STATUS
-EFIAPI
-FvbGetPhysicalAddress(
-  IN CONST  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL     *This,
-  OUT       EFI_PHYSICAL_ADDRESS                    *Address
-  );
-
-EFI_STATUS
-EFIAPI
-FvbGetBlockSize(
-  IN CONST  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL     *This,
-  IN        EFI_LBA                                 Lba,
-  OUT       UINTN                                   *BlockSize,
-  OUT       UINTN                                   *NumberOfBlocks
-  );
-
-EFI_STATUS
-EFIAPI
-FvbRead(
-  IN CONST  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL     *This,
-  IN        EFI_LBA                                 Lba,
-  IN        UINTN                                   Offset,
-  IN OUT    UINTN                                   *NumBytes,
-  IN OUT    UINT8                                   *Buffer
-  );
-
-EFI_STATUS
-EFIAPI
-FvbWrite(
-  IN CONST  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL     *This,
-  IN        EFI_LBA                                 Lba,
-  IN        UINTN                                   Offset,
-  IN OUT    UINTN                                   *NumBytes,
-  IN        UINT8                                   *Buffer
-  );
-
-EFI_STATUS
-EFIAPI
-FvbEraseBlocks(
-  IN CONST  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL     *This,
-  ...
-  );
-
-#endif /* __SPI_H__ */
+#endif /* __AMDBLOCKS_SPI_H__ */
