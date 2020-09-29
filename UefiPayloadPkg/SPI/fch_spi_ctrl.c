@@ -158,14 +158,14 @@ static int protect_a_range(UINT32 value)
 
 	/* find a free protection register */
 	for (n = 0; n < MAX_ROM_PROTECT_RANGES; n++) {
-		reg32 = pci_read_config32((struct device *)SOC_LPC_DEV, ROM_PROTECT_RANGE_REG(n));
+		reg32 = pci_read_config32(SOC_LPC_DEV, ROM_PROTECT_RANGE_REG(n));
 		if (!reg32)
 			break;
 	}
 	if (n == MAX_ROM_PROTECT_RANGES)
 		return -1; /* no free range */
 
-	pci_write_config32((struct device *)SOC_LPC_DEV, ROM_PROTECT_RANGE_REG(n), value);
+	pci_write_config32(SOC_LPC_DEV, ROM_PROTECT_RANGE_REG(n), value);
 	return 0;
 }
 
