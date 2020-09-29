@@ -4,6 +4,8 @@
 //#include <commonlib/helpers.h>
 //#include <stddef.h>
 //#include <string.h>
+#include <stddef.h>
+#include <string.h>
 #include <Include/PiDxe.h>
 #include "SPIgeneric.h"
 
