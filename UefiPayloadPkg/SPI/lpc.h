@@ -15,4 +15,4 @@
 
 #define _LPCB_DEV PCI_DEV(0, 0x14, 0x3)
 
-unsigned long int lpc_get_spibase(void)
+unsigned long int lpc_get_spibase(void);
