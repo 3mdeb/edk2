@@ -1,11 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
-//#include <assert.h>
-//#include <commonlib/helpers.h>
-//#include <stddef.h>
-//#include <string.h>
-#include <stddef.h>
-#include <string.h>
 #include <Include/PiDxe.h>
 #include "SPIgeneric.h"
 
