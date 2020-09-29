@@ -5,7 +5,7 @@
 #include "pci_type.h"
 
 VOID spi_set_base(VOID *base);
-uintptr_t spi_get_bar(VOID);
+unsigned long int spi_get_bar(VOID);
 UINT8 spi_read8(UINT8 reg);
 UINT16 spi_read16(UINT8 reg);
 UINT32 spi_read32(UINT8 reg);
