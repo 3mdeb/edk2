@@ -6,6 +6,9 @@
 #include "utils.h"
 #include "stopwatch.h"
 #include "fch_spi_util.h"
+#include "SPIgeneric.h"
+#include "lpc.h"
+#include "pci_devs.h"
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 
@@ -18,7 +21,7 @@
 #define SPI_CNTRL1			0x0c
 #define SPI_CMD_CODE			0x45
 #define SPI_CMD_TRIGGER			0x47
-#define   SPI_CMD_TRIGGER_EXECUTE	BIT(7)
+#define   SPI_CMD_TRIGGER_EXECUTE	BIT7
 #define SPI_TX_BYTE_COUNT		0x48
 #define SPI_RX_BYTE_COUNT		0x4b
 #define SPI_STATUS			0x4c
