@@ -51,13 +51,15 @@ static VOID dump_state(CONST char *str, UINT8 phase)
 		addr += spi_read8(SPI_TX_BYTE_COUNT);
 	}
 
-	if (dump_size > 0)
-		hexdump((VOID *)addr, dump_size);
+	if (dump_size > 0) {
+    //hexdump((VOID *)addr, dump_size);
+    DEBUG((EFI_D_INFO, "%a: HEXDUMPING NOT IMPLEMENTED: %x\n", __FUNCTION__, dump_size));
+  }
 }
 
 static int wait_for_ready(VOID)
 {
-	CONST uint32_t timeout_ms = 500;
+	CONST UINT32 timeout_ms = 500;
 	struct stopwatch sw;
 
 	stopwatch_init_msecs_expire(&sw, timeout_ms);
@@ -94,9 +96,9 @@ static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 			__SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin)
 {
 	__SIZE_TYPE__ count;
-	uint8_t cmd;
-	uint8_t *bufin = din;
-	CONST uint8_t *bufout = dout;
+	UINT8 cmd;
+	UINT8 *bufin = din;
+	CONST UINT8 *bufout = dout;
 
 	if (CONFIG(SOC_AMD_COMMON_BLOCK_SPI_DEBUG))
 		DEBUG((EFI_D_INFO, "%a(%zx, %zx)\n", __FUNCTION__, bytesout,
