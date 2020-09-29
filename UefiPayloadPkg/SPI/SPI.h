@@ -6,7 +6,7 @@
 #include <Include/PiDxe.h>
 
 #define SPI_CNTRL0			0x00
-#define   SPI_BUSY			BIT(31)
+#define   SPI_BUSY			BIT31
 
 enum spi_read_mode {
 	SPI_READ_MODE_NORMAL33M = 0,
@@ -22,15 +22,15 @@ enum spi_read_mode {
  * SPI read mode is split into bits 18, 29, 30 such that [30:29:18] correspond to bits [2:0] for
  * SpiReadMode.
  */
-#define   SPI_READ_MODE_MASK		(BIT(30) | BIT(29) | BIT(18))
+#define   SPI_READ_MODE_MASK		(BIT30 | BIT29 | BIT18)
 #define   SPI_READ_MODE_UPPER_BITS(x)	((((x) >> 1) & 0x3) << 29)
 #define   SPI_READ_MODE_LOWER_BITS(x)	(((x) & 0x1) << 18)
 #define   SPI_READ_MODE(x)		(SPI_READ_MODE_UPPER_BITS(x) | \
 					 SPI_READ_MODE_LOWER_BITS(x))
-#define   SPI_ACCESS_MAC_ROM_EN		BIT(22)
+#define   SPI_ACCESS_MAC_ROM_EN		BIT22
 
 #define SPI100_ENABLE			0x20
-#define   SPI_USE_SPI100		BIT(0)
+#define   SPI_USE_SPI100		BIT0
 
 /* Use SPI_SPEED_16M-SPI_SPEED_66M below for the southbridge */
 #define SPI100_SPEED_CONFIG		0x22
@@ -54,7 +54,7 @@ enum spi100_speed {
 					 SPI_ALT_SPEED(a) | SPI_TPM_SPEED(t))
 
 #define SPI100_HOST_PREF_CONFIG		0x2c
-#define   SPI_RD4DW_EN_HOST		BIT(15)
+#define   SPI_RD4DW_EN_HOST		BIT15
 
 #define SPI_FIFO			0x80
 #define SPI_FIFO_LAST_BYTE		0xc7
