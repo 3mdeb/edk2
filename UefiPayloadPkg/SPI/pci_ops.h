@@ -3,6 +3,7 @@
 
 #include <Include/PiDxe.h>
 #include "device.h"
+#include "pci_type.h"
 
 UINT32 pci_s_read_config32(pci_devfn_t dev, UINT16 reg);
 pci_devfn_t pcidev_bdf(const struct device *dev);
