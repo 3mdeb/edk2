@@ -24,6 +24,9 @@
   lpc.c
   amdSPI.h
   amdSPI.c
+  pci_type.h
+  device.h
+  kconfig.h
 
 [Packages]
   MdePkg/MdePkg.dec

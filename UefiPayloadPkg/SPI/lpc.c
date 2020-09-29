@@ -1,6 +1,7 @@
 #include <Include/PiDxe.h>
 
 #include "lpc.h"
+#include "pci_ops.h"
 
 UINT32 *lpc_get_spibase(void)
 {
