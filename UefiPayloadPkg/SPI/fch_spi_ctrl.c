@@ -5,6 +5,7 @@
 #include "SPI.h"
 #include "utils.h"
 #include "stopwatch.h"
+#include "fch_spi_util.h"
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 
