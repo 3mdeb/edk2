@@ -3,14 +3,14 @@
 #include "mmio.h"
 #include "fch_spi_util.h"
 
-static uintptr_t spi_base;
+static unsigned long int spi_base;
 
 VOID spi_set_base(VOID *base)
 {
-	spi_base = (uintptr_t)base;
+	spi_base = (unsigned long int)base;
 }
 
-uintptr_t spi_get_bar(VOID)
+unsigned long int spi_get_bar(VOID)
 {
 	if (!spi_base)
 		spi_set_base((VOID *)lpc_get_spibase());
