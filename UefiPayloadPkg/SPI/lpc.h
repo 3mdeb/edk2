@@ -1,4 +1,5 @@
 #include <Include/PiDxe.h>
+#include "pci_type.h"
 
 #ifndef BIT
 #define BIT(x)				(1ul << (x))
