@@ -3,7 +3,7 @@
 #ifndef __AMDBLOCKS_SPI_H__
 #define __AMDBLOCKS_SPI_H__
 
-#include <types.h>
+#include <Include/PiDxe.h>
 
 #define SPI_CNTRL0			0x00
 #define   SPI_BUSY			BIT(31)
@@ -86,7 +86,7 @@ struct spi_config {
  * This function expects SoC to include soc_amd_common_config in chip SoC config and uses
  * settings from mainboard devicetree to configure speed and read mode.
  */
-void fch_spi_early_init(void);
+VOID fch_spi_early_init(VOID);
 
 /*
  * Configure SPI speed and read mode.
@@ -94,18 +94,18 @@ void fch_spi_early_init(void);
  * This function expects SoC to include soc_amd_common_config in chip SoC config and uses
  * settings from mainboard devicetree to configure speed and read mode.
  */
-void fch_spi_config_modes(void);
+VOID fch_spi_config_modes(VOID);
 
 /* Set the SPI base address variable */
-void spi_set_base(void *base);
+VOID spi_set_base(VOID *base);
 
 /* Get the SPI base address variable's value */
-uintptr_t spi_get_bar(void);
-uint8_t spi_read8(uint8_t reg);
-uint16_t spi_read16(uint8_t reg);
-uint32_t spi_read32(uint8_t reg);
-void spi_write8(uint8_t reg, uint8_t val);
-void spi_write16(uint8_t reg, uint16_t val);
-void spi_write32(uint8_t reg, uint32_t val);
+uintptr_t spi_get_bar(VOID);
+UINT8 spi_read8(UINT8 reg);
+UINT16 spi_read16(UINT8 reg);
+UINT32 spi_read32(UINT8 reg);
+VOID spi_write8(UINT8 reg, UINT8 val);
+VOID spi_write16(UINT8 reg, UINT16 val);
+VOID spi_write32(UINT8 reg, UINT32 val);
 
 #endif /* __AMDBLOCKS_SPI_H__ */
