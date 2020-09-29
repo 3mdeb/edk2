@@ -10,6 +10,7 @@
 #include "lpc.h"
 #include "pci_devs.h"
 #include "spi_flash.h"
+#include "pci_ops.h"
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 
