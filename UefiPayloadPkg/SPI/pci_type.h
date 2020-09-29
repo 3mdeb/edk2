@@ -3,8 +3,6 @@
 #ifndef DEVICE_PCI_TYPE_H
 #define DEVICE_PCI_TYPE_H
 
-#include <stdint.h>
-
 typedef UINT32 pci_devfn_t;
 
 /* Convert pci_devfn_t to offset in MMCONF space.
