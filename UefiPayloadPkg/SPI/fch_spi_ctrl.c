@@ -25,7 +25,7 @@
 #define   SPI_FIFO_RD_PTR_SHIFT		16
 #define   SPI_FIFO_RD_PTR_MASK		0x7f
 
-static void dump_state(const char *str, UINT8 phase)
+static VOID dump_state(const char *str, UINT8 phase)
 {
 	UINT8 dump_size;
 	UINT32 addr;
@@ -48,10 +48,10 @@ static void dump_state(const char *str, UINT8 phase)
 	}
 
 	if (dump_size > 0)
-		hexdump((void *)addr, dump_size);
+		hexdump((VOID *)addr, dump_size);
 }
 
-static int wait_for_ready(void)
+static int wait_for_ready(VOID)
 {
 	const uint32_t timeout_ms = 500;
 	struct stopwatch sw;
@@ -66,7 +66,7 @@ static int wait_for_ready(void)
 	return -1;
 }
 
-static int execute_command(void)
+static int execute_command(VOID)
 {
 	dump_state("Before execute", 0);
 
@@ -81,15 +81,15 @@ static int execute_command(void)
 	return 0;
 }
 
-void spi_init(void)
+VOID spi_init(VOID)
 {
 	DEBUG((EFI_D_INFO, "%a: %s: SPI BAR at 0x%08lx\n", __FUNCTION__, __func__, spi_get_bar()));
 }
 
-static int spi_ctrlr_xfer(const struct spi_slave *slave, const void *dout,
-			size_t bytesout, void *din, size_t bytesin)
+static int spi_ctrlr_xfer(const struct spi_slave *slave, const VOID *dout,
+			__SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin)
 {
-	size_t count;
+	__SIZE_TYPE__ count;
 	uint8_t cmd;
 	uint8_t *bufin = din;
 	const uint8_t *bufout = dout;
@@ -134,7 +134,7 @@ static int spi_ctrlr_xfer(const struct spi_slave *slave, const void *dout,
 }
 
 static int xfer_vectors(const struct spi_slave *slave,
-			struct spi_op vectors[], size_t count)
+			struct spi_op vectors[], __SIZE_TYPE__ count)
 {
 	return spi_flash_vector_helper(slave, vectors, count, spi_ctrlr_xfer);
 }
@@ -175,8 +175,8 @@ static int fch_spi_flash_protect(const struct spi_flash *flash, const struct reg
 {
 	int ret;
 	UINT32 reg32, rom_base, range_base;
-	size_t addr, len, gran_value, total_ranges, range;
-	bool granularity_64k = true; /* assume 64k granularity */
+	__SIZE_TYPE__ addr, len, gran_value, total_ranges, range;
+	BOOLEAN granularity_64k = TRUE; /* assume 64k granularity */
 
 	addr = region->offset;
 	len = region->size;
@@ -189,9 +189,9 @@ static int fch_spi_flash_protect(const struct spi_flash *flash, const struct reg
 
 	/* Define granularity to be used */
 	if (GRANULARITY_TEST_4k & range_base)
-		granularity_64k = false; /* use 4K granularity */
+		granularity_64k = FALSE; /* use 4K granularity */
 	if (GRANULARITY_TEST_4k & len)
-		granularity_64k = false; /* use 4K granularity */
+		granularity_64k = FALSE; /* use 4K granularity */
 
 	/* Define the first range and total number of ranges required */
 	if (granularity_64k) {
@@ -262,4 +262,4 @@ const struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {
 	},
 };
 
-const size_t spi_ctrlr_bus_map_count = ARRAY_SIZE(spi_ctrlr_bus_map);
+const __SIZE_TYPE__ spi_ctrlr_bus_map_count = ARRAY_SIZE(spi_ctrlr_bus_map);
