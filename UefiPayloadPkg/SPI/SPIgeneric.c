@@ -2,6 +2,7 @@
 
 #include <Include/PiDxe.h>
 #include "SPIgeneric.h"
+#include "own.h"
 
 UINT32 spi_claim_bus(CONST struct spi_slave *slave)
 {
