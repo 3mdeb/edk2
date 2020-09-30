@@ -2,6 +2,7 @@
 #include <Include/PiDxe.h>
 #include "mmio.h"
 #include "fch_spi_util.h"
+#include "lpc.h"
 
 static unsigned long int spi_base;
 
