@@ -6,7 +6,7 @@
 
 /* By not assigning this to CONFIG_MMCONF_BASE_ADDRESS here we
  * prevent some sub-optimal constant folding. */
-UINT8 *const pci_mmconf = (VOID *)(unsigned long int)CONFIG_MMCONF_BASE_ADDRESS;
+UINT8 *const pci_mmconf = (VOID *)(unsigned long int)0xBAADF00D; //CONFIG_MMCONF_BASE_ADDRESS;
 //extern UINT8 *const pci_mmconf;
 
 /* Using a unique datatype for MMIO writes makes the pointers to _not_
