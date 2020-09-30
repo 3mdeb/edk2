@@ -39,4 +39,10 @@ UINT32 pci_mmio_read_config32(pci_devfn_t dev, UINT16 reg)
 	return pcicfg(dev)->reg32[reg / sizeof(UINT32)];
 }
 
+static __always_inline
+void pci_mmio_write_config32(pci_devfn_t dev, uint16_t reg, uint32_t value)
+{
+	pcicfg(dev)->reg32[reg / sizeof(uint32_t)] = value;
+}
+
 #endif PCI_MMIO_CFG_H

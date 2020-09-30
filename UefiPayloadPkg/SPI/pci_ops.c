@@ -36,3 +36,15 @@ UINT32 pci_read_config32(CONST struct device *dev, UINT16 reg)
 {
 	return pci_s_read_config32(PCI_BDF(dev), reg);
 }
+
+static __attribute__ ((__always_inline__)) inline
+void pci_s_write_config32(pci_devfn_t dev, uint16_t reg, UINT32 value)
+{
+	pci_mmio_write_config32(dev, reg, value);
+}
+
+static __attribute__ ((__always_inline__)) inline
+void pci_write_config32(const struct device *dev, UINT16 reg, UINT32 val)
+{
+	pci_s_write_config32(PCI_BDF(dev), reg, val);
+}
