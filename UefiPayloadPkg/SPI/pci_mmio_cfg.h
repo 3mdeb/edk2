@@ -6,7 +6,7 @@
 
 /* By not assigning this to CONFIG_MMCONF_BASE_ADDRESS here we
  * prevent some sub-optimal constant folding. */
-UINT8 *const pci_mmconf = (VOID *)(uintptr_t)CONFIG_MMCONF_BASE_ADDRESS;
+UINT8 *const pci_mmconf = (VOID *)(unsigned long int)CONFIG_MMCONF_BASE_ADDRESS;
 //extern UINT8 *const pci_mmconf;
 
 /* Using a unique datatype for MMIO writes makes the pointers to _not_
@@ -39,10 +39,10 @@ UINT32 pci_mmio_read_config32(pci_devfn_t dev, UINT16 reg)
 	return pcicfg(dev)->reg32[reg / sizeof(UINT32)];
 }
 
-static __always_inline
-void pci_mmio_write_config32(pci_devfn_t dev, uint16_t reg, uint32_t value)
+static __attribute__ ((__always_inline__)) inline
+void pci_mmio_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
 {
-	pcicfg(dev)->reg32[reg / sizeof(uint32_t)] = value;
+	pcicfg(dev)->reg32[reg / sizeof(UINT32)] = value;
 }
 
-#endif PCI_MMIO_CFG_H
+#endif /* PCI_MMIO_CFG_H */
