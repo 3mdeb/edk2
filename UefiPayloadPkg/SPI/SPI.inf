@@ -38,7 +38,7 @@
   spi_flash.h
   spi_flash.c
   pci_ops.h
-  pci_ops.c
+  # pci_ops.c
 
 [Packages]
   MdePkg/MdePkg.dec
