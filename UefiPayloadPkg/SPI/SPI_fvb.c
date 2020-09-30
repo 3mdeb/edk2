@@ -17,14 +17,14 @@
 
 EFI_HANDLE Handle = NULL;
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
-    NULL, //FvbGetAttributes, // GetAttributes
-    NULL, //FvbSetAttributes, // SetAttributes
-    NULL, //FvbGetPhysicalAddress,  // GetPhysicalAddress
-    NULL, //FvbGetBlockSize,  // GetBlockSize
-    NULL, //FvbRead,  // Read
-    NULL, //FvbWrite, // Write
-    NULL, //FvbEraseBlocks, // EraseBlocks
-    NULL, //ParentHandle
+    FvbGetAttributes, // GetAttributes
+    FvbSetAttributes, // SetAttributes
+    FvbGetPhysicalAddress,  // GetPhysicalAddress
+    FvbGetBlockSize,  // GetBlockSize
+    FvbRead,  // Read
+    FvbWrite, // Write
+    FvbEraseBlocks, // EraseBlocks
+    NULL //ParentHandle
   };
 
 void * memset (void *dest, int ch, __SIZE_TYPE__ count)
@@ -45,11 +45,11 @@ EFI_STATUS EFIAPI SPIInitialize (
   DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
   DEBUG((EFI_D_INFO, "sizeof(unsigned int) 0x%X\n", sizeof(unsigned int)));
   DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(VOID *)));
-  Status = gBS->InstallMultipleProtocolInterfaces (
-              &Handle,
-              &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
-              NULL
-              );
+  // Status = gBS->InstallMultipleProtocolInterfaces (
+  //             &Handle,
+  //             &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
+  //             NULL
+  //             );
   if(EFI_ERROR (Status)) {
     DEBUG((EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
   } else {

@@ -31,9 +31,10 @@ union pci_bank {
 static __attribute__ ((__always_inline__)) inline
 volatile union pci_bank *pcicfg(pci_devfn_t dev)
 {
-	DEBUG((EFI_D_INFO, "%a: Access to BAADF00D!!!", __FUNCTION__));
+	/*DEBUG((EFI_D_INFO, "%a: Access to BAADF00D!!!", __FUNCTION__));
 	UINT8 *CONST pci_mmconf = (VOID *)(unsigned long int)0xBAADF00D;
-	return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
+	return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];*/
+	return NULL;
 }
 
 static __attribute__ ((__always_inline__)) inline
