@@ -15,7 +15,6 @@ unsigned long int spi_get_bar(VOID)
 {
 	if (!spi_base)
 		spi_set_base((VOID *)lpc_get_spibase());
-	ASSERT(spi_base);
 
 	return spi_base;
 }

@@ -5,6 +5,7 @@
 
 #include <Include/PiDxe.h>
 #include "endian.h"
+#include "mmio.h"
 
 static inline uint8_t read8(const void *addr)
 {
