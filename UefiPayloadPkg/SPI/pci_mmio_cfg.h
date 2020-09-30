@@ -30,8 +30,8 @@ union pci_bank {
 static __attribute__ ((__always_inline__)) inline
 volatile union pci_bank *pcicfg(pci_devfn_t dev)
 {
-	return ((VOID *)0xBAADF00D)[PCI_DEVFN_OFFSET(dev)];
-	//return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
+	UINT8 *CONST pci_mmconf = (VOID *)(unsigned long int)0xBAADF00D;
+	return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
 }
 
 static __attribute__ ((__always_inline__)) inline
