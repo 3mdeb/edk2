@@ -2,6 +2,7 @@
 #define PCI_MMIO_CFG_H
 
 #include <Include/PiDxe.h>
+#include <Include/Library/DebugLib.h>
 #include "pci_type.h"
 
 /* By not assigning this to CONFIG_MMCONF_BASE_ADDRESS here we
@@ -30,6 +31,7 @@ union pci_bank {
 static __attribute__ ((__always_inline__)) inline
 volatile union pci_bank *pcicfg(pci_devfn_t dev)
 {
+	DEBUG((EFI_D_INFO, "%a: Access to BAADF00D!!!", __FUNCTION__));
 	UINT8 *CONST pci_mmconf = (VOID *)(unsigned long int)0xBAADF00D;
 	return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
 }
