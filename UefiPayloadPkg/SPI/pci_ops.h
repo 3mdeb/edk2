@@ -28,7 +28,8 @@ pci_devfn_t pcidev_bdf(CONST struct device *dev)
 __attribute__ ((noreturn))
 VOID pcidev_die(VOID)
 {
-	die("PCI: dev is NULL!\n");
+	//die("PCI: dev is NULL!\n");
+  DEBUG((EFI_D_INFO, "%a: PCI: dev is NULL!", __FUNCTION__));
 	while(1);
 }
 
