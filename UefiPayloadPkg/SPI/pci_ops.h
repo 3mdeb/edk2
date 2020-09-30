@@ -37,7 +37,7 @@ static __attribute__ ((__always_inline__)) inline
 pci_devfn_t pcidev_assert(CONST struct device *dev)
 {
 	if (!dev) {
-    DEBUG((EFI_D_INFO, "%a: PCI: dev is NULL!", __FUNCTION__));
+    DEBUG((EFI_D_INFO, "%a: PCI: dev is NULL!!!", __FUNCTION__));
 	  while(1);
   }
 	return pcidev_bdf(dev);
