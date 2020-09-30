@@ -15,15 +15,27 @@
 #include <Library/MemoryAllocationLib.h>
 #include "SPIgeneric.h"
 
+
+
+#include <Library/UefiLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/DxeServicesTableLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/PcdLib.h>
+#include <Library/SMMStoreLib.h>
+
+#include "BlSMMStoreDxe.h"
+
 EFI_HANDLE Handle = NULL;
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
-    FvbGetAttributes, // GetAttributes
-    FvbSetAttributes, // SetAttributes
-    FvbGetPhysicalAddress,  // GetPhysicalAddress
-    FvbGetBlockSize,  // GetBlockSize
-    FvbRead,  // Read
-    FvbWrite, // Write
-    FvbEraseBlocks, // EraseBlocks
+    NULL,// FvbGetAttributes, // GetAttributes
+    NULL,// FvbSetAttributes, // SetAttributes
+    NULL,// FvbGetPhysicalAddress,  // GetPhysicalAddress
+    NULL,// FvbGetBlockSize,  // GetBlockSize
+    NULL,// FvbRead,  // Read
+    NULL,// FvbWrite, // Write
+    NULL,// FvbEraseBlocks, // EraseBlocks
     NULL //ParentHandle
   };
 
@@ -43,13 +55,14 @@ EFI_STATUS EFIAPI SPIInitialize (
   EFI_STATUS Status;
   struct spi_slave slave;
   DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
+
   DEBUG((EFI_D_INFO, "sizeof(unsigned int) 0x%X\n", sizeof(unsigned int)));
   DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(VOID *)));
-  // Status = gBS->InstallMultipleProtocolInterfaces (
-  //             &Handle,
-  //             &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
-  //             NULL
-  //             );
+  Status = gBS->InstallMultipleProtocolInterfaces (
+              &Handle,
+              &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
+              NULL
+              );
   if(EFI_ERROR (Status)) {
     DEBUG((EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
   } else {

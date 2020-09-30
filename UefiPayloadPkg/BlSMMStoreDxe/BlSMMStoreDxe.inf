@@ -31,7 +31,6 @@
   BaseLib
   DebugLib
   HobLib
-  SmmStoreLib
   UefiLib
   UefiDriverEntryPoint
   UefiBootServicesTableLib
