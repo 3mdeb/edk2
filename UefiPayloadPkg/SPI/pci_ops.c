@@ -1,10 +1,10 @@
-#include <Include/PiDxe.h>
-#include <Include/Library/DebugLib.h>
+// #include <Include/PiDxe.h>
+// #include <Include/Library/DebugLib.h>
 
-#include "pci_ops.h"
-#include "pci_type.h"
-#include "device.h"
-#include "pci_mmio_cfg.h"
+// #include "pci_ops.h"
+// #include "pci_type.h"
+// #include "device.h"
+// #include "pci_mmio_cfg.h"
 
 // static __attribute__ ((__always_inline__)) inline
 // UINT32 pci_s_read_config32(pci_devfn_t dev, UINT16 reg)
