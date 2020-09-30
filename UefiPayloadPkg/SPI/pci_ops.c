@@ -13,7 +13,7 @@ UINT32 pci_s_read_config32(pci_devfn_t dev, UINT16 reg)
 }
 
 static __attribute__ ((__always_inline__)) inline
-pci_devfn_t pcidev_bdf(const struct device *dev)
+pci_devfn_t pcidev_bdf(CONST struct device *dev)
 {
 	return (dev->path.pci.devfn << 12) | (dev->bus->secondary << 20);
 }
@@ -40,13 +40,13 @@ UINT32 pci_read_config32(CONST struct device *dev, UINT16 reg)
 }
 
 static __attribute__ ((__always_inline__)) inline
-void pci_s_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
+VOID pci_s_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
 {
 	pci_mmio_write_config32(dev, reg, value);
 }
 
 static __attribute__ ((__always_inline__)) inline
-void pci_write_config32(const struct device *dev, UINT16 reg, UINT32 val)
+VOID pci_write_config32(CONST struct device *dev, UINT16 reg, UINT32 val)
 {
 	pci_s_write_config32(PCI_BDF(dev), reg, val);
 }
