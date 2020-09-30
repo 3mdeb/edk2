@@ -158,14 +158,14 @@ static int protect_a_range(UINT32 value)
 
 	/* find a free protection register */
 	for (n = 0; n < MAX_ROM_PROTECT_RANGES; n++) {
-		reg32 = pci_read_config32(SOC_LPC_DEV, ROM_PROTECT_RANGE_REG(n));
+		reg32 = pci_read_config32((struct device *)((VOID *)SOC_LPC_DEV), ROM_PROTECT_RANGE_REG(n));
 		if (!reg32)
 			break;
 	}
 	if (n == MAX_ROM_PROTECT_RANGES)
 		return -1; /* no free range */
 
-	pci_write_config32(SOC_LPC_DEV, ROM_PROTECT_RANGE_REG(n), value);
+	pci_write_config32((struct device *)((VOID *)SOC_LPC_DEV), ROM_PROTECT_RANGE_REG(n), value);
 	return 0;
 }
 
@@ -193,7 +193,7 @@ static int fch_spi_flash_protect(CONST struct spi_flash *flash, CONST struct reg
 	addr = region->offset;
 	len = region->size;
 
-	reg32 = pci_read_config32(SOC_LPC_DEV, ROM_ADDRESS_RANGE2_START);
+	reg32 = pci_read_config32((struct device *)((VOID *)SOC_LPC_DEV), ROM_ADDRESS_RANGE2_START);
 	rom_base = WORD_TO_DWORD_UPPER(reg32);
 	if (addr < rom_base)
 		return -1;
@@ -251,7 +251,7 @@ static int fch_spi_flash_protect(CONST struct spi_flash *flash, CONST struct reg
 	}
 
 	/* Final steps to protect region */
-	pci_write_config32(SOC_LPC_DEV, SPI_RESTRICTED_CMD1, reg32);
+	pci_write_config32((struct device *)((VOID *)SOC_LPC_DEV), SPI_RESTRICTED_CMD1, reg32);
 	reg32 = spi_read32(SPI_CNTRL0);
 	reg32 &= ~SPI_ACCESS_MAC_ROM_EN;
 	spi_write32(SPI_CNTRL0, reg32);
