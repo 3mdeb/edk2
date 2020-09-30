@@ -7,32 +7,32 @@
 #include "endian.h"
 #include "mmio.h"
 
-static inline uint8_t read8(const void *addr)
+static inline UINT8 read8(CONST VOID *addr)
 {
 	return *(volatile uint8_t *)addr;
 }
 
-static inline uint16_t read16(const void *addr)
+static inline uint16_t read16(CONST VOID *addr)
 {
 	return *(volatile uint16_t *)addr;
 }
 
-static inline uint32_t read32(const void *addr)
+static inline uint32_t read32(CONST VOID *addr)
 {
 	return *(volatile uint32_t *)addr;
 }
 
-static inline void write8(void *addr, uint8_t val)
+static inline VOID write8(VOID *addr, uint8_t val)
 {
 	*(volatile uint8_t *)addr = val;
 }
 
-static inline void write16(void *addr, uint16_t val)
+static inline VOID write16(VOID *addr, uint16_t val)
 {
 	*(volatile uint16_t *)addr = val;
 }
 
-static inline void write32(void *addr, uint32_t val)
+static inline VOID write32(VOID *addr, uint32_t val)
 {
 	*(volatile uint32_t *)addr = val;
 }
