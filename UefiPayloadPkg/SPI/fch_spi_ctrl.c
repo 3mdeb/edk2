@@ -94,6 +94,7 @@ static int execute_command(VOID)
 
 VOID spi_init(VOID)
 {
+	DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
 	DEBUG((EFI_D_INFO, "%a: %s: SPI BAR at 0x%08lx\n", __FUNCTION__, __func__, spi_get_bar()));
 }
 
@@ -260,6 +261,7 @@ static int fch_spi_flash_protect(CONST struct spi_flash *flash, CONST struct reg
 }
 
 static CONST struct spi_ctrlr fch_spi_flash_ctrlr = {
+	.xfer = spi_ctrlr_xfer,
 	.xfer_vector = xfer_vectors,
 	.max_xfer_size = SPI_FIFO_DEPTH,
 	.flags = SPI_CNTRLR_DEDUCT_CMD_LEN | SPI_CNTRLR_DEDUCT_OPCODE_LEN,

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
 #include <Include/PiDxe.h>
+#include <Include/Library/DebugLib.h>
 #include "SPIgeneric.h"
 #include "own.h"
 
@@ -68,8 +69,12 @@ UINT32 spi_xfer(CONST struct spi_slave *slave, CONST void *dout, __SIZE_TYPE__ b
 {
 	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
 
-	if (ctrlr && ctrlr->xfer)
+	if (ctrlr && ctrlr->xfer) {
+		DEBUG((EFI_D_INFO, "xfer available\n"));
 		return ctrlr->xfer(slave, dout, bytesout, din, bytesin);
+	} else {
+		DEBUG((EFI_D_INFO, "xfer failed\n"));
+	}
 
 	return -1;
 }

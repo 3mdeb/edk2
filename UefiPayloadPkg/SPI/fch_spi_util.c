@@ -4,15 +4,21 @@
 #include "fch_spi_util.h"
 #include "lpc.h"
 
-static unsigned long int spi_base;
+#include <Include/Library/DebugLib.h>
+#include <Include/PiDxe.h>
+#include "fch_spi_ctrl.h"
+
+static unsigned long int spi_base = 0xBAADF00D;
 
 VOID spi_set_base(VOID *base)
 {
+	DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
 	spi_base = (unsigned long int)base;
 }
 
 unsigned long int spi_get_bar(VOID)
 {
+	DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
 	if (!spi_base)
 		spi_set_base((VOID *)lpc_get_spibase());
 

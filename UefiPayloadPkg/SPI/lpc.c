@@ -6,6 +6,7 @@
 
 unsigned long int lpc_get_spibase(void)
 {
+	DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
 	UINT32 base;
 
 	base = pci_read_config32((struct device *)_LPCB_DEV, SPIROM_BASE_ADDRESS_REGISTER);
