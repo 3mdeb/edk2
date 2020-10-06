@@ -8,7 +8,7 @@
 #include <Include/PiDxe.h>
 #include "fch_spi_ctrl.h"
 
-static unsigned long int spi_base = 0xBAADF00D;
+static unsigned long int spi_base = 0xF8000000;
 
 VOID spi_set_base(VOID *base)
 {

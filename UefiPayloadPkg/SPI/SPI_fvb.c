@@ -13,29 +13,26 @@
 #include <Guid/SMMSTOREInfoGuid.h>
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include "SPIgeneric.h"
-#include "fch_spi_ctrl.h"
-
 #include <Library/UefiLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/MemoryAllocationLib.h>
 #include <Library/DxeServicesTableLib.h>
-#include <Library/UefiBootServicesTableLib.h>
 #include <Library/PcdLib.h>
 #include <Library/SMMStoreLib.h>
-
+#include "SPIgeneric.h"
+#include "fch_spi_ctrl.h"
 #include "BlSMMStoreDxe.h"
+#include "Fvb.h"
 
 EFI_HANDLE Handle = NULL;
 EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
-    NULL,// FvbGetAttributes, // GetAttributes
-    NULL,// FvbSetAttributes, // SetAttributes
-    NULL,// FvbGetPhysicalAddress,  // GetPhysicalAddress
-    NULL,// FvbGetBlockSize,  // GetBlockSize
-    NULL,// FvbRead,  // Read
-    NULL,// FvbWrite, // Write
-    NULL,// FvbEraseBlocks, // EraseBlocks
-    NULL //ParentHandle
+    FvbGetAttributes, // GetAttributes
+    FvbSetAttributes, // SetAttributes
+    FvbGetPhysicalAddress,  // GetPhysicalAddress
+    FvbGetBlockSize,  // GetBlockSize
+    FvbRead, // Read
+    FvbWrite,// FvbWrite, // Write
+    FvbEraseBlocks, // EraseBlocks
+    NULL
   };
 
 void * memset (void *dest, int ch, __SIZE_TYPE__ count)
@@ -51,23 +48,22 @@ EFI_STATUS EFIAPI SPIInitialize (
   IN EFI_SYSTEM_TABLE                  *SystemTable
   )
 {
-  // EFI_STATUS Status;
+  EFI_STATUS Status;
   struct spi_slave slave;
   DEBUG((EFI_D_INFO, "SPI IS HERE 2\n"));
 
   DEBUG((EFI_D_INFO, "sizeof(unsigned int) 0x%X\n", sizeof(unsigned int)));
   DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(VOID *)));
-  // Status = gBS->InstallMultipleProtocolInterfaces (
-  //             &Handle,
-  //             &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
-  //             NULL
-  //             );
-  // DEBUG((EFI_D_INFO, "\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n.\n."));
-  // if(EFI_ERROR (Status)) {
-  //   DEBUG((EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
-  // } else {
-  //   DEBUG((EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
-  // }
+  Status = gBS->InstallMultipleProtocolInterfaces (
+              &Handle,
+              &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
+              NULL
+              );
+  if(EFI_ERROR (Status)) {
+    DEBUG((EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
+  } else {
+    DEBUG((EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
+  }
   DEBUG((EFI_D_INFO, "calling spi_init()\n"));
   spi_init();
   DEBUG((EFI_D_INFO, "spi_init() was called\n"));
@@ -89,13 +85,6 @@ EFI_STATUS EFIAPI SPIInitialize (
  *
  *   Returns: 0 on success, not 0 on failure
  */
-// struct spi_op {
-// 	const VOID *dout;
-// 	__SIZE_TYPE__ bytesout;
-// 	VOID *din;
-// 	__SIZE_TYPE__ bytesin;
-// 	enum spi_op_status status;
-// };
   struct spi_op vector = {
     .dout = "asdf",
     .bytesout = 4,
@@ -103,7 +92,5 @@ EFI_STATUS EFIAPI SPIInitialize (
   char fill[255];
   DEBUG((EFI_D_INFO, "spi_xfer() returned 0x%X\n", spi_xfer(&slave, "asdf", 4, &fill, 0)));
   DEBUG((EFI_D_INFO, "spi_xfer_vectors() returned 0x%X\n", spi_xfer_vector(&slave, &vector, 1)));
-  // int spi_xfer_vector(const struct spi_slave *slave,
-	// 	struct spi_op vectors[], __SIZE_TYPE__ count)
   return EFI_SUCCESS;
 }
