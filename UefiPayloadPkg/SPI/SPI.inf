@@ -35,12 +35,12 @@
   mmio.c
   stopwatch.h
   pci_devs.h
-  spi_flash.h
-  spi_flash.c
   pci_ops.h
   # pci_ops.c
   Fvb.h
   Fvb.c
+  spi_flash_internal.h
+  spi_flash_internal.c
 
 [Packages]
   MdePkg/MdePkg.dec

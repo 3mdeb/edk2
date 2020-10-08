@@ -5,10 +5,6 @@
  * based on winbond.c
  */
 
-#include <console/console.h>
-#include <commonlib/helpers.h>
-#include <spi_flash.h>
-#include <spi-generic.h>
 
 #include "spi_flash_internal.h"
 

@@ -1,6 +1,9 @@
 #include <Include/PiDxe.h>
-#include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
+#include "spi_winbond.h"
+#include "spi_flash_internal.h"
+#include "SPIgeneric.h"
+#include "SPI_fvb.h"
 
 union status_reg1 {
 	UINT8 u;
@@ -204,14 +207,14 @@ static const struct spi_flash_part_id flash_table[] = {
  * Convert BPx, TB and CMP to a region.
  * SEC (if available) must be zero.
  */
-static void winbond_bpbits_to_region(const size_t granularity,
+static void winbond_bpbits_to_region(const __SIZE_TYPE__ granularity,
 				     const UINT8 bp,
-				     bool tb,
-				     const bool cmp,
-				     const size_t flash_size,
+				     BOOLEAN tb,
+				     const BOOLEAN cmp,
+				     const __SIZE_TYPE__ flash_size,
 				     struct region *out)
 {
-	size_t protected_size =
+	__SIZE_TYPE__ protected_size =
 		MIN(bp ? granularity << (bp - 1) : 0, flash_size);
 
 	if (cmp) {
@@ -247,7 +250,7 @@ static int winbond_get_write_protection(const struct spi_flash *flash,
 	if (!params)
 		return -1;
 
-	const size_t granularity = (1 << params->protection_granularity_shift);
+	const __SIZE_TYPE__ granularity = (1 << params->protection_granularity_shift);
 
 	union status_reg1 reg1 = { .u = 0 };
 
@@ -285,9 +288,8 @@ static int winbond_get_write_protection(const struct spi_flash *flash,
 
 		return 0;
 	}
-
-	printk(BIOS_DEBUG, "WINBOND: flash protected range 0x%08zx-0x%08zx\n",
-	       region_offset(&wp_region), region_end(&wp_region));
+	DEBUG((EFI_D_INFO, "%a WINBOND: flash protected range 0x%08zx-0x%08zx\n",
+	       __FUNCTION__, region_offset(&wp_region), region_end(&wp_region)));
 
 	return region_is_subregion(&wp_region, region);
 }
@@ -306,12 +308,12 @@ static int winbond_get_write_protection(const struct spi_flash *flash,
 static int winbond_flash_cmd_status(const struct spi_flash *flash,
 				    const UINT16 mask,
 				    const UINT16 val,
-				    const bool non_volatile)
+				    const BOOLEAN non_volatile)
 {
 	struct {
 		UINT8 cmd;
 		UINT16 sreg;
-	} __packed cmdbuf;
+	} __attribute__((packed)) cmdbuf;
 	UINT8 reg8;
 	int ret;
 
@@ -375,13 +377,14 @@ static int winbond_flash_cmd_status(const struct spi_flash *flash,
 
 	cmdbuf.sreg |= reg8 << 8;
 
-	printk(BIOS_DEBUG, "WINBOND: SREG=%02x SREG2=%02x\n",
+		DEBUG((EFI_D_INFO, "%a WINBOND: SREG=%02x SREG2=%02x\n",
+				 __FUNCTION__,
 	       cmdbuf.sreg & 0xff,
-	       cmdbuf.sreg >> 8);
+	       cmdbuf.sreg >> 8));
 
 	/* Compare against expected result */
 	if ((val & mask) != (cmdbuf.sreg & mask)) {
-		DEBUG(((EFI_D_INFO, "%a WINBOND: SREG is locked!\n", __FUNCTION__));
+		DEBUG((EFI_D_INFO, "%a WINBOND: SREG is locked!\n", __FUNCTION__));
 		ret = -1;
 	}
 
@@ -509,12 +512,12 @@ winbond_set_write_protection(const struct spi_flash *flash,
 		mask.reg2.srp1 = 1;
 	}
 
-	ret = winbond_flash_cmd_status(flash, mask.u, val.u, true);
+	ret = winbond_flash_cmd_status(flash, mask.u, val.u, TRUE);
 	if (ret)
 		return ret;
-
-	printk(BIOS_DEBUG, "WINBOND: write-protection set to range "
-	       "0x%08zx-0x%08zx\n", region_offset(region), region_end(region));
+	DEBUG((EFI_D_INFO, "%a WINBOND: write-protection set to range "
+	       "0x%08zx-0x%08zx\n", __FUNCTION__,
+				 region_offset(region), region_end(region)));
 
 	return ret;
 }

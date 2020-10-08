@@ -12,6 +12,7 @@
 #include "pci_type.h"
 #include "device.h"
 #include "pci_mmio_cfg.h"
+#include "fch_spi_util.h"
 
 static __attribute__ ((__always_inline__)) inline
 UINT32 pci_s_read_config32(pci_devfn_t dev, UINT16 reg)

@@ -1,5 +1,6 @@
 #include "BlSMMStoreDxe.h"
 #include "Fvb.h"
+#include "SPI_fvb.h"
 
 
 // STATIC EFI_EVENT mFvbVirtualAddrChangeEvent;

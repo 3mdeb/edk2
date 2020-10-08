@@ -82,6 +82,34 @@ struct intel_swseq_spi_config {
 	struct intel_spi_op ops[8];
 };
 
+struct spi_flash_protection_ops {
+	/*
+	 * Returns 1 if the whole region is software write protected.
+	 * Hardware write protection mechanism aren't accounted.
+	 * If the write protection could be changed, due to unlocked status
+	 * register for example, 0 should be returned.
+	 * Returns 0 on success.
+	 */
+	int (*get_write)(const struct spi_flash *flash,
+				    const struct region *region);
+	/*
+	 * Enable the status register write protection, if supported on the
+	 * requested region, and optionally enable status register lock-down.
+	 * Returns 0 if the whole region was software write protected.
+	 * Hardware write protection mechanism aren't accounted.
+	 * If the status register is locked and the requested configuration
+	 * doesn't match the selected one, return an error.
+	 * Only a single region is supported !
+	 *
+	 * @return 0 on success
+	 */
+	int
+	(*set_write)(const struct spi_flash *flash,
+				const struct region *region,
+				const enum spi_flash_status_reg_lockdown mode);
+
+};
+
 void * memset (void *dest, int ch, __SIZE_TYPE__ count);
 
 //

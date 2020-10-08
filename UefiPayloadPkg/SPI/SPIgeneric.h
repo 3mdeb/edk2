@@ -200,6 +200,25 @@ struct spi_ctrlr_buses {
 	UINT32 bus_end;
 };
 
+/*
+ * SPI write protection is enforced by locking the status register.
+ * The following modes are known. It depends on the flash chip if the
+ * mode is actually supported.
+ *
+ * PRESERVE : Keep the previous status register lock-down setting (noop)
+ * NONE     : Status register isn't locked
+ * PIN      : Status register is locked as long as the ~WP pin is active
+ * REBOOT   : Status register is locked until power failure
+ * PERMANENT: Status register is permanently locked
+ */
+enum spi_flash_status_reg_lockdown {
+	SPI_WRITE_PROTECTION_PRESERVE = -1,
+	SPI_WRITE_PROTECTION_NONE = 0,
+	SPI_WRITE_PROTECTION_PIN,
+	SPI_WRITE_PROTECTION_REBOOT,
+	SPI_WRITE_PROTECTION_PERMANENT
+};
+
 /* Mapping of SPI buses to controllers - should be defined by platform. */
 extern const struct spi_ctrlr_buses spi_ctrlr_bus_map[];
 extern const __SIZE_TYPE__ spi_ctrlr_bus_map_count;

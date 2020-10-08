@@ -7,4 +7,6 @@
 #define ALIGN_DOWN(x,a)         ((x) & ~((typeof(x))(a)-1UL))
 #define IS_ALIGNED(x,a)         (((x) & ((typeof(x))(a)-1UL)) == 0)
 
+#define KiB (1<<10)
+
 #endif /* UTILS_H */

@@ -7,6 +7,9 @@
 #ifndef SPI_FLASH_INTERNAL_H
 #define SPI_FLASH_INTERNAL_H
 
+#include <Include/PiDxe.h>
+#include "SPI_fvb.h"
+
 /* Common commands */
 #define CMD_READ_ID			0x9f
 
@@ -25,18 +28,18 @@
 #define STATUS_WIP			0x01
 
 /* Send a single-byte command to the device and read the response */
-int spi_flash_cmd(const struct spi_slave *spi, u8 cmd, void *response, size_t len);
+int spi_flash_cmd(const struct spi_slave *spi, UINT8 cmd, VOID *response, __SIZE_TYPE__ len);
 
 /*
  * Send a multi-byte command to the device followed by (optional)
  * data. Used for programming the flash array, etc.
  */
-int spi_flash_cmd_write(const struct spi_slave *spi, const u8 *cmd,
-			size_t cmd_len, const void *data, size_t data_len);
+int spi_flash_cmd_write(const struct spi_slave *spi, const UINT8 *cmd,
+			__SIZE_TYPE__ cmd_len, const VOID *data, __SIZE_TYPE__ data_len);
 
 /* Send a command to the device and wait for some bit to clear itself. */
 int spi_flash_cmd_poll_bit(const struct spi_flash *flash, unsigned long timeout,
-			   u8 cmd, u8 poll_bit);
+			   UINT8 cmd, UINT8 poll_bit);
 
 /*
  * Send the read status command to the device and wait for the wip
@@ -45,20 +48,33 @@ int spi_flash_cmd_poll_bit(const struct spi_flash *flash, unsigned long timeout,
 int spi_flash_cmd_wait_ready(const struct spi_flash *flash, unsigned long timeout);
 
 /* Erase sectors. */
-int spi_flash_cmd_erase(const struct spi_flash *flash, u32 offset, size_t len);
+int spi_flash_cmd_erase(const struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
 
 /* Read status register. */
-int spi_flash_cmd_status(const struct spi_flash *flash, u8 *reg);
+int spi_flash_cmd_status(const struct spi_flash *flash, UINT8 *reg);
 
 /* Write to flash utilizing page program semantics. */
-int spi_flash_cmd_write_page_program(const struct spi_flash *flash, u32 offset,
-				size_t len, const void *buf);
+int spi_flash_cmd_write_page_program(const struct spi_flash *flash, UINT32 offset,
+				__SIZE_TYPE__ len, const VOID *buf);
 
 /* Read len bytes into buf at offset. */
-int spi_flash_cmd_read(const struct spi_flash *flash, u32 offset, size_t len, void *buf);
+int spi_flash_cmd_read(const struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len, VOID *buf);
 
 /* Release from deep sleep an provide alternative rdid information. */
-int stmicro_release_deep_sleep_identify(const struct spi_slave *spi, u8 *idcode);
+int stmicro_release_deep_sleep_identify(const struct spi_slave *spi, UINT8 *idcode);
+
+int spi_flash_volatile_group_begin(const struct spi_flash *flash);
+int spi_flash_volatile_group_end(const struct spi_flash *flash);
+// int region_is_subregion(const struct region *p, const struct region *c);
+int chipset_volatile_group_begin(const struct spi_flash *flash);
+int chipset_volatile_group_end(const struct spi_flash *flash);
+// inline __SIZE_TYPE__ region_offset(const struct region *r);
+// inline __SIZE_TYPE__ region_end(const struct region *r);
+// inline __SIZE_TYPE__ region_sz(const struct region *r);
+int spi_flash_vector_helper(const struct spi_slave *slave,
+	struct spi_op vectors[], __SIZE_TYPE__ count,
+	int (*func)(const struct spi_slave *slave, const VOID *dout,
+		    __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin));
 
 struct spi_flash_part_id {
 	/* rdid command constructs 2x 16-bit id using the following method
@@ -66,21 +82,21 @@ struct spi_flash_part_id {
 	 *    id[0] = (id[1] << 8) | id[2]
 	 *    id[1] = (id[3] << 8) | id[4]
 	 */
-	uint16_t id[2];
+	UINT16 id[2];
 	/* Log based 2 total number of sectors. */
-	uint16_t nr_sectors_shift: 4;
-	uint16_t fast_read_dual_output_support : 1;
-	uint16_t _reserved_for_flags: 3;
+	UINT16 nr_sectors_shift: 4;
+	UINT16 fast_read_dual_output_support : 1;
+	UINT16 _reserved_for_flags: 3;
 	/* Block protection. Currently used by Winbond. */
-	uint16_t protection_granularity_shift : 5;
-	uint16_t bp_bits : 3;
+	UINT16 protection_granularity_shift : 5;
+	UINT16 bp_bits : 3;
 };
 
 struct spi_flash_ops_descriptor {
-	uint8_t erase_cmd; /* Sector Erase */
-	uint8_t status_cmd; /* Read Status Register */
-	uint8_t pp_cmd; /* Page program command, if supported. */
-	uint8_t wren_cmd; /* Write Enable command. */
+	UINT8 erase_cmd; /* Sector Erase */
+	UINT8 status_cmd; /* Read Status Register */
+	UINT8 pp_cmd; /* Page program command, if supported. */
+	UINT8 wren_cmd; /* Write Enable command. */
 	struct spi_flash_ops ops;
 };
 
@@ -88,13 +104,13 @@ struct spi_flash_ops_descriptor {
  * vendor. One can implement multiple sets from a single vendor by having
  * separate objects. */
 struct spi_flash_vendor_info {
-	uint8_t id;
-	uint8_t page_size_shift : 4; /* if page programming oriented. */
+	UINT8 id;
+	UINT8 page_size_shift : 4; /* if page programming oriented. */
 	/* Log based 2 sector size */
-	uint8_t sector_size_kib_shift : 4;
-	uint16_t nr_part_ids;
+	UINT8 sector_size_kib_shift : 4;
+	UINT16 nr_part_ids;
 	const struct spi_flash_part_id *ids;
-	uint16_t match_id_mask[2]; /* matching bytes of the id for this set*/
+	UINT16 match_id_mask[2]; /* matching bytes of the id for this set*/
 	const struct spi_flash_ops_descriptor *desc;
 	const struct spi_flash_protection_ops *prot_ops;
 	/* Returns 0 on success. !0 otherwise. */
