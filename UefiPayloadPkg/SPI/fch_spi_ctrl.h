@@ -10,6 +10,13 @@
 #include "fch_spi_util.h"
 #include "SPIgeneric.h"
 
+union pci_bank {
+	UINT8 reg8[4096];
+	UINT16 reg16[4096 / sizeof(UINT16)];
+	UINT32 reg32[4096 / sizeof(UINT32)];
+};
+
+union pci_bank *pcicfg(pci_devfn_t dev);
 VOID dump_state(CONST char *str, UINT8 phase);
 int wait_for_ready(VOID);
 int execute_command(VOID);

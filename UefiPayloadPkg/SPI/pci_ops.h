@@ -13,6 +13,19 @@
 #include "device.h"
 #include "pci_mmio_cfg.h"
 #include "fch_spi_util.h"
+#include "fch_spi_ctrl.h"
+
+static __attribute__ ((__always_inline__)) inline
+UINT32 pci_mmio_read_config32(pci_devfn_t dev, UINT16 reg)
+{
+	return pcicfg(dev)->reg32[reg / sizeof(UINT32)];
+}
+
+static __attribute__ ((__always_inline__)) inline
+void pci_mmio_write_config32(pci_devfn_t dev, UINT16 reg, UINT32 value)
+{
+	pcicfg(dev)->reg32[reg / sizeof(UINT32)] = value;
+}
 
 static __attribute__ ((__always_inline__)) inline
 UINT32 pci_s_read_config32(pci_devfn_t dev, UINT16 reg)
@@ -39,7 +52,6 @@ pci_devfn_t pcidev_assert(CONST struct device *dev)
 {
 	if (!dev) {
     DEBUG((EFI_D_INFO, "%a: PCI: dev is NULL!", __FUNCTION__));
-	  while(1);
   }
 	return pcidev_bdf(dev);
 }
@@ -47,7 +59,9 @@ pci_devfn_t pcidev_assert(CONST struct device *dev)
 static __attribute__ ((__always_inline__)) inline
 UINT32 pci_read_config32(CONST struct device *dev, UINT16 reg)
 {
-	return pci_s_read_config32(PCI_BDF(dev), reg);
+	DEBUG((EFI_D_INFO, "%a: PCI_BDF = 0x%X\n", __FUNCTION__, PCI_BDF(dev)));
+	return pci_s_read_config32(PCI_DEV(0x00, 0x14, 0x03), reg);
+	//return pci_s_read_config32(PCI_BDF(dev), reg);
 }
 
 static __attribute__ ((__always_inline__)) inline

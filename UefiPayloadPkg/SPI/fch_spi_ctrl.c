@@ -34,7 +34,7 @@
 #define   SPI_FIFO_RD_PTR_SHIFT		16
 #define   SPI_FIFO_RD_PTR_MASK		0x7f
 
-static VOID dump_state(CONST char *str, UINT8 phase)
+VOID dump_state(CONST char *str, UINT8 phase)
 {
 	UINT8 dump_size;
 	UINT32 addr;
@@ -62,7 +62,7 @@ static VOID dump_state(CONST char *str, UINT8 phase)
   }
 }
 
-static int wait_for_ready(VOID)
+int wait_for_ready(VOID)
 {
 	CONST UINT32 timeout_ms = 500;
 	struct stopwatch sw;
@@ -77,7 +77,7 @@ static int wait_for_ready(VOID)
 	return -1;
 }
 
-static int execute_command(VOID)
+int execute_command(VOID)
 {
 	dump_state("Before execute", 0);
 
@@ -98,7 +98,7 @@ VOID spi_init(VOID)
 	DEBUG((EFI_D_INFO, "%a: %s: SPI BAR at 0x%08lx\n", __FUNCTION__, __func__, spi_get_bar()));
 }
 
-static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
+int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 			__SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin)
 {
 	__SIZE_TYPE__ count;
@@ -146,13 +146,13 @@ static int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 	return 0;
 }
 
-static int xfer_vectors(CONST struct spi_slave *slave,
+int xfer_vectors(CONST struct spi_slave *slave,
 			struct spi_op vectors[], __SIZE_TYPE__ count)
 {
 	return spi_flash_vector_helper(slave, vectors, count, spi_ctrlr_xfer);
 }
 
-static int protect_a_range(UINT32 value)
+int protect_a_range(UINT32 value)
 {
 	UINT32 reg32;
 	UINT8 n;
@@ -183,7 +183,7 @@ static int protect_a_range(UINT32 value)
  * and second region is read protection, it's best to define first region as read and write
  * protection.
  */
-static int fch_spi_flash_protect(CONST struct spi_flash *flash, CONST struct region *region,
+int fch_spi_flash_protect(CONST struct spi_flash *flash, CONST struct region *region,
 				 CONST enum ctrlr_prot_type type)
 {
 	int ret;
@@ -260,7 +260,7 @@ static int fch_spi_flash_protect(CONST struct spi_flash *flash, CONST struct reg
 	return 0;
 }
 
-static CONST struct spi_ctrlr fch_spi_flash_ctrlr = {
+CONST struct spi_ctrlr fch_spi_flash_ctrlr = {
 	.xfer = spi_ctrlr_xfer,
 	.xfer_vector = xfer_vectors,
 	.max_xfer_size = SPI_FIFO_DEPTH,
