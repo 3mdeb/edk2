@@ -48,30 +48,35 @@ EFI_STATUS EFIAPI SPIInitialize (
   IN EFI_SYSTEM_TABLE                  *SystemTable
   )
 {
-  // EFI_STATUS Status;
+  EFI_STATUS Status;
   struct spi_slave slave;
   DEBUG((EFI_D_INFO, "SPI IS HERE 2\n"));
 
   DEBUG((EFI_D_INFO, "sizeof(unsigned int) 0x%X\n", sizeof(unsigned int)));
   DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(VOID *)));
-  // Status = gBS->InstallMultipleProtocolInterfaces (
-  //             &Handle,
-  //             &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
-  //             NULL
-  //             );
-  // if(EFI_ERROR (Status)) {
-  //   DEBUG((EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
-  // } else {
-  //   DEBUG((EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
-  // }
+  Status = gBS->InstallMultipleProtocolInterfaces (
+              &Handle,
+              &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
+              NULL
+              );
+  if(EFI_ERROR (Status)) {
+    DEBUG((EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
+  } else {
+    DEBUG((EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
+  }
   DEBUG((EFI_D_INFO, "calling spi_init()\n"));
   spi_init();
   DEBUG((EFI_D_INFO, "spi_init() was called\n"));
   DEBUG((EFI_D_INFO, "spi_setup_slave() returned 0x%X\n", spi_setup_slave(0, 0, &slave)));
   DEBUG((EFI_D_INFO, "0x%X\n", slave.ctrlr->xfer));
-  char fill[255];
+  unsigned char fill[255];
   DEBUG((EFI_D_INFO, "spi_flash_cmd() returned 0x%X\n", spi_flash_cmd(&slave, CMD_READ_ID, &fill, 5)));
-  DEBUG((EFI_D_INFO, "%X %X %X %X %X\n", fill[0], fill[1], fill[2], fill[3], fill[4]));
+  DEBUG((EFI_D_INFO, "%X %X %X %X %X\n",
+    (unsigned int)(unsigned char)fill[0],
+    (unsigned int)(unsigned char)fill[1],
+    (unsigned int)(unsigned char)fill[2],
+    (unsigned int)(unsigned char)fill[3],
+    (unsigned int)(unsigned char)fill[4]));
   struct spi_op vector = {
     .dout = "asdf8888",
     .bytesout = 8,

@@ -14,25 +14,22 @@ static unsigned long int spi_base = 0;
 
 VOID spi_set_base(VOID *base)
 {
-	DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
 	spi_base = (unsigned long int)base;
 }
 
 //static //__attribute__ ((__always_inline__))
 union pci_bank *pcicfg(pci_devfn_t dev)
 {
+	// FIXME this should not be a magic constant
 	UINT8 *pci_mmconf =(void *)((unsigned long int)(0xF8000000));
-	DEBUG((EFI_D_INFO, "%a pci_mmconf = 0x%X, dev = 0x%X, PCI_DEVFN_OFFSET(dev) = 0x%X\n", __FUNCTION__, pci_mmconf, dev, PCI_DEVFN_OFFSET(dev)));
-	DEBUG((EFI_D_INFO, "%a returned address = 0x%X\n", __FUNCTION__, (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)]));
 	return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
 }
 
 unsigned long int spi_get_bar(VOID)
 {
-	if (spi_base == 0)
-		DEBUG((EFI_D_INFO, "%a calling lpc_get_spibase()\n", __FUNCTION__));
-	 	spi_set_base((VOID *)lpc_get_spibase());
-	DEBUG((EFI_D_INFO, "%a spi_base = 0x%X\n", __FUNCTION__, spi_base));
+	if (spi_base == 0) {
+		spi_set_base((VOID *)lpc_get_spibase());
+	}
 	return spi_base;
 }
 

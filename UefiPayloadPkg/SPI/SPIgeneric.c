@@ -70,10 +70,7 @@ UINT32 spi_xfer(CONST struct spi_slave *slave, CONST void *dout, __SIZE_TYPE__ b
 	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
 
 	if (ctrlr && ctrlr->xfer) {
-		DEBUG((EFI_D_INFO, "xfer available\n"));
 		return ctrlr->xfer(slave, dout, bytesout, din, bytesin);
-	} else {
-		DEBUG((EFI_D_INFO, "xfer failed\n"));
 	}
 
 	return -1;

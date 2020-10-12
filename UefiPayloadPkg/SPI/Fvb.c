@@ -1,6 +1,8 @@
 #include "BlSMMStoreDxe.h"
 #include "Fvb.h"
 #include "SPI_fvb.h"
+#include "SPIgeneric.h"
+#include "spi_flash_internal.h"
 
 
 // STATIC EFI_EVENT mFvbVirtualAddrChangeEvent;
@@ -222,35 +224,32 @@ FvbRead (
   IN OUT    UINT8                                 *Buffer
   )
 {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  UINTN         BlockSize;
-  SMMSTORE_INSTANCE *Instance;
-
-  Instance = INSTANCE_FROM_FVB_THIS(This);
-
-  DEBUG ((DEBUG_BLKIO, "FvbRead(Parameters: Lba=%ld, Offset=0x%x, *NumBytes=0x%x, Buffer @ 0x%08x)\n", Lba, Offset, *NumBytes, Buffer));
-
-  // Cache the block size to avoid de-referencing pointers all the time
-  BlockSize = Instance->Media.BlockSize;
-
-  DEBUG ((DEBUG_BLKIO, "FvbRead: Check if (Offset=0x%x + NumBytes=0x%x) <= BlockSize=0x%x\n", Offset, *NumBytes, BlockSize ));
-
-  // The read must not span block boundaries.
-  // We need to check each variable individually because adding two large values together overflows.
-  if ((Offset               >= BlockSize) ||
-      (*NumBytes            >  BlockSize) ||
-      ((Offset + *NumBytes) >  BlockSize)) {
-    DEBUG ((EFI_D_ERROR, "FvbRead: ERROR - EFI_BAD_BUFFER_SIZE: (Offset=0x%x + NumBytes=0x%x) > BlockSize=0x%x\n", Offset, *NumBytes, BlockSize ));
+  struct spi_slave slave;
+  if(Lba != 0) {
+    DEBUG((EFI_D_INFO, "%a Only block 0 is supported!\n", __FUNCTION__));
+    return EFI_ACCESS_DENIED;
+  }
+  if(Buffer == NULL || *NumBytes == 0) {
+    DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
     return EFI_BAD_BUFFER_SIZE;
   }
-
-  // We must have some bytes to read
-  if (*NumBytes == 0) {
-    return EFI_BAD_BUFFER_SIZE;
+  spi_setup_slave(0, 0, &slave);
+  UINT8 command[4] = {
+    CMD_READ_ARRAY_SLOW,
+    (UINT8)((Offset & 0xFF0000) >> 16),
+    (UINT8)((Offset & 0xFF00)   >> 8),
+    (UINT8) (Offset & 0xFF),
+  };
+  if(spi_xfer(&slave, command, 4, Buffer, *NumBytes) != 0) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
   }
 
-  return EFI_DEVICE_ERROR;
-  //return SMMStoreRead (Lba, Offset, NumBytes, Buffer);
+  for(int counter = 0; counter < *NumBytes; ++counter) {
+    DEBUG((EFI_D_INFO, "%DUMP %X\n", Buffer[counter]));
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**

@@ -59,7 +59,6 @@ pci_devfn_t pcidev_assert(CONST struct device *dev)
 static __attribute__ ((__always_inline__)) inline
 UINT32 pci_read_config32(CONST struct device *dev, UINT16 reg)
 {
-	DEBUG((EFI_D_INFO, "%a: PCI_BDF = 0x%X\n", __FUNCTION__, PCI_BDF(dev)));
 	return pci_s_read_config32(PCI_DEV(0x00, 0x14, 0x03), reg);
 	//return pci_s_read_config32(PCI_BDF(dev), reg);
 }

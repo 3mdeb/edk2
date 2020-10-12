@@ -94,8 +94,7 @@ int execute_command(VOID)
 
 VOID spi_init(VOID)
 {
-	DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-	DEBUG((EFI_D_INFO, "%a: %s: SPI BAR at 0x%08lx\n", __FUNCTION__, __func__, spi_get_bar()));
+	spi_get_bar();
 }
 
 int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
