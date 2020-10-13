@@ -1,9 +1,20 @@
-#include "BlSMMStoreDxe.h"
+#include <Include/PiDxe.h>
 #include "Fvb.h"
 #include "SPI_fvb.h"
 #include "SPIgeneric.h"
 #include "spi_flash_internal.h"
+#include "spi_winbond.h"
 
+
+#define ADDRESS(Lba, Offset) (((BLOCK_SIZE) * (Lba)) + (Offset))
+
+static struct spi_slave *getSPISlave() {
+  static struct spi_slave slave;
+  if(slave.ctrlr == NULL) {
+    spi_setup_slave(0, 0, &slave);
+  }
+  return &slave;
+}
 
 // STATIC EFI_EVENT mFvbVirtualAddrChangeEvent;
 // STATIC UINTN     mFlashNvStorageVariableBase;
@@ -224,31 +235,39 @@ FvbRead (
   IN OUT    UINT8                                 *Buffer
   )
 {
-  struct spi_slave slave;
-  if(Lba != 0) {
-    DEBUG((EFI_D_INFO, "%a Only block 0 is supported!\n", __FUNCTION__));
-    return EFI_ACCESS_DENIED;
-  }
-  if(Buffer == NULL || *NumBytes == 0) {
+  // FIXME check if read is not done from outside flash memory
+  UINTN address = ADDRESS(Lba, Offset);
+  // Maxumum amount of bytes possible to read. Can't span the block boundary
+  UINTN numberOfBytesToRead = MIN(*NumBytes, BLOCK_SIZE-Offset);
+  UINTN numberOfBytesRead = 0;
+  if(Buffer == NULL || numberOfBytesToRead == 0) {
     DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
     return EFI_BAD_BUFFER_SIZE;
   }
-  spi_setup_slave(0, 0, &slave);
-  UINT8 command[4] = {
-    CMD_READ_ARRAY_SLOW,
-    (UINT8)((Offset & 0xFF0000) >> 16),
-    (UINT8)((Offset & 0xFF00)   >> 8),
-    (UINT8) (Offset & 0xFF),
-  };
-  if(spi_xfer(&slave, command, 4, Buffer, *NumBytes) != 0) {
-    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
-    return EFI_DEVICE_ERROR;
+
+  while(numberOfBytesRead < numberOfBytesToRead) {
+    UINTN nextReadAddress = address + numberOfBytesRead;
+    UINTN numberOfBytesLeft = numberOfBytesToRead - numberOfBytesRead;
+    UINTN numberOfBytesToReadNext = MIN(numberOfBytesLeft, PAGE_SIZE);
+    UINT8 command[] = {
+      CMD_READ_ARRAY_SLOW,
+      (UINT8)((nextReadAddress & 0xFF0000) >> 16),
+      (UINT8)((nextReadAddress & 0xFF00)   >> 8),
+      (UINT8) (nextReadAddress & 0xFF)
+    };
+    if(spi_xfer(getSPISlave(),
+      command, ARRAY_SIZE(command),
+      Buffer+numberOfBytesRead, numberOfBytesToReadNext) != 0) {
+      DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+      return EFI_DEVICE_ERROR;
+    }
+    numberOfBytesRead += numberOfBytesToReadNext;
   }
 
-  for(int counter = 0; counter < *NumBytes; ++counter) {
-    DEBUG((EFI_D_INFO, "%DUMP %X\n", Buffer[counter]));
+  if(numberOfBytesToRead != *NumBytes) {
+    *NumBytes = numberOfBytesToRead;
+    return EFI_BAD_BUFFER_SIZE;
   }
-
   return EFI_SUCCESS;
 }
 
@@ -316,8 +335,100 @@ FvbWrite (
   IN        UINT8                                 *Buffer
   )
 {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_DEVICE_ERROR;
+  struct spi_slave slave;
+  //UINTN bytesToWrite = *NumBytes;
+  UINTN address = ADDRESS(Lba, Offset);
+  if(Buffer == NULL || *NumBytes == 0) {
+    DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
+    return EFI_BAD_BUFFER_SIZE;
+  }
+  spi_setup_slave(0, 0, &slave);
+  UINT8 writeEnableCmd[] = {
+    CMD_WRITE_ENABLE
+  };
+  if(spi_xfer(&slave, writeEnableCmd, ARRAY_SIZE(writeEnableCmd), NULL, 0) != 0) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+
+  UINT8 pageProgramCmd[] = {
+    CMD_W25_PP, // FIXME Winbond specific
+    (UINT8)((address & 0xFF0000) >> 16),
+    (UINT8)((address & 0xFF00)   >> 8),
+    (UINT8) (address & 0xFF)
+  };
+  // ALIGN_VALUE - aligns to next nearest address
+  // MIN - minimum
+  if(spi_xfer(
+      &slave, pageProgramCmd, ARRAY_SIZE(pageProgramCmd), Buffer, *NumBytes)) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+
+  return EFI_SUCCESS;
+}
+
+
+static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address) {
+  UINT8 writeEnableCmd[] = {
+    CMD_WRITE_ENABLE
+  };
+  if(spi_xfer(
+      getSPISlave(),
+      writeEnableCmd, ARRAY_SIZE(writeEnableCmd),
+      NULL, 0
+  ) != 0) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  UINT8 blockEraseCmd[] = {
+    CMD_BLOCK_ERASE, // FIXME Winbond specific
+    (UINT8)((Address & 0xFF0000) >> 16),
+    (UINT8)((Address & 0xFF00)   >> 8),
+    (UINT8) (Address & 0xFF)
+  };
+  if(spi_xfer(
+    getSPISlave(), blockEraseCmd, ARRAY_SIZE(blockEraseCmd), NULL, 0)
+  ) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS FvbEraseConsecutiveBlocks(EFI_LBA Lba, UINTN amount) {
+  BOOLEAN error = FALSE;
+  for(UINTN current = 0; current < amount; ++current) {
+    if(FvbEraseBlockAtAddress(ADDRESS(Lba+current, 0)) != EFI_SUCCESS) {
+      error = TRUE;
+    }
+  }
+  if(error) {
+    return EFI_DEVICE_ERROR;
+  } else {
+    return EFI_SUCCESS;
+  }
+}
+
+static EFI_STATUS readStatusReg(UINT8 *Status) {
+  UINT8 readStatusCmd[] = {
+    CMD_READ_STATUS
+  };
+  if(spi_xfer(
+    getSPISlave(), readStatusCmd, ARRAY_SIZE(readStatusCmd), Status, 1)
+  ) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS checkBusyBit(UINT8 *Busy) {
+  if(readStatusReg(Busy) != EFI_SUCCESS) {
+    return EFI_DEVICE_ERROR;
+  }
+  *Busy &= REG_BUSY_MASK;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -370,8 +481,35 @@ FvbEraseBlocks (
   ...
   )
 {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_DEVICE_ERROR;
+  EFI_STATUS status = EFI_SUCCESS;
+  VA_LIST Args;
+  VA_START(Args, This);
+  // Verify and everything
+  VA_END(Args);
+  // Erase blocks
+  VA_START(Args, This);
+  do {
+    EFI_LBA Lba = VA_ARG(Args, EFI_LBA);
+    if(Lba == EFI_LBA_LIST_TERMINATOR) {
+      break;
+    }
+    UINTN NumberOfBlocksToErase = VA_ARG(Args, EFI_LBA);
+    // To forget an argument is an easy mistake to do.
+    // Better check for it and try to warn a programmer.
+    if(NumberOfBlocksToErase == EFI_LBA_LIST_TERMINATOR) {
+      DEBUG((EFI_D_INFO,
+        "%a WARNING FvbEraseBlocks with invalid number of parameters!\n",
+        __FUNCTION__
+      ));
+      status = EFI_INVALID_PARAMETER;
+      break;
+    }
+    if(FvbEraseConsecutiveBlocks(Lba, NumberOfBlocksToErase) != EFI_SUCCESS) {
+      status = EFI_DEVICE_ERROR;
+    }
+  } while (TRUE);
+  VA_END(Args);
+  return status;
 }
 
 /**

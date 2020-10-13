@@ -27,6 +27,17 @@
 /* Common status */
 #define STATUS_WIP			0x01
 
+/* Common register masks */
+#define REG_BUSY_MASK 											0x01
+#define REG_WRITE_ENABLE_MASK 							0x02
+#define REG_BLOCK_PROTECT_0_MASK 						0x04
+#define REG_BLOCK_PROTECT_1_MASK 						0x08
+#define REG_BLOCK_PROTECT_2_MASK 						0x10
+#define REG_TOP_BOTTOM_PROTECTION_MASK 			0x20
+#define REG_BLOCK_PROTECTION_MASK 					0x40
+#define REG_STATUS_REGISTER_PROTECTION_MASK 0x80
+
+
 /* Send a single-byte command to the device and read the response */
 int spi_flash_cmd(const struct spi_slave *spi, UINT8 cmd, VOID *response, __SIZE_TYPE__ len);
 

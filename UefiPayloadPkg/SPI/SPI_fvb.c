@@ -43,6 +43,8 @@ void * memset (void *dest, int ch, __SIZE_TYPE__ count)
   return dest;
 }
 
+EFI_STATUS checkBusyBit(UINT8 *Busy);
+
 EFI_STATUS EFIAPI SPIInitialize (
   IN EFI_HANDLE                        ImageHandle,
   IN EFI_SYSTEM_TABLE                  *SystemTable
@@ -50,7 +52,7 @@ EFI_STATUS EFIAPI SPIInitialize (
 {
   EFI_STATUS Status;
   struct spi_slave slave;
-  DEBUG((EFI_D_INFO, "SPI IS HERE 2\n"));
+  DEBUG((EFI_D_INFO, "SPI IS HERE\n"));
 
   DEBUG((EFI_D_INFO, "sizeof(unsigned int) 0x%X\n", sizeof(unsigned int)));
   DEBUG((EFI_D_INFO, "sizeof(void *) 0x%X\n", sizeof(VOID *)));
@@ -61,27 +63,32 @@ EFI_STATUS EFIAPI SPIInitialize (
               );
   if(EFI_ERROR (Status)) {
     DEBUG((EFI_D_INFO, "%a Error during protocol installation\n", __FUNCTION__));
-  } else {
-    DEBUG((EFI_D_INFO, "%a Successfull protocol installation\n", __FUNCTION__));
   }
-  DEBUG((EFI_D_INFO, "calling spi_init()\n"));
   spi_init();
-  DEBUG((EFI_D_INFO, "spi_init() was called\n"));
   DEBUG((EFI_D_INFO, "spi_setup_slave() returned 0x%X\n", spi_setup_slave(0, 0, &slave)));
-  DEBUG((EFI_D_INFO, "0x%X\n", slave.ctrlr->xfer));
-  unsigned char fill[255];
-  DEBUG((EFI_D_INFO, "spi_flash_cmd() returned 0x%X\n", spi_flash_cmd(&slave, CMD_READ_ID, &fill, 5)));
-  DEBUG((EFI_D_INFO, "%X %X %X %X %X\n",
-    (unsigned int)(unsigned char)fill[0],
-    (unsigned int)(unsigned char)fill[1],
-    (unsigned int)(unsigned char)fill[2],
-    (unsigned int)(unsigned char)fill[3],
-    (unsigned int)(unsigned char)fill[4]));
-  struct spi_op vector = {
-    .dout = "asdf8888",
-    .bytesout = 8,
-  };
-  DEBUG((EFI_D_INFO, "spi_xfer() returned 0x%X\n", spi_xfer(&slave, "asdf", 4, &fill, 0)));
-  DEBUG((EFI_D_INFO, "spi_xfer_vectors() returned 0x%X\n", spi_xfer_vector(&slave, &vector, 1)));
+  char fill[300] = {};
+  UINTN length = 4;
+  FvbRead(&FvbProtocol, 0, 0, &length, (VOID *)fill);
+  DEBUG((EFI_D_INFO, "TRIALS\n"));
+  for(int i = 0; i < 10; i++) {
+    DEBUG((EFI_D_INFO, "%X %X\n", i, fill[i]));
+  }
+  DEBUG((EFI_D_INFO, "ERASING\n"));
+  EFI_STATUS result = FvbEraseBlocks(&FvbProtocol, 0, 1, EFI_LBA_LIST_TERMINATOR);
+  if(result == EFI_SUCCESS)
+    DEBUG((EFI_D_INFO, "EFI_SUCCESS\n"));
+  if(result == EFI_ACCESS_DENIED)
+    DEBUG((EFI_D_INFO, "EFI_ACCESS_DENIED\n"));
+  if(result == EFI_DEVICE_ERROR)
+    DEBUG((EFI_D_INFO, "EFI_DEVICE_ERROR\n"));
+  if(result == EFI_INVALID_PARAMETER)
+    DEBUG((EFI_D_INFO, "EFI_INVALID_PARAMETER\n"));
+  UINT8 busy = 0xFF;
+  checkBusyBit(&busy);
+  DEBUG((EFI_D_INFO, "BUSY: 0x%X\n", busy));
+  FvbRead(&FvbProtocol, 0, 0, &length, (VOID *)fill);
+  for(int i = 0; i < 10; i++) {
+    DEBUG((EFI_D_INFO, "%X %X\n", i, fill[i]));
+  }
   return EFI_SUCCESS;
 }

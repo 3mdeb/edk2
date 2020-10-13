@@ -1,7 +1,11 @@
 #ifndef FVB_H
 #define FVB_H
 
+#include <Include/PiDxe.h>
 #include "BlSMMStoreDxe.h"
+
+#define BLOCK_SIZE 0x10000
+#define PAGE_SIZE 0x100
 
 EFI_STATUS
 InitializeFvAndVariableStoreHeaders (
