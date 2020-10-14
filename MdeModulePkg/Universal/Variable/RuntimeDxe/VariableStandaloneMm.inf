@@ -135,11 +135,5 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdVariableCollectStatistics        ## CONSUMES  # statistic the information of variable.
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangDeprecate       ## CONSUMES  # Auto update PlatformLang/Lang
 
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
-  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
-
 [Depex]
   TRUE

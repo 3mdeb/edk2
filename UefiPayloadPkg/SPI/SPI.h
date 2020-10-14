@@ -76,26 +76,6 @@ struct spi_config {
 	enum spi100_speed tpm_speed;
 };
 
-/*
- * Perform early SPI initialization:
- * 1. Sets SPI ROM base and enables SPI ROM
- * 2. Enables SPI ROM prefetching
- * 3. Disables 4dw burst
- * 4. Configures SPI speed and read mode.
- *
- * This function expects SoC to include soc_amd_common_config in chip SoC config and uses
- * settings from mainboard devicetree to configure speed and read mode.
- */
-VOID fch_spi_early_init(VOID);
-
-/*
- * Configure SPI speed and read mode.
- *
- * This function expects SoC to include soc_amd_common_config in chip SoC config and uses
- * settings from mainboard devicetree to configure speed and read mode.
- */
-VOID fch_spi_config_modes(VOID);
-
 /* Set the SPI base address variable */
 VOID spi_set_base(VOID *base);
 

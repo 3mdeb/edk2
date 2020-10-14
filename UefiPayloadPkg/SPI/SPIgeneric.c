@@ -2,8 +2,8 @@
 
 #include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
+#include <Library/BaseMemoryLib/MemLibInternals.h>
 #include "SPIgeneric.h"
-#include "own.h"
 
 UINT32 spi_claim_bus(CONST struct spi_slave *slave)
 {
@@ -114,7 +114,7 @@ UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
 {
 	__SIZE_TYPE__ i;
 
-	memset(slave, 0, sizeof(*slave));
+	InternalMemZeroMem(slave, sizeof(*slave));
 
 	for (i = 0; i < spi_ctrlr_bus_map_count; i++) {
 		if ((spi_ctrlr_bus_map[i].bus_start <= bus) &&

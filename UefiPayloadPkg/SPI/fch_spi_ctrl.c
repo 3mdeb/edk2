@@ -1,8 +1,8 @@
 #include <Include/Library/DebugLib.h>
 #include <Include/PiDxe.h>
 
-#include "kconfig.h"
 #include "SPI.h"
+#include "kconfig.h"
 #include "utils.h"
 #include "stopwatch.h"
 #include "fch_spi_util.h"

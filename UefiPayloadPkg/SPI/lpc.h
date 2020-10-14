@@ -1,4 +1,3 @@
-#include <Include/PiDxe.h>
 #include "pci_type.h"
 
 /* PCI registers for D14F3 */

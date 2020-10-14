@@ -16,6 +16,68 @@ static struct spi_slave *getSPISlave() {
   return &slave;
 }
 
+static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address) {
+  UINT8 writeEnableCmd[] = {
+    CMD_WRITE_ENABLE
+  };
+  if(spi_xfer(
+      getSPISlave(),
+      writeEnableCmd, ARRAY_SIZE(writeEnableCmd),
+      NULL, 0
+  ) != 0) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  UINT8 blockEraseCmd[] = {
+    CMD_BLOCK_ERASE, // FIXME Winbond specific
+    (UINT8)((Address & 0xFF0000) >> 16),
+    (UINT8)((Address & 0xFF00)   >> 8),
+    (UINT8) (Address & 0xFF)
+  };
+  if(spi_xfer(
+    getSPISlave(), blockEraseCmd, ARRAY_SIZE(blockEraseCmd), NULL, 0)
+  ) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS FvbEraseConsecutiveBlocks(EFI_LBA Lba, UINTN amount) {
+  BOOLEAN error = FALSE;
+  for(UINTN current = 0; current < amount; ++current) {
+    if(FvbEraseBlockAtAddress(ADDRESS(Lba+current, 0)) != EFI_SUCCESS) {
+      error = TRUE;
+    }
+  }
+  if(error) {
+    return EFI_DEVICE_ERROR;
+  } else {
+    return EFI_SUCCESS;
+  }
+}
+
+static EFI_STATUS readStatusReg(UINT8 *Status) {
+  UINT8 readStatusCmd[] = {
+    CMD_READ_STATUS
+  };
+  if(spi_xfer(
+    getSPISlave(), readStatusCmd, ARRAY_SIZE(readStatusCmd), Status, 1)
+  ) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS checkBusyBit(UINT8 *Busy) {
+  if(readStatusReg(Busy) != EFI_SUCCESS) {
+    return EFI_DEVICE_ERROR;
+  }
+  *Busy &= REG_BUSY_MASK;
+  return EFI_SUCCESS;
+}
+
 // STATIC EFI_EVENT mFvbVirtualAddrChangeEvent;
 // STATIC UINTN     mFlashNvStorageVariableBase;
 
@@ -365,69 +427,6 @@ FvbWrite (
     return EFI_DEVICE_ERROR;
   }
 
-  return EFI_SUCCESS;
-}
-
-
-static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address) {
-  UINT8 writeEnableCmd[] = {
-    CMD_WRITE_ENABLE
-  };
-  if(spi_xfer(
-      getSPISlave(),
-      writeEnableCmd, ARRAY_SIZE(writeEnableCmd),
-      NULL, 0
-  ) != 0) {
-    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
-    return EFI_DEVICE_ERROR;
-  }
-  UINT8 blockEraseCmd[] = {
-    CMD_BLOCK_ERASE, // FIXME Winbond specific
-    (UINT8)((Address & 0xFF0000) >> 16),
-    (UINT8)((Address & 0xFF00)   >> 8),
-    (UINT8) (Address & 0xFF)
-  };
-  if(spi_xfer(
-    getSPISlave(), blockEraseCmd, ARRAY_SIZE(blockEraseCmd), NULL, 0)
-  ) {
-    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
-    return EFI_DEVICE_ERROR;
-  }
-  return EFI_SUCCESS;
-}
-
-static EFI_STATUS FvbEraseConsecutiveBlocks(EFI_LBA Lba, UINTN amount) {
-  BOOLEAN error = FALSE;
-  for(UINTN current = 0; current < amount; ++current) {
-    if(FvbEraseBlockAtAddress(ADDRESS(Lba+current, 0)) != EFI_SUCCESS) {
-      error = TRUE;
-    }
-  }
-  if(error) {
-    return EFI_DEVICE_ERROR;
-  } else {
-    return EFI_SUCCESS;
-  }
-}
-
-static EFI_STATUS readStatusReg(UINT8 *Status) {
-  UINT8 readStatusCmd[] = {
-    CMD_READ_STATUS
-  };
-  if(spi_xfer(
-    getSPISlave(), readStatusCmd, ARRAY_SIZE(readStatusCmd), Status, 1)
-  ) {
-    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
-    return EFI_DEVICE_ERROR;
-  }
-  return EFI_SUCCESS;
-}
-
-EFI_STATUS checkBusyBit(UINT8 *Busy) {
-  if(readStatusReg(Busy) != EFI_SUCCESS) {
-    return EFI_DEVICE_ERROR;
-  }
-  *Busy &= REG_BUSY_MASK;
   return EFI_SUCCESS;
 }
 

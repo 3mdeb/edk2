@@ -4,7 +4,6 @@
 #include <Include/PiDxe.h>
 
 #include "kconfig.h"
-#include "SPI.h"
 #include "utils.h"
 #include "stopwatch.h"
 #include "fch_spi_util.h"

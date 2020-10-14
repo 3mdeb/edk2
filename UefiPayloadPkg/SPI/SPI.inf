@@ -17,7 +17,6 @@
 
 [Sources]
   SPI.h
-  # SPI.c
   SPIgeneric.h
   SPIgeneric.c
   lpc.h

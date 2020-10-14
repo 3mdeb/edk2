@@ -2,13 +2,13 @@
 
 #include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
+#include <Library/BaseMemoryLib/MemLibInternals.h>
 #include "spi_flash_internal.h"
 #include "SPIgeneric.h"
 #include "kconfig.h"
 #include "stopwatch.h"
 #include "utils.h"
 #include "SPI_fvb.h"
-#include "own.h"
 
 static VOID spi_flash_addr(UINT32 addr, UINT8 *cmd)
 {
@@ -97,8 +97,8 @@ int spi_flash_cmd_write(const struct spi_slave *spi, const UINT8 *cmd,
 {
 	int ret;
 	UINT8 buff[cmd_len + data_len];
-	memcpy(buff, cmd, cmd_len);
-	memcpy(buff + cmd_len, data, data_len);
+	InternalMemCopyMem(buff, cmd, cmd_len);
+	InternalMemCopyMem(buff + cmd_len, data, data_len);
 
 	ret = do_spi_flash_cmd(spi, buff, cmd_len + data_len, NULL, 0);
 	if (ret) {
@@ -339,7 +339,7 @@ static int fill_spi_flash(const struct spi_slave *spi, struct spi_flash *flash,
 	const struct spi_flash_vendor_info *vi,
 	const struct spi_flash_part_id *part)
 {
-	memcpy(&flash->spi, spi, sizeof(*spi));
+	InternalMemCopyMem(&flash->spi, spi, sizeof(*spi));
 	flash->vendor = vi->id;
 	flash->model = part->id[0];
 

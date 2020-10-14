@@ -6,7 +6,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include <Library/UefiLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DxeServicesTableLib.h>
@@ -177,22 +176,6 @@ InitRealNonVolatileVariableStore (
   if (NvStorageData == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-
-  DEBUG((EFI_D_INFO, "Updating HOB\n"));
-  SMMSTORE_INFO *SMMStoreInfoHob;
-  SMMStoreInfoHob = AllocateRuntimePool (GET_GUID_HOB_DATA_SIZE(GuidHob));
-  // Update PCDs for Variable/RuntimeDxe
-  CopyMem(SMMStoreInfoHob, GET_GUID_HOB_DATA (GuidHob), GET_GUID_HOB_DATA_SIZE(GuidHob));
-  DEBUG((EFI_D_INFO, "PcdGet32 (PcdFlashNvStorageVariableBase) = 0x%X\n", PcdGet32 (PcdFlashNvStorageVariableBase)));
-  DEBUG((EFI_D_INFO, "PcdGet32 (PcdFlashNvStorageFtwWorkingBase) = 0x%X\n", PcdGet32 (PcdFlashNvStorageFtwWorkingBase)));
-  DEBUG((EFI_D_INFO, "PcdGet32 (PcdFlashNvStorageFtwSpareBase) = 0x%X\n", PcdGet32 (PcdFlashNvStorageFtwSpareBase)));
-  DEBUG((EFI_D_INFO, "SMMStoreInfoHob->MmioAddress = 0x%X\n", SMMStoreInfoHob->MmioAddress));
-  PcdSet32S (PcdFlashNvStorageVariableBase,
-      PcdGet32 (PcdFlashNvStorageVariableBase) + SMMStoreInfoHob->MmioAddress);
-  PcdSet32S (PcdFlashNvStorageFtwWorkingBase,
-      PcdGet32 (PcdFlashNvStorageFtwWorkingBase) + SMMStoreInfoHob->MmioAddress);
-  PcdSet32S (PcdFlashNvStorageFtwSpareBase,
-      PcdGet32 (PcdFlashNvStorageFtwSpareBase) + SMMStoreInfoHob->MmioAddress);
 
   NvStorageBase = NV_STORAGE_VARIABLE_BASE;
   ASSERT (NvStorageBase != 0);
