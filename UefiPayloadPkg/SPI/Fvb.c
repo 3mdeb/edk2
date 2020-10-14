@@ -7,6 +7,27 @@
 
 
 #define ADDRESS(Lba, Offset) (((BLOCK_SIZE) * (Lba)) + (Offset))
+#define REMAINING_SPACE_IN_BLOCK(Offset) ((BLOCK_SIZE) - (Offset))
+
+static struct spi_slave *getSPISlave();
+static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address);
+static EFI_STATUS FvbEraseConsecutiveBlocks(EFI_LBA Lba, UINTN amount);
+static EFI_STATUS readStatusReg(UINT8 *Status);
+static EFI_STATUS checkBusyBit(UINT8 *Busy);
+static EFI_STATUS waitForBusyBit();
+static EFI_STATUS FvbNextBlocksFromList(
+  VA_LIST *Args,
+  EFI_LBA *Lba,
+  UINTN *LbaCount);
+static EFI_STATUS FvbEraseVerifiedBlocks(VA_LIST *Args);
+static EFI_STATUS FvbVerifySingleBlockWritability(EFI_LBA Lba);
+static EFI_STATUS FvbVerifyConsecutiveBlocksWritability(
+  EFI_LBA Lba,
+  UINTN LbaCount);
+static EFI_STATUS FvbVerifyBlocksWritability(VA_LIST *Args);
+static UINTN FvbGetTotalNumberOfBlocks();
+static EFI_STATUS WriteEnable();
+static EFI_STATUS PageProgram(UINTN address, UINT8 *Buffer, UINTN NumBytes);
 
 static struct spi_slave *getSPISlave() {
   static struct spi_slave slave;
@@ -17,17 +38,7 @@ static struct spi_slave *getSPISlave() {
 }
 
 static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address) {
-  UINT8 writeEnableCmd[] = {
-    CMD_WRITE_ENABLE
-  };
-  if(spi_xfer(
-      getSPISlave(),
-      writeEnableCmd, ARRAY_SIZE(writeEnableCmd),
-      NULL, 0
-  ) != 0) {
-    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
-    return EFI_DEVICE_ERROR;
-  }
+  WriteEnable();
   UINT8 blockEraseCmd[] = {
     CMD_BLOCK_ERASE, // FIXME Winbond specific
     (UINT8)((Address & 0xFF0000) >> 16),
@@ -70,11 +81,150 @@ static EFI_STATUS readStatusReg(UINT8 *Status) {
   return EFI_SUCCESS;
 }
 
-EFI_STATUS checkBusyBit(UINT8 *Busy) {
+static EFI_STATUS checkBusyBit(UINT8 *Busy) {
   if(readStatusReg(Busy) != EFI_SUCCESS) {
     return EFI_DEVICE_ERROR;
   }
   *Busy &= REG_BUSY_MASK;
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS waitForBusyBit() {
+  UINT8 busy = 0xFF;
+  while(busy != 0) {
+    if(checkBusyBit(&busy) != EFI_SUCCESS) {
+      return EFI_DEVICE_ERROR;
+    }
+  }
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS FvbNextBlocksFromList(
+  VA_LIST *Args,
+  EFI_LBA *Lba,
+  UINTN *LbaCount
+) {
+  *Lba = VA_ARG(*Args, EFI_LBA);
+  if(*Lba == EFI_LBA_LIST_TERMINATOR) {
+    return EFI_SUCCESS;
+  }
+  *LbaCount = VA_ARG(*Args, EFI_LBA);
+  // To forget an argument is an easy mistake to do.
+  // Better check for it and try to warn a programmer.
+  if(*LbaCount == EFI_LBA_LIST_TERMINATOR) {
+    DEBUG((
+      EFI_D_INFO, "%a WARNING: invalid number of parameters!\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS FvbEraseVerifiedBlocks(VA_LIST *Args) {
+  EFI_STATUS status = EFI_SUCCESS;
+  while(TRUE)
+  {
+    EFI_LBA Lba;
+    UINTN LbaCount;
+    if(FvbNextBlocksFromList(Args, &Lba, &LbaCount) != EFI_SUCCESS) {
+      status = EFI_INVALID_PARAMETER;
+      break;
+    }
+    if(Lba == EFI_LBA_LIST_TERMINATOR) {
+      break;
+    }
+    if(FvbEraseConsecutiveBlocks(Lba, LbaCount) != EFI_SUCCESS) {
+      status = EFI_DEVICE_ERROR;
+    }
+  }
+  return status;
+}
+
+static EFI_STATUS FvbVerifySingleBlockWritability(EFI_LBA Lba) {
+  if(Lba > FvbGetTotalNumberOfBlocks()-1) {
+    return EFI_ACCESS_DENIED;
+  } else {
+    return EFI_SUCCESS;
+  }
+}
+
+static EFI_STATUS FvbVerifyConsecutiveBlocksWritability(
+  EFI_LBA Lba,
+  UINTN LbaCount
+) {
+  for(EFI_LBA currentLba = Lba; currentLba < Lba+LbaCount; ++currentLba) {
+    if(FvbVerifySingleBlockWritability(Lba) != EFI_SUCCESS) {
+      return EFI_ACCESS_DENIED;
+    }
+  }
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS FvbVerifyBlocksWritability(VA_LIST *Args) {
+  EFI_STATUS status = EFI_SUCCESS;
+  while(TRUE) {
+    EFI_LBA Lba;
+    UINTN LbaCount;
+    if(FvbNextBlocksFromList(Args, &Lba, &LbaCount) != EFI_SUCCESS) {
+      status = EFI_INVALID_PARAMETER;
+      break;
+    }
+    if(Lba == EFI_LBA_LIST_TERMINATOR) {
+      break;
+    }
+    if(FvbVerifyConsecutiveBlocksWritability(Lba, LbaCount) != EFI_SUCCESS) {
+      status = EFI_ACCESS_DENIED;
+      break;
+    }
+  }
+  return status;
+}
+
+static UINTN FvbGetTotalNumberOfBlocks() {
+  return FLASH_SIZE / BLOCK_SIZE;
+}
+
+static EFI_STATUS WriteEnable() {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
+  UINT8 writeEnableCmd[] = {
+    CMD_WRITE_ENABLE
+  };
+  if(spi_xfer(
+    getSPISlave(), writeEnableCmd, ARRAY_SIZE(writeEnableCmd), NULL, 0) != 0) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS PageProgram(UINTN address, UINT8 *Buffer, UINTN NumBytes) {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
+  DEBUG((EFI_D_INFO, "writing 0x%X 0x%X 0x%X 0x%X\n", (UINTN)Buffer[0], (UINTN)Buffer[1], (UINTN)Buffer[2], (UINTN)Buffer[3]));
+  DEBUG((EFI_D_INFO, "PageProgram(address = 0x%X, Buffer = 0x%X, NumBytes = 0x%X)\n", address, Buffer, NumBytes));
+  UINT8 busy = 0xFF;
+  checkBusyBit(&busy);
+  DEBUG((EFI_D_INFO, "BUSY: %X\n", busy));
+  UINT8 pageProgramCmd[] = {
+    CMD_W25_PP, // FIXME Winbond specific
+    (UINT8)((address & 0xFF0000) >> 16),
+    (UINT8)((address & 0x00FF00) >> 8), // WRITING DUMMY DATA
+    (UINT8) (address & 0x0000FF), 0xAA, 0xBB, 0xCC, 0xDD
+  };
+  DEBUG((EFI_D_INFO, "command\n"));
+  for(UINTN counter = 0; counter < ARRAY_SIZE(pageProgramCmd); ++counter) {
+    DEBUG((EFI_D_INFO, "0x%X\n", pageProgramCmd[counter]));
+  }
+  if(spi_xfer(
+      getSPISlave(),
+      pageProgramCmd, ARRAY_SIZE(pageProgramCmd),
+      NULL, 0) != 0) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  checkBusyBit(&busy);
+  DEBUG((EFI_D_INFO, "BUSY: %X\n", busy));
+  waitForBusyBit();
+  checkBusyBit(&busy);
+  DEBUG((EFI_D_INFO, "BUSY: %X\n", busy));
   return EFI_SUCCESS;
 }
 
@@ -104,7 +254,7 @@ InitializeFvAndVariableStoreHeaders (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_DEVICE_ERROR;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -122,7 +272,7 @@ ValidateFvHeader (
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_DEVICE_ERROR;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -242,8 +392,13 @@ FvbGetBlockSize (
   OUT       UINTN                                *NumberOfBlocks
   )
 {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_DEVICE_ERROR;
+  *BlockSize = BLOCK_SIZE;
+  *NumberOfBlocks = FvbGetTotalNumberOfBlocks();
+  if(Lba > *NumberOfBlocks) {
+    return EFI_INVALID_PARAMETER;
+  } else {
+    return EFI_SUCCESS;
+  }
 }
 
 /**
@@ -300,13 +455,13 @@ FvbRead (
   // FIXME check if read is not done from outside flash memory
   UINTN address = ADDRESS(Lba, Offset);
   // Maxumum amount of bytes possible to read. Can't span the block boundary
-  UINTN numberOfBytesToRead = MIN(*NumBytes, BLOCK_SIZE-Offset);
+  UINTN numberOfBytesToRead = MIN(*NumBytes, REMAINING_SPACE_IN_BLOCK(Offset));
   UINTN numberOfBytesRead = 0;
   if(Buffer == NULL || numberOfBytesToRead == 0) {
     DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
     return EFI_BAD_BUFFER_SIZE;
   }
-
+  waitForBusyBit();
   while(numberOfBytesRead < numberOfBytesToRead) {
     UINTN nextReadAddress = address + numberOfBytesRead;
     UINTN numberOfBytesLeft = numberOfBytesToRead - numberOfBytesRead;
@@ -387,6 +542,7 @@ FvbRead (
 
 
  **/
+
 EFI_STATUS
 EFIAPI
 FvbWrite (
@@ -397,35 +553,37 @@ FvbWrite (
   IN        UINT8                                 *Buffer
   )
 {
-  struct spi_slave slave;
-  //UINTN bytesToWrite = *NumBytes;
-  UINTN address = ADDRESS(Lba, Offset);
-  if(Buffer == NULL || *NumBytes == 0) {
+  DEBUG((EFI_D_INFO, "%a This = 0x%X, Lba = 0x%X, Offset = 0x%X, *NumBytes = 0x%X, Buffer = 0x%X\n", __FUNCTION__, This, Lba, Offset, *NumBytes, Buffer));
+  UINT8 status = 0xFF;
+  readStatusReg(&status);
+  DEBUG((EFI_D_INFO, "STATUS: 0x%X\n", status));
+  CONST UINTN numberOfBytesToWrite = MIN(*NumBytes, REMAINING_SPACE_IN_BLOCK(Offset));
+  DEBUG((EFI_D_INFO, "MIN: 0x%X 0x%X\n", *NumBytes, REMAINING_SPACE_IN_BLOCK(Offset)));
+  DEBUG((EFI_D_INFO, "CALCULATION: 0x%X - 0x%X\n", BLOCK_SIZE, Offset));
+  DEBUG((EFI_D_INFO, "numberOfBytesToWrite: 0x%X\n", numberOfBytesToWrite));
+  CONST UINTN address = ADDRESS(Lba, Offset);
+  if(Buffer == NULL || numberOfBytesToWrite == 0) {
     DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
     return EFI_BAD_BUFFER_SIZE;
   }
-  spi_setup_slave(0, 0, &slave);
-  UINT8 writeEnableCmd[] = {
-    CMD_WRITE_ENABLE
-  };
-  if(spi_xfer(&slave, writeEnableCmd, ARRAY_SIZE(writeEnableCmd), NULL, 0) != 0) {
-    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+  if(FvbVerifySingleBlockWritability(Lba) == EFI_ACCESS_DENIED) {
+    return EFI_ACCESS_DENIED;
+  }
+  if(waitForBusyBit() != EFI_SUCCESS) {
+    DEBUG((EFI_D_INFO, "%a error busy bit\n", __FUNCTION__));
     return EFI_DEVICE_ERROR;
   }
-
-  UINT8 pageProgramCmd[] = {
-    CMD_W25_PP, // FIXME Winbond specific
-    (UINT8)((address & 0xFF0000) >> 16),
-    (UINT8)((address & 0xFF00)   >> 8),
-    (UINT8) (address & 0xFF)
-  };
-  // ALIGN_VALUE - aligns to next nearest address
-  // MIN - minimum
-  if(spi_xfer(
-      &slave, pageProgramCmd, ARRAY_SIZE(pageProgramCmd), Buffer, *NumBytes)) {
-    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+  if(WriteEnable() != EFI_SUCCESS) {
+    DEBUG((EFI_D_INFO, "%a error write enable\n", __FUNCTION__));
     return EFI_DEVICE_ERROR;
   }
+  if(PageProgram(address, Buffer, numberOfBytesToWrite) != EFI_SUCCESS) {
+    DEBUG((EFI_D_INFO, "%a error page program\n", __FUNCTION__));
+  }
+  if(numberOfBytesToWrite != *NumBytes) {
+    return EFI_BAD_BUFFER_SIZE;
+  }
+  *NumBytes = numberOfBytesToWrite;
 
   return EFI_SUCCESS;
 }
@@ -473,6 +631,7 @@ FvbWrite (
                                  not exist in the firmware volume.
 
  **/
+
 EFI_STATUS
 EFIAPI
 FvbEraseBlocks (
@@ -483,58 +642,16 @@ FvbEraseBlocks (
   EFI_STATUS status = EFI_SUCCESS;
   VA_LIST Args;
   VA_START(Args, This);
-  // Verify and everything
+  status = FvbVerifyBlocksWritability(&Args);
   VA_END(Args);
-  // Erase blocks
-  VA_START(Args, This);
-  do {
-    EFI_LBA Lba = VA_ARG(Args, EFI_LBA);
-    if(Lba == EFI_LBA_LIST_TERMINATOR) {
-      break;
-    }
-    UINTN NumberOfBlocksToErase = VA_ARG(Args, EFI_LBA);
-    // To forget an argument is an easy mistake to do.
-    // Better check for it and try to warn a programmer.
-    if(NumberOfBlocksToErase == EFI_LBA_LIST_TERMINATOR) {
+  if(status == EFI_SUCCESS) {
+    VA_START(Args, This);
+    status = FvbEraseVerifiedBlocks(&Args);
+    VA_END(Args);
+    if(status != EFI_SUCCESS) {
       DEBUG((EFI_D_INFO,
-        "%a WARNING FvbEraseBlocks with invalid number of parameters!\n",
-        __FUNCTION__
-      ));
-      status = EFI_INVALID_PARAMETER;
-      break;
+        "%a WARNING: Blocks verified, but erase failed!", __FUNCTION__));
     }
-    if(FvbEraseConsecutiveBlocks(Lba, NumberOfBlocksToErase) != EFI_SUCCESS) {
-      status = EFI_DEVICE_ERROR;
-    }
-  } while (TRUE);
-  VA_END(Args);
+  }
   return status;
-}
-
-/**
-  Fixup internal data so that EFI can be call in virtual mode.
-  Call the passed in Child Notify event and convert any pointers in
-  lib to virtual mode.
-
-  @param[in]    Event   The Event that is being processed
-  @param[in]    Context Event Context
-**/
-VOID
-EFIAPI
-FvbVirtualNotifyEvent (
-  IN EFI_EVENT        Event,
-  IN VOID             *Context
-  )
-{
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-}
-
-EFI_STATUS
-EFIAPI
-SMMStoreFvbInitialize (
-  IN SMMSTORE_INSTANCE* Instance
-  )
-{
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_DEVICE_ERROR;
 }

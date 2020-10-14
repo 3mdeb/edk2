@@ -35,14 +35,6 @@ EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol = {
     NULL
   };
 
-void * memset (void *dest, int ch, __SIZE_TYPE__ count)
-{
-  for(__SIZE_TYPE__ offset = 0; offset < count; ++offset) {
-    ((CHAR8 *)dest)[offset] = ch;
-  }
-  return dest;
-}
-
 EFI_STATUS checkBusyBit(UINT8 *Busy);
 
 EFI_STATUS EFIAPI SPIInitialize (
@@ -66,29 +58,39 @@ EFI_STATUS EFIAPI SPIInitialize (
   }
   spi_init();
   DEBUG((EFI_D_INFO, "spi_setup_slave() returned 0x%X\n", spi_setup_slave(0, 0, &slave)));
-  char fill[300] = {};
-  UINTN length = 4;
+  unsigned char fill[300] = {};
+  UINTN length = 30;
   FvbRead(&FvbProtocol, 0, 0, &length, (VOID *)fill);
   DEBUG((EFI_D_INFO, "TRIALS\n"));
   for(int i = 0; i < 10; i++) {
-    DEBUG((EFI_D_INFO, "%X %X\n", i, fill[i]));
+    DEBUG((EFI_D_INFO, "%X %X\n", i, (UINTN)(UINT8)fill[i]));
   }
   DEBUG((EFI_D_INFO, "ERASING\n"));
-  EFI_STATUS result = FvbEraseBlocks(&FvbProtocol, 0, 1, EFI_LBA_LIST_TERMINATOR);
-  if(result == EFI_SUCCESS)
-    DEBUG((EFI_D_INFO, "EFI_SUCCESS\n"));
-  if(result == EFI_ACCESS_DENIED)
-    DEBUG((EFI_D_INFO, "EFI_ACCESS_DENIED\n"));
-  if(result == EFI_DEVICE_ERROR)
-    DEBUG((EFI_D_INFO, "EFI_DEVICE_ERROR\n"));
-  if(result == EFI_INVALID_PARAMETER)
-    DEBUG((EFI_D_INFO, "EFI_INVALID_PARAMETER\n"));
-  UINT8 busy = 0xFF;
-  checkBusyBit(&busy);
-  DEBUG((EFI_D_INFO, "BUSY: 0x%X\n", busy));
+  FvbEraseBlocks(&FvbProtocol, 0, 2, 4, 5, EFI_LBA_LIST_TERMINATOR);
   FvbRead(&FvbProtocol, 0, 0, &length, (VOID *)fill);
   for(int i = 0; i < 10; i++) {
-    DEBUG((EFI_D_INFO, "%X %X\n", i, fill[i]));
+    DEBUG((EFI_D_INFO, "%X %X\n", i, (UINTN)(UINT8)fill[i]));
   }
+  DEBUG((EFI_D_INFO, "WRITING\n"));
+  UINT8 toWrite[] = {01, 0x01, 0x01, 0x77};
+  UINTN writeLen = 4;
+  EFI_STATUS status = FvbWrite(&FvbProtocol, 0, 1, &writeLen, toWrite);
+  DEBUG((EFI_D_INFO, "Written: 0x%X\n", writeLen));
+  if(status == EFI_SUCCESS) {
+    DEBUG((EFI_D_INFO, "EFI_SUCCESS\n"));
+  } else if(status == EFI_BAD_BUFFER_SIZE) {
+    DEBUG((EFI_D_INFO, "EFI_BAD_BUFFER_SIZE\n"));
+  } else if(status == EFI_ACCESS_DENIED) {
+    DEBUG((EFI_D_INFO, "EFI_ACCESS_DENIED\n"));
+  } else {
+    DEBUG((EFI_D_INFO, "It's really bad\n"));
+  }
+  unsigned char newFill[300] = {};
+  UINTN newLength = 30;
+  FvbRead(&FvbProtocol, 0, 0, &newLength, (VOID *)newFill);
+  for(int i = 0; i < 10; i++) {
+    DEBUG((EFI_D_INFO, "%X %X\n", i, (UINTN)(UINT8)fill[i]));
+  }
+  while(TRUE);
   return EFI_SUCCESS;
 }
