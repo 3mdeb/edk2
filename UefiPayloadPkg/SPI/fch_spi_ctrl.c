@@ -7,32 +7,35 @@
 #include "stopwatch.h"
 #include "fch_spi_util.h"
 #include "SPIgeneric.h"
-#include "lpc.h"
 #include "pci_devs.h"
 #include "pci_ops.h"
 #include "spi_flash_internal.h"
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 
-#define GRANULARITY_TEST_4k		0x0000f000		/* bits 15-12 */
-#define WORD_TO_DWORD_UPPER(x)		((x << 16) & 0xffff0000)
+#define GRANULARITY_TEST_4k			0x0000f000		/* bits 15-12 */
+#define WORD_TO_DWORD_UPPER(x)	((x << 16) & 0xffff0000)
 
 /* SPI MMIO registers */
-#define SPI_RESTRICTED_CMD1		0x04
-#define SPI_RESTRICTED_CMD2		0x08
-#define SPI_CNTRL1			0x0c
-#define SPI_CMD_CODE			0x45
-#define SPI_CMD_TRIGGER			0x47
-#define   SPI_CMD_TRIGGER_EXECUTE	BIT7
-#define SPI_TX_BYTE_COUNT		0x48
-#define SPI_RX_BYTE_COUNT		0x4b
-#define SPI_STATUS			0x4c
-#define   SPI_DONE_BYTE_COUNT_SHIFT	0
-#define   SPI_DONE_BYTE_COUNT_MASK	0xff
-#define   SPI_FIFO_WR_PTR_SHIFT		8
-#define   SPI_FIFO_WR_PTR_MASK		0x7f
-#define   SPI_FIFO_RD_PTR_SHIFT		16
-#define   SPI_FIFO_RD_PTR_MASK		0x7f
+#define SPI_RESTRICTED_CMD1				0x04
+#define SPI_RESTRICTED_CMD2				0x08
+#define SPI_CNTRL1								0x0c
+#define SPI_CMD_CODE							0x45
+#define SPI_CMD_TRIGGER						0x47
+#define SPI_CMD_TRIGGER_EXECUTE		0x80
+#define SPI_TX_BYTE_COUNT					0x48
+#define SPI_RX_BYTE_COUNT					0x4b
+#define SPI_STATUS								0x4c
+#define SPI_DONE_BYTE_COUNT_SHIFT	0
+#define SPI_DONE_BYTE_COUNT_MASK	0xff
+#define SPI_FIFO_WR_PTR_SHIFT			8
+#define SPI_FIFO_WR_PTR_MASK			0x7f
+#define SPI_FIFO_RD_PTR_SHIFT			16
+#define SPI_FIFO_RD_PTR_MASK			0x7f
+
+#define MAX_ROM_PROTECT_RANGES		4
+#define ROM_PROTECT_RANGE0				0x50
+#define ROM_PROTECT_RANGE_REG(n)	(ROM_PROTECT_RANGE0 + (4 * n))
 
 VOID dump_state(CONST char *str, UINT8 phase)
 {
@@ -169,102 +172,11 @@ int protect_a_range(UINT32 value)
 	return 0;
 }
 
-/*
- * Protect range of SPI flash defined by region using the SPI flash controller.
- *
- * Note: Up to 4 ranges can be protected, though if a particular region requires more than one
- * range, total number of regions decreases accordingly. Each range can be programmed to 4KiB or
- * 64KiB granularity.
- *
- * Warning: If more than 1 region needs protection, and they need mixed protections (read/write)
- * than start with the region that requires the most protection. After the restricted commands
- * have been written, they can't be changed (write once). So if first region is write protection
- * and second region is read protection, it's best to define first region as read and write
- * protection.
- */
-int fch_spi_flash_protect(CONST struct spi_flash *flash, CONST struct region *region,
-				 CONST enum ctrlr_prot_type type)
-{
-	int ret;
-	UINT32 reg32, rom_base, range_base;
-	__SIZE_TYPE__ addr, len, gran_value, total_ranges, range;
-	BOOLEAN granularity_64k = TRUE; /* assume 64k granularity */
-
-	addr = region->offset;
-	len = region->size;
-
-	reg32 = pci_read_config32((struct device *)((VOID *)SOC_LPC_DEV), ROM_ADDRESS_RANGE2_START);
-	rom_base = WORD_TO_DWORD_UPPER(reg32);
-	if (addr < rom_base)
-		return -1;
-	range_base = addr % rom_base;
-
-	/* Define granularity to be used */
-	if (GRANULARITY_TEST_4k & range_base)
-		granularity_64k = FALSE; /* use 4K granularity */
-	if (GRANULARITY_TEST_4k & len)
-		granularity_64k = FALSE; /* use 4K granularity */
-
-	/* Define the first range and total number of ranges required */
-	if (granularity_64k) {
-		gran_value = 0x00010000; /* 64 KiB */
-		range_base = range_base >> 16;
-	} else {
-		gran_value = 0x00001000; /* 4 KiB */
-		range_base = range_base >> 12;
-	}
-	total_ranges = len / gran_value;
-	range_base &= RANGE_ADDR_MASK;
-
-	/* Create reg32 to be written into a range register and program required ranges */
-	reg32 = rom_base & ROM_BASE_MASK;
-	reg32 |= range_base;
-	if (granularity_64k)
-		reg32 |= RANGE_UNIT;
-	if (type & WRITE_PROTECT)
-		reg32 |= ROM_RANGE_WP;
-	if (type & READ_PROTECT)
-		reg32 |= ROM_RANGE_RP;
-
-	for (range = 0; range < total_ranges; range++) {
-		ret = protect_a_range(reg32);
-		if (ret)
-			return ret;
-		/*
-		 * Next range (lower 8 bits). Range points to the start address of a region.
-		 * The range value must be multiplied by the granularity (which is also the
-		 * size of the region) to get the actual offset from the SPI start address.
-		 */
-		reg32++;
-	}
-
-	/* define commands to be blocked if in range */
-	reg32 = 0;
-	if (type & WRITE_PROTECT) {
-		/* FIXME */
-		DEBUG((EFI_D_INFO, "%a: %s: Write Enable and Write Cmd not blocked\n", __FUNCTION__, __func__));
-		reg32 |= (flash->erase_cmd << 8);
-	}
-	if (type & READ_PROTECT) {
-		/* FIXME */
-		DEBUG((EFI_D_INFO, "%a: %s: READ_PROTECT not supported.\n", __FUNCTION__, __func__));
-	}
-
-	/* Final steps to protect region */
-	pci_write_config32((struct device *)((VOID *)SOC_LPC_DEV), SPI_RESTRICTED_CMD1, reg32);
-	reg32 = spi_read32(SPI_CNTRL0);
-	reg32 &= ~SPI_ACCESS_MAC_ROM_EN;
-	spi_write32(SPI_CNTRL0, reg32);
-
-	return 0;
-}
-
 CONST struct spi_ctrlr fch_spi_flash_ctrlr = {
 	.xfer = spi_ctrlr_xfer,
 	.xfer_vector = xfer_vectors,
 	.max_xfer_size = SPI_FIFO_DEPTH,
 	.flags = SPI_CNTRLR_DEDUCT_CMD_LEN | SPI_CNTRLR_DEDUCT_OPCODE_LEN,
-	.flash_protect = fch_spi_flash_protect,
 };
 
 CONST struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {

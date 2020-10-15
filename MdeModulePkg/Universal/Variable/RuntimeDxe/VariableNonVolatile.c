@@ -6,13 +6,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include <Library/BaseMemoryLib.h>
-#include <Library/MemoryAllocationLib.h>
-#include <Library/DxeServicesTableLib.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/PcdLib.h>
-//#include <Library/SMMStoreLib.h>
-
 #include "VariableNonVolatile.h"
 #include "VariableParsing.h"
 
@@ -123,16 +116,6 @@ InitEmuNonVolatileVariableStore (
 
   return EFI_SUCCESS;
 }
-
-typedef struct {
-  UINT64    ComBuffer;
-  UINT32    ComBufferSize;
-  UINT32    NumBlocks;
-  UINT32    BlockSize;
-  UINT64    MmioAddress;
-  UINT8     ApmCmd;
-  UINT8     Reserved0[3];
-} SMMSTORE_INFO;
 
 /**
   Init real non-volatile variable store.

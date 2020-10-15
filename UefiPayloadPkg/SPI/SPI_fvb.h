@@ -72,16 +72,6 @@ enum optype {
 	WRITE_WITH_ADDR = 3
 };
 
-struct intel_spi_op {
-	UINT8 op;
-	enum optype type;
-};
-
-struct intel_swseq_spi_config {
-	UINT8 opprefixes[2];
-	struct intel_spi_op ops[8];
-};
-
 struct spi_flash_protection_ops {
 	/*
 	 * Returns 1 if the whole region is software write protected.

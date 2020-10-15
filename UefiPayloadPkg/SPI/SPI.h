@@ -76,7 +76,4 @@ struct spi_config {
 	enum spi100_speed tpm_speed;
 };
 
-/* Set the SPI base address variable */
-VOID spi_set_base(VOID *base);
-
 #endif /* __AMDBLOCKS_SPI_H__ */

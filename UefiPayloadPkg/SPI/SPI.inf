@@ -19,8 +19,6 @@
   SPI.h
   SPIgeneric.h
   SPIgeneric.c
-  lpc.h
-  lpc.c
   pci_type.h
   device.h
   kconfig.h
@@ -30,8 +28,6 @@
   SPI_fvb.c
   fch_spi_util.h
   fch_spi_util.c
-  mmio.h
-  mmio.c
   stopwatch.h
   pci_devs.h
   pci_ops.h
