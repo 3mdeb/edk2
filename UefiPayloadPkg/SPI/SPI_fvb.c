@@ -89,7 +89,7 @@ EFI_STATUS EFIAPI SPIInitialize (
   UINTN newLength = 30;
   FvbRead(&FvbProtocol, 0, 0, &newLength, (VOID *)newFill);
   for(int i = 0; i < 10; i++) {
-    DEBUG((EFI_D_INFO, "%X %X\n", i, (UINTN)(UINT8)fill[i]));
+    DEBUG((EFI_D_INFO, "%X %X\n", i, (UINTN)(UINT8)newFill[i]));
   }
   while(TRUE);
   return EFI_SUCCESS;

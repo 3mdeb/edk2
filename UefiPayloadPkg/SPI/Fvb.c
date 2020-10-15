@@ -14,7 +14,7 @@ static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address);
 static EFI_STATUS FvbEraseConsecutiveBlocks(EFI_LBA Lba, UINTN amount);
 static EFI_STATUS readStatusReg(UINT8 *Status);
 static EFI_STATUS checkBusyBit(UINT8 *Busy);
-static EFI_STATUS waitForBusyBit();
+static EFI_STATUS WaitForBusyBit();
 static EFI_STATUS FvbNextBlocksFromList(
   VA_LIST *Args,
   EFI_LBA *Lba,
@@ -81,6 +81,20 @@ static EFI_STATUS readStatusReg(UINT8 *Status) {
   return EFI_SUCCESS;
 }
 
+static EFI_STATUS writeStatusReg(UINT8 Status) {
+  UINT8 readStatusCmd[] = {
+    STATUS_WIP,
+    Status
+  };
+  if(spi_xfer(
+    getSPISlave(), readStatusCmd, ARRAY_SIZE(readStatusCmd), NULL, 0)
+  ) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  return EFI_SUCCESS;
+}
+
 static EFI_STATUS checkBusyBit(UINT8 *Busy) {
   if(readStatusReg(Busy) != EFI_SUCCESS) {
     return EFI_DEVICE_ERROR;
@@ -89,7 +103,7 @@ static EFI_STATUS checkBusyBit(UINT8 *Busy) {
   return EFI_SUCCESS;
 }
 
-static EFI_STATUS waitForBusyBit() {
+static EFI_STATUS WaitForBusyBit() {
   UINT8 busy = 0xFF;
   while(busy != 0) {
     if(checkBusyBit(&busy) != EFI_SUCCESS) {
@@ -184,7 +198,6 @@ static UINTN FvbGetTotalNumberOfBlocks() {
 }
 
 static EFI_STATUS WriteEnable() {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   UINT8 writeEnableCmd[] = {
     CMD_WRITE_ENABLE
   };
@@ -196,35 +209,37 @@ static EFI_STATUS WriteEnable() {
   return EFI_SUCCESS;
 }
 
-static EFI_STATUS PageProgram(UINTN address, UINT8 *Buffer, UINTN NumBytes) {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  DEBUG((EFI_D_INFO, "writing 0x%X 0x%X 0x%X 0x%X\n", (UINTN)Buffer[0], (UINTN)Buffer[1], (UINTN)Buffer[2], (UINTN)Buffer[3]));
-  DEBUG((EFI_D_INFO, "PageProgram(address = 0x%X, Buffer = 0x%X, NumBytes = 0x%X)\n", address, Buffer, NumBytes));
-  UINT8 busy = 0xFF;
-  checkBusyBit(&busy);
-  DEBUG((EFI_D_INFO, "BUSY: %X\n", busy));
+static EFI_STATUS PageProgram(UINTN Address, UINT8 *Buffer, UINTN NumBytes) {
   UINT8 pageProgramCmd[] = {
     CMD_W25_PP, // FIXME Winbond specific
-    (UINT8)((address & 0xFF0000) >> 16),
-    (UINT8)((address & 0x00FF00) >> 8), // WRITING DUMMY DATA
-    (UINT8) (address & 0x0000FF), 0xAA, 0xBB, 0xCC, 0xDD
+    (UINT8)((Address & 0xFF0000) >> 16),
+    (UINT8)((Address & 0x00FF00) >> 8), // WRITING DUMMY DATA
+    (UINT8) (Address & 0x0000FF), 0xAA, 0xBB, 0xCC, 0xDD
   };
-  DEBUG((EFI_D_INFO, "command\n"));
-  for(UINTN counter = 0; counter < ARRAY_SIZE(pageProgramCmd); ++counter) {
-    DEBUG((EFI_D_INFO, "0x%X\n", pageProgramCmd[counter]));
-  }
   if(spi_xfer(
       getSPISlave(),
-      pageProgramCmd, ARRAY_SIZE(pageProgramCmd),
+      pageProgramCmd, 8/*ARRAY_SIZE(pageProgramCmd)*/,
       NULL, 0) != 0) {
     DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
     return EFI_DEVICE_ERROR;
   }
-  checkBusyBit(&busy);
-  DEBUG((EFI_D_INFO, "BUSY: %X\n", busy));
-  waitForBusyBit();
-  checkBusyBit(&busy);
-  DEBUG((EFI_D_INFO, "BUSY: %X\n", busy));
+  WaitForBusyBit();
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS RemoveBlockProtection() {
+  UINT8 status;
+  if(readStatusReg(&status) != EFI_SUCCESS) {
+    return EFI_DEVICE_ERROR;
+  }
+  status &= ~(
+      REG_BLOCK_PROTECT_0_MASK
+    | REG_BLOCK_PROTECT_1_MASK
+    | REG_BLOCK_PROTECT_2_MASK
+    | REG_BLOCK_PROTECT_3_MASK);
+  if(writeStatusReg(status) != EFI_SUCCESS) {
+    return EFI_DEVICE_ERROR;
+  }
   return EFI_SUCCESS;
 }
 
@@ -343,7 +358,7 @@ FvbSetAttributes(
 
  @retval EFI_SUCCESS       The firmware volume base address was returned.
 
- @retval EFI_NOT_SUPPORTED The firmware volume is not memory mapped.
+ @retval EFI_UNSUPPORTED The firmware volume is not memory mapped.
 
  **/
 EFI_STATUS
@@ -353,8 +368,7 @@ FvbGetPhysicalAddress (
   OUT       EFI_PHYSICAL_ADDRESS                 *Address
   )
 {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_DEVICE_ERROR;
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -461,7 +475,7 @@ FvbRead (
     DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
     return EFI_BAD_BUFFER_SIZE;
   }
-  waitForBusyBit();
+  WaitForBusyBit();
   while(numberOfBytesRead < numberOfBytesToRead) {
     UINTN nextReadAddress = address + numberOfBytesRead;
     UINTN numberOfBytesLeft = numberOfBytesToRead - numberOfBytesRead;
@@ -553,14 +567,7 @@ FvbWrite (
   IN        UINT8                                 *Buffer
   )
 {
-  DEBUG((EFI_D_INFO, "%a This = 0x%X, Lba = 0x%X, Offset = 0x%X, *NumBytes = 0x%X, Buffer = 0x%X\n", __FUNCTION__, This, Lba, Offset, *NumBytes, Buffer));
-  UINT8 status = 0xFF;
-  readStatusReg(&status);
-  DEBUG((EFI_D_INFO, "STATUS: 0x%X\n", status));
   CONST UINTN numberOfBytesToWrite = MIN(*NumBytes, REMAINING_SPACE_IN_BLOCK(Offset));
-  DEBUG((EFI_D_INFO, "MIN: 0x%X 0x%X\n", *NumBytes, REMAINING_SPACE_IN_BLOCK(Offset)));
-  DEBUG((EFI_D_INFO, "CALCULATION: 0x%X - 0x%X\n", BLOCK_SIZE, Offset));
-  DEBUG((EFI_D_INFO, "numberOfBytesToWrite: 0x%X\n", numberOfBytesToWrite));
   CONST UINTN address = ADDRESS(Lba, Offset);
   if(Buffer == NULL || numberOfBytesToWrite == 0) {
     DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
@@ -569,16 +576,11 @@ FvbWrite (
   if(FvbVerifySingleBlockWritability(Lba) == EFI_ACCESS_DENIED) {
     return EFI_ACCESS_DENIED;
   }
-  if(waitForBusyBit() != EFI_SUCCESS) {
-    DEBUG((EFI_D_INFO, "%a error busy bit\n", __FUNCTION__));
+  if(RemoveBlockProtection() != EFI_SUCCESS
+  || WaitForBusyBit() != EFI_SUCCESS
+  || WriteEnable() != EFI_SUCCESS
+  || PageProgram(address, Buffer, numberOfBytesToWrite) != EFI_SUCCESS) {
     return EFI_DEVICE_ERROR;
-  }
-  if(WriteEnable() != EFI_SUCCESS) {
-    DEBUG((EFI_D_INFO, "%a error write enable\n", __FUNCTION__));
-    return EFI_DEVICE_ERROR;
-  }
-  if(PageProgram(address, Buffer, numberOfBytesToWrite) != EFI_SUCCESS) {
-    DEBUG((EFI_D_INFO, "%a error page program\n", __FUNCTION__));
   }
   if(numberOfBytesToWrite != *NumBytes) {
     return EFI_BAD_BUFFER_SIZE;
