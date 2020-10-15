@@ -83,10 +83,4 @@ FvbVirtualNotifyEvent (
   IN VOID             *Context
   );
 
-EFI_STATUS
-EFIAPI
-SMMStoreFvbInitialize (
-  IN SMMSTORE_INSTANCE* Instance
-  );
-
 #endif /* FVB_H */

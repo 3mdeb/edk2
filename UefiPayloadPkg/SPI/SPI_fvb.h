@@ -110,18 +110,6 @@ struct spi_flash_protection_ops {
 
 };
 
-void * memset (void *dest, int ch, __SIZE_TYPE__ count);
-
-//
-// BlSMMStoreFvbDxe.c
-//
-
-EFI_STATUS
-EFIAPI
-SMMStoreFvbInitialize (
-  IN SMMSTORE_INSTANCE*                            Instance
-  );
-
 EFI_STATUS
 EFIAPI
 FvbGetAttributes(

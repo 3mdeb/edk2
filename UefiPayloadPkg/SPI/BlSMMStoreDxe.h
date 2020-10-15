@@ -29,34 +29,6 @@
 
 typedef struct _SMMSTORE_INSTANCE                SMMSTORE_INSTANCE;
 
-// #pragma pack (1)
-// typedef struct {
-//   VENDOR_DEVICE_PATH                  Vendor;
-//   UINT8                               Index;
-//   EFI_DEVICE_PATH_PROTOCOL            End;
-// } NOR_FLASH_DEVICE_PATH;
-// #pragma pack ()
-
-// struct _SMMSTORE_INSTANCE {
-//   UINT32                              Signature;
-//   EFI_HANDLE                          Handle;
-//   EFI_BLOCK_IO_MEDIA                  Media;
-
-//   EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL FvbProtocol;
-
-//   NOR_FLASH_DEVICE_PATH               DevicePath;
-// };
-
-//
-// BlSMMStoreFvbDxe.c
-//
-
-EFI_STATUS
-EFIAPI
-SMMStoreFvbInitialize (
-  IN SMMSTORE_INSTANCE*                            Instance
-  );
-
 EFI_STATUS
 EFIAPI
 FvbGetAttributes(

@@ -1,13 +1,18 @@
 #include <Include/PiDxe.h>
+#include <Library/BaseMemoryLib.h>
 #include "Fvb.h"
 #include "SPI_fvb.h"
 #include "SPIgeneric.h"
 #include "spi_flash_internal.h"
 #include "spi_winbond.h"
+#include "SPI.h"
 
 
 #define ADDRESS(Lba, Offset) (((BLOCK_SIZE) * (Lba)) + (Offset))
-#define REMAINING_SPACE_IN_BLOCK(Offset) ((BLOCK_SIZE) - (Offset))
+#define OFFSET_FROM_PAGE_START(Address) ((Address) % (PAGE_SIZE))
+#define REMAINING_SPACE(Offset, MaxSize) ((MaxSize) - (Offset))
+#define REMAINING_SPACE_IN_BLOCK(Offset) REMAINING_SPACE((Offset), (BLOCK_SIZE))
+#define REMAINING_SPACE_IN_PAGE(Offset) REMAINING_SPACE((Offset), (PAGE_SIZE))
 
 static struct spi_slave *getSPISlave();
 static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address);
@@ -21,13 +26,22 @@ static EFI_STATUS FvbNextBlocksFromList(
   UINTN *LbaCount);
 static EFI_STATUS FvbEraseVerifiedBlocks(VA_LIST *Args);
 static EFI_STATUS FvbVerifySingleBlockWritability(EFI_LBA Lba);
+static EFI_STATUS FvbVerifyBlockReadability(EFI_LBA Lba);
 static EFI_STATUS FvbVerifyConsecutiveBlocksWritability(
   EFI_LBA Lba,
   UINTN LbaCount);
 static EFI_STATUS FvbVerifyBlocksWritability(VA_LIST *Args);
 static UINTN FvbGetTotalNumberOfBlocks();
 static EFI_STATUS WriteEnable();
-static EFI_STATUS PageProgram(UINTN address, UINT8 *Buffer, UINTN NumBytes);
+static EFI_STATUS PageProgram(
+  CONST UINTN Address,
+  CONST UINT8 *Buffer,
+  UINTN *NumBytes);
+static BOOLEAN FvbIsBlockValid(EFI_LBA Lba);
+static EFI_STATUS ReadArray(
+  CONST UINTN Address,
+  UINT8 *Buffer,
+  UINTN *NumBytes);
 
 static struct spi_slave *getSPISlave() {
   static struct spi_slave slave;
@@ -40,7 +54,7 @@ static struct spi_slave *getSPISlave() {
 static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address) {
   WriteEnable();
   UINT8 blockEraseCmd[] = {
-    CMD_BLOCK_ERASE, // FIXME Winbond specific
+    CMD_BLOCK_ERASE,
     (UINT8)((Address & 0xFF0000) >> 16),
     (UINT8)((Address & 0xFF00)   >> 8),
     (UINT8) (Address & 0xFF)
@@ -153,8 +167,24 @@ static EFI_STATUS FvbEraseVerifiedBlocks(VA_LIST *Args) {
   return status;
 }
 
-static EFI_STATUS FvbVerifySingleBlockWritability(EFI_LBA Lba) {
+static BOOLEAN FvbIsBlockValid(EFI_LBA Lba) {
   if(Lba > FvbGetTotalNumberOfBlocks()-1) {
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
+
+static EFI_STATUS FvbVerifyBlockReadability(EFI_LBA Lba) {
+  if(FvbIsBlockValid(Lba) == FALSE) {
+    return EFI_ACCESS_DENIED;
+  } else {
+    return EFI_SUCCESS;
+  }
+}
+
+static EFI_STATUS FvbVerifySingleBlockWritability(EFI_LBA Lba) {
+  if(FvbIsBlockValid(Lba) == FALSE) {
     return EFI_ACCESS_DENIED;
   } else {
     return EFI_SUCCESS;
@@ -209,19 +239,36 @@ static EFI_STATUS WriteEnable() {
   return EFI_SUCCESS;
 }
 
-static EFI_STATUS PageProgram(UINTN Address, UINT8 *Buffer, UINTN NumBytes) {
-  UINT8 pageProgramCmd[] = {
-    CMD_W25_PP, // FIXME Winbond specific
-    (UINT8)((Address & 0xFF0000) >> 16),
-    (UINT8)((Address & 0x00FF00) >> 8), // WRITING DUMMY DATA
-    (UINT8) (Address & 0x0000FF), 0xAA, 0xBB, 0xCC, 0xDD
-  };
+static EFI_STATUS PageProgram(
+  CONST UINTN Address,
+  CONST UINT8 *Buffer,
+  UINTN *NumBytes
+) {
+  CONST UINTN commandHeaderLength = 4;
+  CONST UINTN maxLengthToWrite = MIN(
+    SPI_FIFO_DEPTH-commandHeaderLength,
+    REMAINING_SPACE_IN_PAGE(OFFSET_FROM_PAGE_START(Address))
+  );
+  CONST UINTN lengthOfDataToWrite = MIN(*NumBytes, maxLengthToWrite);
+  if(*NumBytes == 0 || Buffer == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+  UINT8 pageProgramCmd[commandHeaderLength+maxLengthToWrite];
+  pageProgramCmd[0] = CMD_W25_PP; // FIXME Winbond specific
+  pageProgramCmd[1] = (UINT8)((Address & 0xFF0000) >> 16);
+  pageProgramCmd[2] = (UINT8)((Address & 0x00FF00) >> 8);
+  pageProgramCmd[3] = (UINT8) (Address & 0x0000FF);
+  CopyMem(pageProgramCmd+commandHeaderLength, Buffer, lengthOfDataToWrite);
   if(spi_xfer(
       getSPISlave(),
-      pageProgramCmd, 8/*ARRAY_SIZE(pageProgramCmd)*/,
+      pageProgramCmd, commandHeaderLength+lengthOfDataToWrite,
       NULL, 0) != 0) {
     DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
     return EFI_DEVICE_ERROR;
+  }
+  if(lengthOfDataToWrite != *NumBytes) {
+    *NumBytes = lengthOfDataToWrite;
+    return EFI_BAD_BUFFER_SIZE;
   }
   WaitForBusyBit();
   return EFI_SUCCESS;
@@ -239,6 +286,31 @@ static EFI_STATUS RemoveBlockProtection() {
     | REG_BLOCK_PROTECT_3_MASK);
   if(writeStatusReg(status) != EFI_SUCCESS) {
     return EFI_DEVICE_ERROR;
+  }
+  return EFI_SUCCESS;
+}
+
+static EFI_STATUS ReadArray(CONST UINTN Address, UINT8 *Buffer, UINTN *NumBytes) {
+  UINT8 command[] = {
+    CMD_READ_ARRAY_SLOW,
+    (UINT8)((Address & 0xFF0000) >> 16),
+    (UINT8)((Address & 0xFF00)   >> 8),
+    (UINT8) (Address & 0xFF)
+  };
+  UINTN numberOfBytesToRead = MIN(MIN(
+    *NumBytes,
+    REMAINING_SPACE_IN_PAGE(OFFSET_FROM_PAGE_START(Address))),
+    SPI_FIFO_DEPTH-ARRAY_SIZE(command)
+  );
+  if(spi_xfer(getSPISlave(),
+    command, ARRAY_SIZE(command),
+    Buffer, numberOfBytesToRead) != 0) {
+    DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+  if(numberOfBytesToRead != *NumBytes) {
+    *NumBytes = numberOfBytesToRead;
+    return EFI_BAD_BUFFER_SIZE;
   }
   return EFI_SUCCESS;
 }
@@ -456,6 +528,7 @@ FvbGetBlockSize (
  @retval EFI_DEVICE_ERROR    The block device is not functioning correctly and could not be read.
 
  **/
+
 EFI_STATUS
 EFIAPI
 FvbRead (
@@ -466,33 +539,27 @@ FvbRead (
   IN OUT    UINT8                                 *Buffer
   )
 {
-  // FIXME check if read is not done from outside flash memory
   UINTN address = ADDRESS(Lba, Offset);
-  // Maxumum amount of bytes possible to read. Can't span the block boundary
   UINTN numberOfBytesToRead = MIN(*NumBytes, REMAINING_SPACE_IN_BLOCK(Offset));
   UINTN numberOfBytesRead = 0;
+  if(FvbVerifyBlockReadability(Lba) == EFI_ACCESS_DENIED) {
+    return EFI_ACCESS_DENIED;
+  }
   if(Buffer == NULL || numberOfBytesToRead == 0) {
     DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
     return EFI_BAD_BUFFER_SIZE;
   }
-  WaitForBusyBit();
   while(numberOfBytesRead < numberOfBytesToRead) {
-    UINTN nextReadAddress = address + numberOfBytesRead;
-    UINTN numberOfBytesLeft = numberOfBytesToRead - numberOfBytesRead;
-    UINTN numberOfBytesToReadNext = MIN(numberOfBytesLeft, PAGE_SIZE);
-    UINT8 command[] = {
-      CMD_READ_ARRAY_SLOW,
-      (UINT8)((nextReadAddress & 0xFF0000) >> 16),
-      (UINT8)((nextReadAddress & 0xFF00)   >> 8),
-      (UINT8) (nextReadAddress & 0xFF)
-    };
-    if(spi_xfer(getSPISlave(),
-      command, ARRAY_SIZE(command),
-      Buffer+numberOfBytesRead, numberOfBytesToReadNext) != 0) {
-      DEBUG((EFI_D_INFO, "%a Transfer error\n", __FUNCTION__));
+    UINTN bytesRead = numberOfBytesToRead - numberOfBytesRead;
+    EFI_STATUS readStatus = ReadArray(
+      address+numberOfBytesRead,
+      Buffer+numberOfBytesRead,
+      &bytesRead
+    );
+    if(readStatus != EFI_SUCCESS && readStatus != EFI_BAD_BUFFER_SIZE) {
       return EFI_DEVICE_ERROR;
     }
-    numberOfBytesRead += numberOfBytesToReadNext;
+    numberOfBytesRead += bytesRead;
   }
 
   if(numberOfBytesToRead != *NumBytes) {
@@ -567,8 +634,11 @@ FvbWrite (
   IN        UINT8                                 *Buffer
   )
 {
-  CONST UINTN numberOfBytesToWrite = MIN(*NumBytes, REMAINING_SPACE_IN_BLOCK(Offset));
+  CONST UINTN numberOfBytesToWrite = MIN(
+    *NumBytes, REMAINING_SPACE_IN_BLOCK(Offset)
+  );
   CONST UINTN address = ADDRESS(Lba, Offset);
+  UINTN numberOfBytesWritten = 0;
   if(Buffer == NULL || numberOfBytesToWrite == 0) {
     DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
     return EFI_BAD_BUFFER_SIZE;
@@ -578,9 +648,16 @@ FvbWrite (
   }
   if(RemoveBlockProtection() != EFI_SUCCESS
   || WaitForBusyBit() != EFI_SUCCESS
-  || WriteEnable() != EFI_SUCCESS
-  || PageProgram(address, Buffer, numberOfBytesToWrite) != EFI_SUCCESS) {
+  || WriteEnable() != EFI_SUCCESS) {
     return EFI_DEVICE_ERROR;
+  }
+  while(numberOfBytesWritten < numberOfBytesToWrite) {
+    UINTN writtenAmount = numberOfBytesToWrite;
+    EFI_STATUS writingStatus = PageProgram(address, Buffer, &writtenAmount);
+    if(writingStatus != EFI_SUCCESS && writingStatus != EFI_BAD_BUFFER_SIZE) {
+      return EFI_DEVICE_ERROR;
+    }
+    numberOfBytesWritten += writtenAmount;
   }
   if(numberOfBytesToWrite != *NumBytes) {
     return EFI_BAD_BUFFER_SIZE;
