@@ -4,7 +4,7 @@
 #include "SPI_fvb.h"
 #include "GenericSPI.h"
 #include "spi_flash_internal.h"
-#include "spi_winbond.h"
+#include "winbond.h"
 #include "SPI.h"
 
 

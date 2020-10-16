@@ -1,6 +1,6 @@
 #include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
-#include "spi_winbond.h"
+#include "winbond.h"
 #include "spi_flash_internal.h"
 #include "GenericSPI.h"
 #include "SPI_fvb.h"

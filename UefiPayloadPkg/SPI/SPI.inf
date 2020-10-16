@@ -27,7 +27,6 @@
   SPI.h
   SPI_fvb.c
   SPI_fvb.h
-  device.h
   spi_flash_internal.c
   spi_flash_internal.h
 
