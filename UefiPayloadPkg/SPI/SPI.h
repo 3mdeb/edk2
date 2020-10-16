@@ -5,6 +5,10 @@
 
 #include <Include/PiDxe.h>
 
+#define PCU_BUS		0x00
+#define PCU_DEV		0x14
+#define LPC_FUNC	0x03
+
 #define SPI_CNTRL0			0x00
 #define   SPI_BUSY			BIT31
 

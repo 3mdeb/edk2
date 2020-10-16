@@ -1,12 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-#include <Include/PiDxe.h>
-#include "FchSPIUtil.h"
-
 #include <Include/Library/DebugLib.h>
+#include <Include/Library/PciLib.h>
 #include <Include/PiDxe.h>
 #include <Library/IoLib.h>
 #include "FchSPICtrl.h"
-#include "pci_ops.h"
+#include "FchSPIUtil.h"
+#include "SPI.h"
 
 #define _LPCB_DEV PCI_DEV(0, 0x14, 0x3)
 #define SPIROM_BASE_ADDRESS_REGISTER 0xa0
@@ -18,7 +17,8 @@ static UINTN spi_base = 0;
 UINTN lpc_get_spibase(VOID)
 {
 	UINT32 base;
-	base = pci_read_config32((struct device *)_LPCB_DEV, SPIROM_BASE_ADDRESS_REGISTER);
+	base = PciRead32(
+		PCI_LIB_ADDRESS(PCU_BUS, PCU_DEV, LPC_FUNC, SPIROM_BASE_ADDRESS_REGISTER));
 	base = ALIGN_DOWN(base, SPI_BASE_ALIGNMENT);
 	return (unsigned long int)base;
 }

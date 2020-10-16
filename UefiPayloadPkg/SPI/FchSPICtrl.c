@@ -1,11 +1,10 @@
 #include <Include/Library/DebugLib.h>
-#include <Include/PiDxe.h>
+#include <Include/Library/PciLib.h>
 #include <Include/Library/TimerLib.h>
-
-#include "SPI.h"
+#include <Include/PiDxe.h>
 #include "FchSPIUtil.h"
 #include "GenericSPI.h"
-#include "pci_ops.h"
+#include "SPI.h"
 #include "spi_flash_internal.h"
 
 /* SPDX-License-Identifier: GPL-2.0-only */
@@ -33,11 +32,6 @@
 #define MAX_ROM_PROTECT_RANGES		4
 #define ROM_PROTECT_RANGE0				0x50
 #define ROM_PROTECT_RANGE_REG(n)	(ROM_PROTECT_RANGE0 + (4 * n))
-
-#define PCU_DEV			0x14
-#define LPC_FUNC		3
-#define _SOC_DEV(slot, func)	PCI_DEV(0, slot, func)
-#define SOC_LPC_DEV		_SOC_DEV(PCU_DEV, LPC_FUNC)
 
 static int wait_for_ready(VOID)
 {
@@ -131,14 +125,17 @@ int protect_a_range(UINT32 value)
 
 	/* find a free protection register */
 	for (n = 0; n < MAX_ROM_PROTECT_RANGES; n++) {
-		reg32 = pci_read_config32((struct device *)((VOID *)SOC_LPC_DEV), ROM_PROTECT_RANGE_REG(n));
+		reg32 = PciRead32(
+			PCI_LIB_ADDRESS(PCU_BUS, PCU_DEV, LPC_FUNC, ROM_PROTECT_RANGE_REG(n)));
 		if (!reg32)
 			break;
 	}
 	if (n == MAX_ROM_PROTECT_RANGES)
 		return -1; /* no free range */
 
-	pci_write_config32((struct device *)((VOID *)SOC_LPC_DEV), ROM_PROTECT_RANGE_REG(n), value);
+	PciWrite32(
+		PCI_LIB_ADDRESS(PCU_BUS, PCU_DEV, LPC_FUNC, ROM_PROTECT_RANGE_REG(n)),
+		value);
 	return 0;
 }
 

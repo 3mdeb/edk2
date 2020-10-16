@@ -91,8 +91,6 @@ UINT32 spi_crop_chunk(CONST struct spi_slave *slave, UINT32 cmd_len,
 	deduct_opcode_len = !!(ctrlr->flags & SPI_CNTRLR_DEDUCT_OPCODE_LEN);
 	ctrlr_max = ctrlr->max_xfer_size;
 
-	//assert (ctrlr_max != 0);
-
 	/* Assume opcode is always one byte and deduct it from the cmd_len
 	   as the hardware has a separate register for the opcode. */
 	if (deduct_opcode_len)
@@ -103,12 +101,6 @@ UINT32 spi_crop_chunk(CONST struct spi_slave *slave, UINT32 cmd_len,
 
 	return MIN(ctrlr_max, buf_len);
 }
-
-// __attribute__((__weak__))
-// VOID spi_init(VOID)
-// {
-// 	/* Default weak implementation - do nothing. */
-// }
 
 UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
 {

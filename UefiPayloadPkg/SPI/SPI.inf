@@ -28,8 +28,6 @@
   FchSPIUtil.h
   FchSPIUtil.c
   stopwatch.h
-  pci_ops.h
-  pci_ops.c
   Fvb.h
   Fvb.c
   spi_flash_internal.h
@@ -47,6 +45,7 @@
   TimerLib
   UefiDriverEntryPoint
   HobLib
+  PciLib
 
 [Guids]
   gEdkiiNvVarStoreFormattedGuid
