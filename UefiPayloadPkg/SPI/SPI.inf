@@ -31,7 +31,7 @@
   stopwatch.h
   pci_devs.h
   pci_ops.h
-  pci_ops.c
+  # pci_ops.c
   Fvb.h
   Fvb.c
   spi_flash_internal.h

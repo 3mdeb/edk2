@@ -2,7 +2,7 @@
 #define FVB_H
 
 #include <Include/PiDxe.h>
-#include "SPI_fvb.h"
+#include "BlSMMStoreDxe.h"
 
 #define BLOCK_SIZE 0x10000
 #define PAGE_SIZE 0x100
