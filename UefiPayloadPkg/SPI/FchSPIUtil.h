@@ -2,7 +2,6 @@
 #define FCH_SPI_UTIL_H
 
 #include <Include/PiDxe.h>
-#include "pci_type.h"
 
 UINTN lpc_get_spibase(VOID);
 VOID spi_set_base(UINTN base);

@@ -17,21 +17,19 @@
 
 [Sources]
   SPI.h
-  SPIgeneric.h
-  SPIgeneric.c
+  GenericSPI.h
+  GenericSPI.c
   pci_type.h
   device.h
-  kconfig.h
-  fch_spi_ctrl.h
-  fch_spi_ctrl.c
+  FchSPICtrl.h
+  FchSPICtrl.c
   SPI_fvb.h
   SPI_fvb.c
-  fch_spi_util.h
-  fch_spi_util.c
+  FchSPIUtil.h
+  FchSPIUtil.c
   stopwatch.h
-  pci_devs.h
   pci_ops.h
-  # pci_ops.c
+  pci_ops.c
   Fvb.h
   Fvb.c
   spi_flash_internal.h
@@ -44,9 +42,10 @@
   UefiPayloadPkg/UefiPayloadPkg.dec
 
 [LibraryClasses]
-  UefiDriverEntryPoint
-  DebugLib
   BaseMemoryLib
+  DebugLib
+  TimerLib
+  UefiDriverEntryPoint
   HobLib
 
 [Guids]

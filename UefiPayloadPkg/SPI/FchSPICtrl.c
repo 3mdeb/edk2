@@ -1,13 +1,10 @@
 #include <Include/Library/DebugLib.h>
 #include <Include/PiDxe.h>
+#include <Include/Library/TimerLib.h>
 
 #include "SPI.h"
-#include "kconfig.h"
-#include "utils.h"
-#include "stopwatch.h"
-#include "fch_spi_util.h"
-#include "SPIgeneric.h"
-#include "pci_devs.h"
+#include "FchSPIUtil.h"
+#include "GenericSPI.h"
 #include "pci_ops.h"
 #include "spi_flash_internal.h"
 
@@ -37,60 +34,37 @@
 #define ROM_PROTECT_RANGE0				0x50
 #define ROM_PROTECT_RANGE_REG(n)	(ROM_PROTECT_RANGE0 + (4 * n))
 
-VOID dump_state(CONST char *str, UINT8 phase)
+#define PCU_DEV			0x14
+#define LPC_FUNC		3
+#define _SOC_DEV(slot, func)	PCI_DEV(0, slot, func)
+#define SOC_LPC_DEV		_SOC_DEV(PCU_DEV, LPC_FUNC)
+
+static int wait_for_ready(VOID)
 {
-	UINT8 dump_size;
-	UINT32 addr;
-
-	if (!CONFIG(SOC_AMD_COMMON_BLOCK_SPI_DEBUG))
-		return;
-	DEBUG((EFI_D_INFO, "%a: SPI: %s\n", __FUNCTION__, str));
-	DEBUG((EFI_D_INFO, "%a: Cntrl0: %x\n", __FUNCTION__, spi_read32(SPI_CNTRL0)));
-	DEBUG((EFI_D_INFO, "%a: Status: %x\n", __FUNCTION__, spi_read32(SPI_STATUS)));
-
-	addr = spi_get_bar() + SPI_FIFO;
-	if (phase == 0) {
-		dump_size = spi_read8(SPI_TX_BYTE_COUNT);
-		DEBUG((EFI_D_INFO, "%a: TxByteCount: %x\n", __FUNCTION__, dump_size));
-		DEBUG((EFI_D_INFO, "%a: CmdCode: %x\n", __FUNCTION__, spi_read8(SPI_CMD_CODE)));
-	} else {
-		dump_size = spi_read8(SPI_RX_BYTE_COUNT);
-		DEBUG((EFI_D_INFO, "%a: RxByteCount: %x\n", __FUNCTION__, dump_size));
-		addr += spi_read8(SPI_TX_BYTE_COUNT);
-	}
-
-	if (dump_size > 0) {
-    //hexdump((VOID *)addr, dump_size);
-    DEBUG((EFI_D_INFO, "%a: HEXDUMPING NOT IMPLEMENTED: %x\n", __FUNCTION__, dump_size));
-  }
-}
-
-int wait_for_ready(VOID)
-{
-	CONST UINT32 timeout_ms = 500;
-	struct stopwatch sw;
-
-	stopwatch_init_msecs_expire(&sw, timeout_ms);
+	CONST UINT64 timeoutMilisecond = 500;
+	CONST UINT64 nanoToMiliDivider = 1000000;
+	CONST UINT64 startTimeMilisec =
+		GetTimeInNanoSecond(GetPerformanceCounter()) / nanoToMiliDivider;
+	CONST UINT64 endTimeMilisec = startTimeMilisec + timeoutMilisecond;
+	UINT64 timeNow = startTimeMilisec;
 
 	do {
 		if (!(spi_read32(SPI_STATUS) & SPI_BUSY))
 			return 0;
-	} while (!stopwatch_expired(&sw));
+		timeNow = GetTimeInNanoSecond(GetPerformanceCounter()) / nanoToMiliDivider;
+	} while (
+				timeNow<startTimeMilisec
+		|| (timeNow>startTimeMilisec && timeNow>endTimeMilisec));
 
 	return -1;
 }
 
 int execute_command(VOID)
 {
-	dump_state("Before execute", 0);
-
 	spi_write8(SPI_CMD_TRIGGER, SPI_CMD_TRIGGER_EXECUTE);
-
-	if (wait_for_ready())
+	if(wait_for_ready())
 		DEBUG((EFI_D_INFO,
       "%a: FCH_SC Error: Timeout executing command\n", __FUNCTION__));
-
-	dump_state("Transaction finished", 1);
 
 	return 0;
 }
@@ -107,10 +81,6 @@ int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,
 	UINT8 cmd;
 	UINT8 *bufin = din;
 	CONST UINT8 *bufout = dout;
-
-	if (CONFIG(SOC_AMD_COMMON_BLOCK_SPI_DEBUG))
-		DEBUG((EFI_D_INFO, "%a(%zx, %zx)\n", __FUNCTION__, bytesout,
-			bytesin));
 
 	/* First byte is cmd which cannot be sent through FIFO */
 	cmd = bufout[0];

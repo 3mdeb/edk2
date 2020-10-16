@@ -1,19 +1,17 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 #include <Include/PiDxe.h>
-#include "fch_spi_util.h"
-#include "utils.h"
+#include "FchSPIUtil.h"
 
 #include <Include/Library/DebugLib.h>
 #include <Include/PiDxe.h>
 #include <Library/IoLib.h>
-#include "fch_spi_ctrl.h"
-#include "pci_mmio_cfg.h"
-#include "device.h"
+#include "FchSPICtrl.h"
 #include "pci_ops.h"
 
 #define _LPCB_DEV PCI_DEV(0, 0x14, 0x3)
 #define SPIROM_BASE_ADDRESS_REGISTER 0xa0
 #define SPI_BASE_ALIGNMENT 0x00000040
+#define ALIGN_DOWN(x,a) ((x) & ~((typeof(x))(a)-1UL))
 
 static UINTN spi_base = 0;
 

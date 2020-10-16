@@ -2,7 +2,7 @@
 #include <Library/BaseMemoryLib.h>
 #include "Fvb.h"
 #include "SPI_fvb.h"
-#include "SPIgeneric.h"
+#include "GenericSPI.h"
 #include "spi_flash_internal.h"
 #include "spi_winbond.h"
 #include "SPI.h"
@@ -442,6 +442,20 @@ FvbGetPhysicalAddress (
 {
   return EFI_UNSUPPORTED;
 }
+// EFI_STATUS
+// EFIAPI
+// FvbGetPhysicalAddress (
+//   IN CONST  EFI_FIRMWARE_VOLUME_BLOCK2_PROTOCOL  *This,
+//   OUT       EFI_PHYSICAL_ADDRESS                 *Address
+//   )
+// {
+//   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
+//   ASSERT(Address != NULL);
+
+//   *Address = mFlashNvStorageVariableBase;
+//   return EFI_SUCCESS;
+// }
+
 
 /**
  The GetBlockSize() function retrieves the size of the requested

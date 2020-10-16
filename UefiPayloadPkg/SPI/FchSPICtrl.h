@@ -2,12 +2,8 @@
 #define FCH_SPI_CTRL_H
 
 #include <Include/PiDxe.h>
-
-#include "kconfig.h"
-#include "utils.h"
-#include "stopwatch.h"
-#include "fch_spi_util.h"
-#include "SPIgeneric.h"
+#include "pci_type.h"
+#include "GenericSPI.h"
 
 union pci_bank {
 	UINT8 reg8[4096];
@@ -16,8 +12,6 @@ union pci_bank {
 };
 
 union pci_bank *pcicfg(pci_devfn_t dev);
-VOID dump_state(CONST char *str, UINT8 phase);
-int wait_for_ready(VOID);
 int execute_command(VOID);
 VOID spi_init(VOID);
 int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,

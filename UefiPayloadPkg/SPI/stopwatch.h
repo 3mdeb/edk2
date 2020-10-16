@@ -116,11 +116,7 @@ struct stopwatch {
 
 static inline VOID stopwatch_init(struct stopwatch *sw)
 {
-	if (CONFIG(HAVE_MONOTONIC_TIMER))
-		timer_monotonic_get(&sw->start);
-	else
-		sw->start.microseconds = 0;
-
+	sw->start.microseconds = 0;
 	sw->current = sw->expires = sw->start;
 }
 
@@ -140,10 +136,7 @@ static inline VOID stopwatch_init_msecs_expire(struct stopwatch *sw, long ms)
  */
 static inline VOID stopwatch_tick(struct stopwatch *sw)
 {
-	if (CONFIG(HAVE_MONOTONIC_TIMER))
-		timer_monotonic_get(&sw->current);
-	else
-		sw->current.microseconds = 0;
+	sw->current.microseconds = 0;
 }
 
 /*
@@ -160,8 +153,7 @@ static inline int stopwatch_expired(struct stopwatch *sw)
  */
 static inline VOID stopwatch_wait_until_expired(struct stopwatch *sw)
 {
-	while (!stopwatch_expired(sw))
-		;
+	while (!stopwatch_expired(sw));
 }
 
 /*

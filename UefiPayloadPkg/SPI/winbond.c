@@ -2,7 +2,7 @@
 #include <Include/Library/DebugLib.h>
 #include "spi_winbond.h"
 #include "spi_flash_internal.h"
-#include "SPIgeneric.h"
+#include "GenericSPI.h"
 #include "SPI_fvb.h"
 
 union status_reg1 {

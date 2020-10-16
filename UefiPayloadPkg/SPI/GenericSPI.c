@@ -3,7 +3,7 @@
 #include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
 #include <Library/BaseMemoryLib/MemLibInternals.h>
-#include "SPIgeneric.h"
+#include "GenericSPI.h"
 
 UINT32 spi_claim_bus(CONST struct spi_slave *slave)
 {

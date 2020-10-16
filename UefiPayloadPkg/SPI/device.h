@@ -3,7 +3,6 @@
 
 #include <Include/PiDxe.h>
 #include "path.h"
-#include "kconfig.h"
 
 struct bus {
 
@@ -70,18 +69,10 @@ struct device {
 	 */
 	struct bus *link_list;
 
-#if !DEVTREE_EARLY
 	struct pci_irq_info pci_irq_info[4];
 	struct device_operations *ops;
 	struct chip_operations *chip_ops;
 	const char *name;
-#if CONFIG(GENERATE_SMBIOS_TABLES)
-	UINT8 smbios_slot_type;
-	UINT8 smbios_slot_data_width;
-	UINT8 smbios_slot_length;
-	const char *smbios_slot_designation;
-#endif
-#endif
 	void *chip_info;
 
 	/* Zero-terminated array of fields and options to probe. */
