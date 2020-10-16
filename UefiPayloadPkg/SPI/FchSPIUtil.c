@@ -28,14 +28,6 @@ VOID spi_set_base(UINTN base)
 	spi_base = base;
 }
 
-//static //__attribute__ ((__always_inline__))
-union pci_bank *pcicfg(pci_devfn_t dev)
-{
-	// FIXME this should not be a magic constant
-	UINT8 *pci_mmconf =(void *)((UINTN)(0xF8000000));
-	return (void *)&pci_mmconf[PCI_DEVFN_OFFSET(dev)];
-}
-
 UINTN spi_get_bar(VOID)
 {
 	if (spi_base == 0) {

@@ -2,7 +2,6 @@
 #define FCH_SPI_CTRL_H
 
 #include <Include/PiDxe.h>
-#include "pci_type.h"
 #include "GenericSPI.h"
 
 union pci_bank {
@@ -11,7 +10,6 @@ union pci_bank {
 	UINT32 reg32[4096 / sizeof(UINT32)];
 };
 
-union pci_bank *pcicfg(pci_devfn_t dev);
 int execute_command(VOID);
 VOID spi_init(VOID);
 int spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout,

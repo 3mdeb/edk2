@@ -16,22 +16,20 @@
   ENTRY_POINT                    = SPIInitialize
 
 [Sources]
-  SPI.h
-  GenericSPI.h
-  GenericSPI.c
-  pci_type.h
-  device.h
-  FchSPICtrl.h
   FchSPICtrl.c
-  SPI_fvb.h
-  SPI_fvb.c
-  FchSPIUtil.h
+  FchSPICtrl.h
   FchSPIUtil.c
-  stopwatch.h
-  Fvb.h
+  FchSPIUtil.h
   Fvb.c
-  spi_flash_internal.h
+  Fvb.h
+  GenericSPI.c
+  GenericSPI.h
+  SPI.h
+  SPI_fvb.c
+  SPI_fvb.h
+  device.h
   spi_flash_internal.c
+  spi_flash_internal.h
 
 [Packages]
   MdePkg/MdePkg.dec
