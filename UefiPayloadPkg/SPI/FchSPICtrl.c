@@ -5,7 +5,7 @@
 #include "FchSPIUtil.h"
 #include "GenericSPI.h"
 #include "SPI.h"
-#include "spi_flash_internal.h"
+#include "SPIFlashInternal.h"
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 

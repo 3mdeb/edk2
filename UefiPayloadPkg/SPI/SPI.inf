@@ -22,44 +22,43 @@
   FchSPIUtil.h
   Fvb.c
   Fvb.h
+  FvbSPI.c
+  FvbSPI.h
   GenericSPI.c
   GenericSPI.h
   SPI.h
-  SPI_fvb.c
-  SPI_fvb.h
-  spi_flash_internal.c
-  spi_flash_internal.h
+  SPIFlashInternal.c
+  SPIFlashInternal.h
 
 [Packages]
-  MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec
   EmbeddedPkg/EmbeddedPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MdePkg/MdePkg.dec
   UefiPayloadPkg/UefiPayloadPkg.dec
 
 [LibraryClasses]
   BaseMemoryLib
   DebugLib
-  TimerLib
-  UefiDriverEntryPoint
   HobLib
   PciLib
+  TimerLib
+  UefiDriverEntryPoint
 
 [Guids]
-  gEdkiiNvVarStoreFormattedGuid
+  gUefiFvbSPIInfoGuid
   gEfiSMMSTOREInfoHobGuid
-  gEfiEventVirtualAddressChangeGuid
 
 [Protocols]
-  gEfiFirmwareVolumeBlockProtocolGuid                       ## PRODUCES
+  gEfiFirmwareVolumeBlockProtocolGuid ## PRODUCES
 
 [Pcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
-  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize
 
 [Depex]
   TRUE

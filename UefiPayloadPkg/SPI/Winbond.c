@@ -1,9 +1,9 @@
-#include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
-#include "winbond.h"
-#include "spi_flash_internal.h"
+#include <Include/PiDxe.h>
+#include "FvbSPI.h"
 #include "GenericSPI.h"
-#include "SPI_fvb.h"
+#include "SPIFlashInternal.h"
+#include "Winbond.h"
 
 union status_reg1 {
 	UINT8 u;

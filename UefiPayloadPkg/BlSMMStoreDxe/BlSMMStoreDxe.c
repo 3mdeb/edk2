@@ -170,7 +170,8 @@ BlSMMSTOREInitialise (
   //
   // Find the SMMSTORE information guid hob
   //
-  GuidHob = GetFirstGuidHob (&gEfiSMMSTOREInfoHobGuid);
+  // GuidHob = GetFirstGuidHob (&gEfiSMMSTOREInfoHobGuid);
+  GuidHob = NULL;
   if (GuidHob == NULL) {
     DEBUG ((DEBUG_WARN, "SMMSTORE not supported! Skipping driver init.\n"));
     PcdSetBoolS (PcdEmuVariableNvModeEnable, TRUE);

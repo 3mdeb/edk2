@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
-#include <Include/PiDxe.h>
 #include <Include/Library/DebugLib.h>
+#include <Include/PiDxe.h>
 #include <Library/BaseMemoryLib/MemLibInternals.h>
 #include "GenericSPI.h"
 

@@ -2,11 +2,11 @@
 
 /*
  * Driver for Adesto Technologies SPI flash
- * based on winbond.c
+ * based on Winbond.c
  */
 
 
-#include "spi_flash_internal.h"
+#include "SPIFlashInternal.h"
 
 /* at25dfxx-specific commands */
 #define CMD_AT25DF_WREN		0x06	/* Write Enable */

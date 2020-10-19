@@ -83,16 +83,12 @@ APRIORI DXE {
   INF  MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
   INF  MdeModulePkg/Universal/ReportStatusCodeRouter/RuntimeDxe/ReportStatusCodeRouterRuntimeDxe.inf
   INF  MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
-  !if $(BOOTLOADER) == "COREBOOT"
-    # Initialize VariableStore and update PCDs before VariableRuntimeDxe
-    INF  UefiPayloadPkg/BlSMMStoreDxe/BlSMMStoreDxe.inf
-  !endif
+  INF UefiPayloadPkg/SPI/SPI.inf
 
   # Init Test Driver before Secure Boot
   # INF  UefiPayloadPkg/TestDriverDxe/TestDriver.inf
   INF  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
 }
-INF UefiPayloadPkg/SPI/SPI.inf
 
 #
 # DXE Phase modules
@@ -127,9 +123,7 @@ INF UefiPayloadPkg/BlSupportDxe/BlSupportDxe.inf
 
 INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 INF MdeModulePkg/Logo/LogoDxe.inf
-!if $(BOOTLOADER) == "COREBOOT"
-  INF UefiPayloadPkg/BlSMMStoreDxe/BlSMMStoreDxe.inf
-!endif
+INF UefiPayloadPkg/SPI/SPI.inf
 
 #
 # PCI Support

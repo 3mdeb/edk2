@@ -8,7 +8,7 @@
 #define SPI_FLASH_INTERNAL_H
 
 #include <Include/PiDxe.h>
-#include "SPI_fvb.h"
+#include "FvbSPI.h"
 
 /* Common commands */
 #define CMD_READ_ID			0x9f
@@ -33,7 +33,7 @@
 #define REG_BLOCK_PROTECT_0_MASK 						0x04
 #define REG_BLOCK_PROTECT_1_MASK 						0x08
 #define REG_BLOCK_PROTECT_2_MASK 						0x10
-#define REG_BLOCK_PROTECT_3_MASK 						0x20 // FIXME this exists only on some winbond chips
+#define REG_BLOCK_PROTECT_3_MASK 						0x20 // FIXME this exists only on some Winbond chips
 #define REG_TOP_BOTTOM_PROTECTION_MASK 			0x40 // FIXME on other chips T/B mask should be 0x40
 #define REG_STATUS_REGISTER_PROTECTION_MASK 0x80
 

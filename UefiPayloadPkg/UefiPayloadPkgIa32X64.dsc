@@ -257,11 +257,6 @@
 !else
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
 !endif
-!if $(BOOTLOADER) == "COREBOOT"
-  SmmStoreLib|UefiPayloadPkg/Library/CbSMMStoreLib/CbSMMStoreLib.inf
-!else
-  SmmStoreLib|UefiPayloadPkg/Library/SblSMMStoreLib/SblSMMStoreLib.inf
-!endif
 
 !if $(TPM_ENABLE) == TRUE
   Tpm12CommandLib|SecurityPkg/Library/Tpm12CommandLib/Tpm12CommandLib.inf
@@ -629,13 +624,6 @@
 !endif
   UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutputDxe.inf
   UefiPayloadPkg/PciPlatformDxe/PciPlatformDxe.inf
-
-  #
-  # SMMSTORE
-  #
-!if $(BOOTLOADER) == "COREBOOT"
-  UefiPayloadPkg/BlSMMStoreDxe/BlSMMStoreDxe.inf
-!endif
 
   #
   # Network Support

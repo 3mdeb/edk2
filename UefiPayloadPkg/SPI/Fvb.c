@@ -1,11 +1,11 @@
 #include <Include/PiDxe.h>
 #include <Library/BaseMemoryLib.h>
 #include "Fvb.h"
-#include "SPI_fvb.h"
+#include "FvbSPI.h"
 #include "GenericSPI.h"
-#include "spi_flash_internal.h"
-#include "winbond.h"
 #include "SPI.h"
+#include "SPIFlashInternal.h"
+#include "Winbond.h"
 
 
 #define ADDRESS(Lba, Offset) (((BLOCK_SIZE) * (Lba)) + (Offset))

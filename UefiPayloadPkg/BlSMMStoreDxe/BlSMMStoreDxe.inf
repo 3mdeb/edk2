@@ -44,7 +44,7 @@
   gEfiAuthenticatedVariableGuid
   gEfiEventVirtualAddressChangeGuid
   gEdkiiNvVarStoreFormattedGuid     ## PRODUCES ## PROTOCOL
-  gEfiSMMSTOREInfoHobGuid
+  # gEfiSMMSTOREInfoHobGuid
 
 [Protocols]
   gEfiBlockIoProtocolGuid

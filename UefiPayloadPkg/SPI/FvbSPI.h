@@ -11,16 +11,28 @@
 
 
 #include <Base.h>
-#include <PiDxe.h>
 #include <Guid/EventGroup.h>
-#include <Protocol/BlockIo.h>
-#include <Protocol/DiskIo.h>
-#include <Protocol/FirmwareVolumeBlock.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeLib.h>
+#include <PiDxe.h>
+#include <Protocol/BlockIo.h>
+#include <Protocol/DiskIo.h>
+#include <Protocol/FirmwareVolumeBlock.h>
 #include "GenericSPI.h"
+
+extern EFI_GUID gUefiFvbSPIInfoGuid;
+
+typedef struct {
+  UINT64    ComBuffer;
+  UINT32    ComBufferSize;
+  UINT32    NumBlocks;
+  UINT32    BlockSize;
+  UINT64    MmioAddress;
+  UINT8     ApmCmd;
+  UINT8     Reserved0[3];
+} FVBSPI_INFO;
 
 typedef struct _SMMSTORE_INSTANCE                SMMSTORE_INSTANCE;
 
