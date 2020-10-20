@@ -10,12 +10,12 @@
 
 EFI_STATUS
 InitializeFvAndVariableStoreHeaders (
-  IN SMMSTORE_INSTANCE *Instance
+  IN FVBSPI_INFO *Instance
   );
 
 EFI_STATUS
 ValidateFvHeader (
-  IN  SMMSTORE_INSTANCE *Instance
+  IN  FVBSPI_INFO *Instance
   );
 
 EFI_STATUS

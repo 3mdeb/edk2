@@ -156,6 +156,10 @@ BlSMMSTOREInitialise (
   IN EFI_SYSTEM_TABLE   *SystemTable
   )
 {
+  DEBUG ((DEBUG_WARN, "BLAH BlSMMSTOREInitialise.\n"));
+  while(1);
+  return EFI_SUCCESS;
+  //////////////////////////////////////////////
   EFI_STATUS                              Status;
   VOID                                    *ComBuf;
   VOID                                    *GuidHob;
@@ -220,12 +224,12 @@ BlSMMSTOREInitialise (
   }
 
   // Update PCDs for Variable/RuntimeDxe
-  PcdSet32S (PcdFlashNvStorageVariableBase,
-      PcdGet32 (PcdFlashNvStorageVariableBase) + SMMStoreInfoHob->MmioAddress);
-  PcdSet32S (PcdFlashNvStorageFtwWorkingBase,
-      PcdGet32 (PcdFlashNvStorageFtwWorkingBase) + SMMStoreInfoHob->MmioAddress);
-  PcdSet32S (PcdFlashNvStorageFtwSpareBase,
-      PcdGet32 (PcdFlashNvStorageFtwSpareBase) + SMMStoreInfoHob->MmioAddress);
+  PcdSet32S(PcdFlashNvStorageVariableBase,
+      PcdGet32(PcdFlashNvStorageVariableBase) + SMMStoreInfoHob->MmioAddress);
+  PcdSet32S(PcdFlashNvStorageFtwWorkingBase,
+      PcdGet32(PcdFlashNvStorageFtwWorkingBase) + SMMStoreInfoHob->MmioAddress);
+  PcdSet32S(PcdFlashNvStorageFtwSpareBase,
+      PcdGet32(PcdFlashNvStorageFtwSpareBase) + SMMStoreInfoHob->MmioAddress);
 
   mSMMStoreInstance = AllocateRuntimePool (sizeof(SMMSTORE_INSTANCE*));
   if (!mSMMStoreInstance) {

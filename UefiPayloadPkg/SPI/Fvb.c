@@ -1,5 +1,7 @@
+#include <Guid/VariableFormat.h>
 #include <Include/PiDxe.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include "Fvb.h"
 #include "FvbSPI.h"
 #include "GenericSPI.h"
@@ -337,11 +339,80 @@ static EFI_STATUS ReadArray(CONST UINTN Address, UINT8 *Buffer, UINTN *NumBytes)
 **/
 EFI_STATUS
 InitializeFvAndVariableStoreHeaders (
-  IN SMMSTORE_INSTANCE *Instance
+  IN FVBSPI_INFO *Instance
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_SUCCESS;
+  EFI_STATUS                          Status;
+  VOID*                               Headers;
+  UINTN                               HeadersLength;
+  EFI_FIRMWARE_VOLUME_HEADER          *FirmwareVolumeHeader;
+  VARIABLE_STORE_HEADER               *VariableStoreHeader;
+
+  HeadersLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY) + sizeof(VARIABLE_STORE_HEADER);
+  Headers = AllocateZeroPool(HeadersLength);
+
+  // FirmwareVolumeHeader->FvLength is declared to have the Variable area AND the FTW working area AND the FTW Spare contiguous.
+  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) + PcdGet32(PcdFlashNvStorageVariableSize) == PcdGet32(PcdFlashNvStorageFtwWorkingBase));
+  ASSERT(PcdGet32(PcdFlashNvStorageFtwWorkingBase) + PcdGet32(PcdFlashNvStorageFtwWorkingSize) == PcdGet32(PcdFlashNvStorageFtwSpareBase));
+
+  // Check if the size of the area is at least one block size
+  ASSERT((PcdGet32(PcdFlashNvStorageVariableSize) > 0) && (PcdGet32(PcdFlashNvStorageVariableSize) / Instance->BlockSize > 0));
+  ASSERT((PcdGet32(PcdFlashNvStorageFtwWorkingSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwWorkingSize) / Instance->BlockSize > 0));
+  ASSERT((PcdGet32(PcdFlashNvStorageFtwSpareSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwSpareSize) / Instance->BlockSize > 0));
+
+  // Ensure the Variable area Base Addresses are aligned on a block size boundaries
+  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) % Instance->BlockSize == 0);
+  ASSERT(PcdGet32(PcdFlashNvStorageFtwWorkingBase) % Instance->BlockSize == 0);
+  ASSERT(PcdGet32(PcdFlashNvStorageFtwSpareBase) % Instance->BlockSize == 0);
+
+  //
+  // EFI_FIRMWARE_VOLUME_HEADER
+  //
+  FirmwareVolumeHeader = (EFI_FIRMWARE_VOLUME_HEADER*)Headers;
+  CopyGuid (&FirmwareVolumeHeader->FileSystemGuid, &gEfiSystemNvDataFvGuid);
+  FirmwareVolumeHeader->FvLength =
+      PcdGet32(PcdFlashNvStorageVariableSize) +
+      PcdGet32(PcdFlashNvStorageFtwWorkingSize) +
+      PcdGet32(PcdFlashNvStorageFtwSpareSize);
+  FirmwareVolumeHeader->Signature = EFI_FVH_SIGNATURE;
+  FirmwareVolumeHeader->Attributes = (EFI_FVB_ATTRIBUTES_2) (
+                                          EFI_FVB2_READ_ENABLED_CAP   | // Reads may be enabled
+                                          EFI_FVB2_READ_STATUS        | // Reads are currently enabled
+                                          EFI_FVB2_STICKY_WRITE       | // A block erase is required to flip bits into EFI_FVB2_ERASE_POLARITY
+                                          EFI_FVB2_MEMORY_MAPPED      | // It is memory mapped
+                                          EFI_FVB2_ERASE_POLARITY     | // After erasure all bits take this value (i.e. '1')
+                                          EFI_FVB2_WRITE_STATUS       | // Writes are currently enabled
+                                          EFI_FVB2_WRITE_ENABLED_CAP    // Writes may be enabled
+                                      );
+  FirmwareVolumeHeader->HeaderLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY);
+  FirmwareVolumeHeader->Revision = EFI_FVH_REVISION;
+  FirmwareVolumeHeader->BlockMap[0].NumBlocks = Instance->NumBlocks;
+  FirmwareVolumeHeader->BlockMap[0].Length    = Instance->BlockSize;
+  FirmwareVolumeHeader->BlockMap[1].NumBlocks = 0;
+  FirmwareVolumeHeader->BlockMap[1].Length    = 0;
+  FirmwareVolumeHeader->Checksum = CalculateCheckSum16 ((UINT16*)FirmwareVolumeHeader,FirmwareVolumeHeader->HeaderLength);
+  DEBUG((EFI_D_INFO, "%a checksum = 0x%X\n", __FUNCTION__, FirmwareVolumeHeader->Checksum));
+
+  //
+  // VARIABLE_STORE_HEADER
+  //
+  VariableStoreHeader = (VARIABLE_STORE_HEADER*)((UINTN)Headers + FirmwareVolumeHeader->HeaderLength);
+  CopyGuid (&VariableStoreHeader->Signature, &gEfiVariableGuid);
+  VariableStoreHeader->Size   = PcdGet32(PcdFlashNvStorageVariableSize) - FirmwareVolumeHeader->HeaderLength;
+  VariableStoreHeader->Format = VARIABLE_STORE_FORMATTED;
+  VariableStoreHeader->State  = VARIABLE_STORE_HEALTHY;
+
+  // Install the combined super-header in the store
+  Status = FvbEraseBlocks(NULL, 0, 1, EFI_LBA_LIST_TERMINATOR);
+  if(Status != EFI_SUCCESS) {
+    DEBUG((EFI_D_INFO, "%a Erase failed\n", __FUNCTION__));
+    return Status;
+  }
+  Status = FvbWrite(NULL, 0, 0, &HeadersLength, Headers);
+
+  FreePool (Headers);
+  return Status;
 }
 
 /**
@@ -354,11 +425,115 @@ InitializeFvAndVariableStoreHeaders (
 
 **/
 EFI_STATUS
-ValidateFvHeader (
-  IN  SMMSTORE_INSTANCE *Instance
-  )
-{
+ValidateFvHeader (IN  FVBSPI_INFO *Instance) {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
+  UINT16                      Checksum;
+  EFI_FIRMWARE_VOLUME_HEADER  *FwVolHeader;
+  VARIABLE_STORE_HEADER       *VariableStoreHeader;
+  UINTN                       VariableStoreLength;
+  UINTN                       FvLength;
+  EFI_STATUS                  TempStatus;
+  UINTN                       BufferSize;
+  UINTN                       BufferSizeReqested;
+
+  BufferSizeReqested = sizeof(EFI_FIRMWARE_VOLUME_HEADER);
+  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER*)AllocatePool(BufferSizeReqested);
+  if (!FwVolHeader) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  BufferSize = BufferSizeReqested;
+  TempStatus = FvbRead(NULL, 0, 0, &BufferSize, (UINT8 *)FwVolHeader);
+  if (EFI_ERROR (TempStatus) || BufferSizeReqested != BufferSize) {
+    FreePool (FwVolHeader);
+    return EFI_DEVICE_ERROR;
+  }
+
+  FvLength = PcdGet32(PcdFlashNvStorageVariableSize) + PcdGet32(PcdFlashNvStorageFtwWorkingSize) +
+      PcdGet32(PcdFlashNvStorageFtwSpareSize);
+
+  //
+  // Verify the header revision, header signature, length
+  // Length of FvBlock cannot be 2**64-1
+  // HeaderLength cannot be an odd number
+  //
+  if (   (FwVolHeader->Revision  != EFI_FVH_REVISION)
+      || (FwVolHeader->Signature != EFI_FVH_SIGNATURE)
+      || (FwVolHeader->FvLength  != FvLength)
+      )
+  {
+    DEBUG ((EFI_D_INFO, "%a: No Firmware Volume header present\n",
+      __FUNCTION__));
+    FreePool (FwVolHeader);
+    return EFI_NOT_FOUND;
+  }
+
+  // Check the Firmware Volume Guid
+  if( CompareGuid (&FwVolHeader->FileSystemGuid, &gEfiSystemNvDataFvGuid) == FALSE ) {
+    DEBUG ((EFI_D_INFO, "%a: Firmware Volume Guid non-compatible\n",
+      __FUNCTION__));
+    FreePool (FwVolHeader);
+    return EFI_NOT_FOUND;
+  }
+
+  BufferSizeReqested = FwVolHeader->HeaderLength;
+  FreePool (FwVolHeader);
+  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER*)AllocatePool(BufferSizeReqested);
+  if (!FwVolHeader) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  BufferSize = BufferSizeReqested;
+  TempStatus = FvbRead(NULL, 0, 0, &BufferSize, (UINT8 *)FwVolHeader);
+  if (EFI_ERROR (TempStatus) || BufferSizeReqested != BufferSize) {
+    FreePool (FwVolHeader);
+    return EFI_DEVICE_ERROR;
+  }
+
+  // Verify the header checksum
+  DEBUG ((EFI_D_INFO, "%a: FwVolHeader->HeaderLength =   0x%X\n", __FUNCTION__, FwVolHeader->HeaderLength));
+  Checksum = CalculateSum16((UINT16*)FwVolHeader, FwVolHeader->HeaderLength);
+  DEBUG((EFI_D_INFO, "%a checksum = 0x%X\n", __FUNCTION__, Checksum));
+  if (Checksum != 0) {
+    DEBUG ((EFI_D_INFO, "%a: FV checksum is invalid (Checksum:0x%X)\n",
+      __FUNCTION__, Checksum));
+    FreePool (FwVolHeader);
+    return EFI_NOT_FOUND;
+  }
+
+  BufferSizeReqested = sizeof(VARIABLE_STORE_HEADER);
+  VariableStoreHeader = (VARIABLE_STORE_HEADER*)AllocatePool(BufferSizeReqested);
+  if (!VariableStoreHeader) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  BufferSize = BufferSizeReqested;
+  TempStatus = FvbRead(NULL, 0, FwVolHeader->HeaderLength, &BufferSize, (UINT8 *)VariableStoreHeader);
+  if (EFI_ERROR (TempStatus) || BufferSizeReqested != BufferSize) {
+    FreePool (VariableStoreHeader);
+    FreePool (FwVolHeader);
+    return EFI_DEVICE_ERROR;
+  }
+
+  // Check the Variable Store Guid
+  if (!CompareGuid (&VariableStoreHeader->Signature, &gEfiVariableGuid) &&
+      !CompareGuid (&VariableStoreHeader->Signature, &gEfiAuthenticatedVariableGuid)) {
+    DEBUG ((EFI_D_INFO, "%a: Variable Store Guid non-compatible\n",
+      __FUNCTION__));
+    FreePool (FwVolHeader);
+    FreePool (VariableStoreHeader);
+    return EFI_NOT_FOUND;
+  }
+
+  VariableStoreLength = PcdGet32 (PcdFlashNvStorageVariableSize) - FwVolHeader->HeaderLength;
+  if (VariableStoreHeader->Size != VariableStoreLength) {
+    DEBUG ((EFI_D_INFO, "%a: Variable Store Length does not match\n",
+      __FUNCTION__));
+    FreePool (FwVolHeader);
+    FreePool (VariableStoreHeader);
+    return EFI_NOT_FOUND;
+  }
+
+  FreePool (FwVolHeader);
+  FreePool (VariableStoreHeader);
+
   return EFI_SUCCESS;
 }
 
@@ -539,6 +714,7 @@ FvbRead (
   IN OUT    UINT8                                 *Buffer
   )
 {
+  DEBUG((EFI_D_INFO, "%a(This = 0x%X, Lba = 0x%X, Offset = 0x%X, *NumBytes = 0x%X, Buffer = 0x%X)\n", __FUNCTION__, This, Lba, Offset, *NumBytes, Buffer));
   UINTN address = ADDRESS(Lba, Offset);
   UINTN numberOfBytesToRead = MIN(*NumBytes, REMAINING_SPACE_IN_BLOCK(Offset));
   UINTN numberOfBytesRead = 0;
@@ -565,6 +741,9 @@ FvbRead (
   if(numberOfBytesToRead != *NumBytes) {
     *NumBytes = numberOfBytesToRead;
     return EFI_BAD_BUFFER_SIZE;
+  }
+  for(UINTN counter = 0; counter < *NumBytes; ++counter) {
+    DEBUG((EFI_D_INFO, "%a 0x%X\n", __FUNCTION__, (UINTN)Buffer[counter]));
   }
   return EFI_SUCCESS;
 }
@@ -634,6 +813,10 @@ FvbWrite (
   IN        UINT8                                 *Buffer
   )
 {
+  DEBUG((EFI_D_INFO, "%a(This = 0x%X, Lba = 0x%X, Offset = 0x%X, *NumBytes = 0x%X, Buffer = 0x%X)\n", __FUNCTION__, This, Lba, Offset, *NumBytes, Buffer));
+  for(UINTN counter = 0; counter < *NumBytes; ++counter) {
+    DEBUG((EFI_D_INFO, "%a 0x%X\n", __FUNCTION__, (UINTN)Buffer[counter]));
+  }
   CONST UINTN numberOfBytesToWrite = MIN(
     *NumBytes, REMAINING_SPACE_IN_BLOCK(Offset)
   );
@@ -718,6 +901,7 @@ FvbEraseBlocks (
   ...
   )
 {
+  DEBUG((EFI_D_INFO, "%a(This = 0x%X)\n", __FUNCTION__, This));
   EFI_STATUS status = EFI_SUCCESS;
   VA_LIST Args;
   VA_START(Args, This);

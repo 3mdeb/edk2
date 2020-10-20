@@ -45,8 +45,10 @@
   UefiDriverEntryPoint
 
 [Guids]
+  gEfiAuthenticatedVariableGuid
+  gEfiSystemNvDataFvGuid
+  gEfiVariableGuid
   gUefiFvbSPIInfoGuid
-  gEfiSMMSTOREInfoHobGuid
 
 [Protocols]
   gEfiFirmwareVolumeBlockProtocolGuid ## PRODUCES
