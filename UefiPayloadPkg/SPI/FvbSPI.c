@@ -77,9 +77,16 @@ EFI_STATUS EFIAPI SPIInitialize (
   PcdSet32S(PcdFlashNvStorageFtwSpareBase,
       PcdGet32(PcdFlashNvStorageFtwSpareBase) + fvbSPIInfo.MmioAddress);
   spi_init();
-  Status = InitializeFvAndVariableStoreHeaders(&fvbSPIInfo);
-  DEBUG((DEBUG_WARN, "InitializeFvAndVariableStoreHeaders(&fvbSPIInfo) = 0x%X\n", Status));
-  Status = ValidateFvHeader(&fvbSPIInfo);
-  DEBUG((DEBUG_WARN, "ValidateFvHeader(&fvbSPIInfo) = 0x%X\n", Status));
+  UINTN len = 0x64;
+  UINT8 buff[0x300] = {};
+  FvbRead(NULL, 0, 0, &len, buff);
+  FvbEraseBlocks(NULL, 0, 1, EFI_LBA_LIST_TERMINATOR);
+  FvbRead(NULL, 0, 0, &len, buff);
+  FvbWrite(NULL, 0, 0, &len, buff);
+  FvbRead(NULL, 0, 0, &len, buff);
+  // Status = InitializeFvAndVariableStoreHeaders(&fvbSPIInfo);
+  // DEBUG((DEBUG_WARN, "InitializeFvAndVariableStoreHeaders(&fvbSPIInfo) = 0x%X\n", Status));
+  // Status = ValidateFvHeader(&fvbSPIInfo);
+  // DEBUG((DEBUG_WARN, "ValidateFvHeader(&fvbSPIInfo) = 0x%X\n", Status));
   return EFI_SUCCESS;
 }
