@@ -207,8 +207,10 @@ InitRealNonVolatileVariableStore (
   // Check if the Firmware Volume is not corrupted
   //
   if ((FvHeader->Signature != EFI_FVH_SIGNATURE) || (!CompareGuid (&gEfiSystemNvDataFvGuid, &FvHeader->FileSystemGuid))) {
+    DEBUG((EFI_D_INFO, "signatures: 0x%X 0x%X\n", FvHeader->Signature, EFI_FVH_SIGNATURE));
     FreePool (NvStorageData);
     DEBUG ((DEBUG_ERROR, "Firmware Volume for Variable Store is corrupted\n"));
+    DEBUG ((EFI_D_INFO, "%a HERHERHER\n", __FUNCTION__));
     return EFI_VOLUME_CORRUPTED;
   }
 

@@ -490,7 +490,7 @@ VariableServiceInitialize (
   EFI_EVENT                             EndOfDxeEvent;
 
   Status = VariableCommonInitialize ();
-  DEBUG ((DEBUG_WARN, "HIHO\n"));
+  DEBUG ((DEBUG_WARN, "HIHO, Status = 0x%X\n", Status));
   ASSERT_EFI_ERROR (Status);
 
   Status = gBS->InstallMultipleProtocolInterfaces (

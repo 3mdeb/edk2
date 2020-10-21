@@ -77,16 +77,14 @@ EFI_STATUS EFIAPI SPIInitialize (
   PcdSet32S(PcdFlashNvStorageFtwSpareBase,
       PcdGet32(PcdFlashNvStorageFtwSpareBase) + fvbSPIInfo.MmioAddress);
   spi_init();
-  UINTN len = 0x64;
-  UINT8 buff[0x300] = {};
-  FvbRead(NULL, 0, 0, &len, buff);
-  FvbEraseBlocks(NULL, 0, 1, EFI_LBA_LIST_TERMINATOR);
-  FvbRead(NULL, 0, 0, &len, buff);
-  FvbWrite(NULL, 0, 0, &len, buff);
-  FvbRead(NULL, 0, 0, &len, buff);
-  // Status = InitializeFvAndVariableStoreHeaders(&fvbSPIInfo);
-  // DEBUG((DEBUG_WARN, "InitializeFvAndVariableStoreHeaders(&fvbSPIInfo) = 0x%X\n", Status));
-  // Status = ValidateFvHeader(&fvbSPIInfo);
-  // DEBUG((DEBUG_WARN, "ValidateFvHeader(&fvbSPIInfo) = 0x%X\n", Status));
+
+  Status = InitializeFvAndVariableStoreHeaders(&fvbSPIInfo);
+  DEBUG((DEBUG_WARN, "InitializeFvAndVariableStoreHeaders(&fvbSPIInfo) = 0x%X\n", Status));
+  Status = ValidateFvHeader(&fvbSPIInfo);
+  DEBUG((DEBUG_WARN, "ValidateFvHeader(&fvbSPIInfo) = 0x%X\n", Status));
+  UINTN len = 5;
+  FvbWrite(NULL, 0,  0x60000, &len, (UINT8 *)(unsigned char *)"\x00\x01\x02\x03\x04");
+  UINT8 *base = (UINT8 *)0xFF860000;
+  DEBUG((DEBUG_WARN, "0x%X 0x%X 0x%X 0x%X 0x%X \n", base[0], base[1], base[2], base[3], base[4]));
   return EFI_SUCCESS;
 }

@@ -54,6 +54,7 @@ static struct spi_slave *getSPISlave() {
 }
 
 static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address) {
+  WaitForBusyBit();
   WriteEnable();
   UINT8 blockEraseCmd[] = {
     CMD_BLOCK_ERASE,
@@ -256,6 +257,10 @@ static EFI_STATUS PageProgram(
   if(*NumBytes == 0 || Buffer == NULL) {
     return EFI_INVALID_PARAMETER;
   }
+  WaitForBusyBit();
+  if(WriteEnable() != EFI_SUCCESS) {
+    return EFI_DEVICE_ERROR;
+  }
   UINT8 pageProgramCmd[commandHeaderLength+maxLengthToWrite];
   pageProgramCmd[0] = CMD_W25_PP; // FIXME Winbond specific
   pageProgramCmd[1] = (UINT8)((Address & 0xFF0000) >> 16);
@@ -273,7 +278,6 @@ static EFI_STATUS PageProgram(
     *NumBytes = lengthOfDataToWrite;
     return EFI_BAD_BUFFER_SIZE;
   }
-  WaitForBusyBit();
   return EFI_SUCCESS;
 }
 
@@ -389,30 +393,32 @@ InitializeFvAndVariableStoreHeaders(IN FVBSPI_INFO *Instance) {
   FirmwareVolumeHeader->BlockMap[0].Length    = Instance->BlockSize;
   FirmwareVolumeHeader->BlockMap[1].NumBlocks = 0;
   FirmwareVolumeHeader->BlockMap[1].Length    = 0;
-  FirmwareVolumeHeader->Checksum = CalculateCheckSum16 ((UINT16*)FirmwareVolumeHeader,FirmwareVolumeHeader->HeaderLength);
-  DEBUG((EFI_D_INFO, "%a checksum = 0x%X\n", __FUNCTION__, FirmwareVolumeHeader->Checksum));
+  FirmwareVolumeHeader->Checksum = CalculateCheckSum16((UINT16*)FirmwareVolumeHeader,FirmwareVolumeHeader->HeaderLength);
 
   //
   // VARIABLE_STORE_HEADER
   //
   VariableStoreHeader = (VARIABLE_STORE_HEADER*)((UINTN)Headers + FirmwareVolumeHeader->HeaderLength);
-  CopyGuid (&VariableStoreHeader->Signature, &gEfiVariableGuid);
+  CopyGuid(&VariableStoreHeader->Signature, &gEfiVariableGuid);
   VariableStoreHeader->Size   = PcdGet32(PcdFlashNvStorageVariableSize) - FirmwareVolumeHeader->HeaderLength;
   VariableStoreHeader->Format = VARIABLE_STORE_FORMATTED;
   VariableStoreHeader->State  = VARIABLE_STORE_HEALTHY;
 
   // Install the combined super-header in the store
+  static UINT8 blockBackup[BLOCK_SIZE];
+  UINTN sizeToRead = BLOCK_SIZE;
+  FvbRead(NULL, 0, 0, &sizeToRead, blockBackup);
+  if(sizeToRead != BLOCK_SIZE) {
+    DEBUG((EFI_D_INFO, "%a Creating block backup failed!\n", __FUNCTION__));
+  }
   Status = FvbEraseBlocks(NULL, 0, 1, EFI_LBA_LIST_TERMINATOR);
   if(Status != EFI_SUCCESS) {
     DEBUG((EFI_D_INFO, "%a Erase failed\n", __FUNCTION__));
     return Status;
   }
-  UINTN len = 0x64;
-  UINT8 buff[0x64] = {};
-  DEBUG((EFI_D_INFO, "%a PAY ATTENTION\n", __FUNCTION__));
-  FvbRead(NULL, 0, 0, &len, buff);
   Status = FvbWrite(NULL, 0, 0, &HeadersLength, Headers);
-  FvbRead(NULL, 0, 0, &len, buff);
+  UINTN backupRestoreSize = BLOCK_SIZE-HeadersLength;
+  Status = FvbWrite(NULL, 0, HeadersLength, &backupRestoreSize, blockBackup+HeadersLength);
 
   FreePool (Headers);
   DEBUG((EFI_D_INFO, "%a Initialized. Now checking\n", __FUNCTION__));
@@ -540,7 +546,7 @@ ValidateFvHeader(IN  FVBSPI_INFO *Instance) {
 
   FreePool(FwVolHeader);
   FreePool(VariableStoreHeader);
-
+  DEBUG ((EFI_D_INFO, "%a: Header successfully validated!\n", __FUNCTION__));
   return EFI_SUCCESS;
 }
 
@@ -725,6 +731,7 @@ FvbRead (
   UINTN address = ADDRESS(Lba, Offset);
   UINTN numberOfBytesToRead = MIN(*NumBytes, REMAINING_SPACE_IN_BLOCK(Offset));
   UINTN numberOfBytesRead = 0;
+  WaitForBusyBit();
   if(FvbVerifyBlockReadability(Lba) == EFI_ACCESS_DENIED) {
     return EFI_ACCESS_DENIED;
   }
@@ -748,9 +755,6 @@ FvbRead (
   if(numberOfBytesToRead != *NumBytes) {
     *NumBytes = numberOfBytesToRead;
     return EFI_BAD_BUFFER_SIZE;
-  }
-  for(UINTN counter = 0; counter < *NumBytes; counter+=8) {
-    DEBUG((EFI_D_INFO, "%a 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", __FUNCTION__, (UINTN)Buffer[counter], (UINTN)Buffer[counter+1], (UINTN)Buffer[counter+2], (UINTN)Buffer[counter+3], (UINTN)Buffer[counter+4], (UINTN)Buffer[counter+5], (UINTN)Buffer[counter+6], (UINTN)Buffer[counter+7]));
   }
   return EFI_SUCCESS;
 }
@@ -821,13 +825,10 @@ FvbWrite (
   )
 {
   DEBUG((EFI_D_INFO, "%a(This = 0x%X, Lba = 0x%X, Offset = 0x%X, *NumBytes = 0x%X, Buffer = 0x%X)\n", __FUNCTION__, This, Lba, Offset, *NumBytes, Buffer));
-  for(UINTN counter = 0; counter < *NumBytes; counter+=8) {
-    DEBUG((EFI_D_INFO, "%a 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", __FUNCTION__, (UINTN)Buffer[counter], (UINTN)Buffer[counter+1], (UINTN)Buffer[counter+2], (UINTN)Buffer[counter+3], (UINTN)Buffer[counter+4], (UINTN)Buffer[counter+5], (UINTN)Buffer[counter+6], (UINTN)Buffer[counter+7]));
-  }
   CONST UINTN numberOfBytesToWrite = MIN(
     *NumBytes, REMAINING_SPACE_IN_BLOCK(Offset)
   );
-  CONST UINTN address = ADDRESS(Lba, Offset);
+  UINTN address = ADDRESS(Lba, Offset);
   UINTN numberOfBytesWritten = 0;
   if(Buffer == NULL || numberOfBytesToWrite == 0) {
     DEBUG((EFI_D_INFO, "%a Buffer is NULL or too small!\n", __FUNCTION__));
@@ -836,18 +837,20 @@ FvbWrite (
   if(FvbVerifySingleBlockWritability(Lba) == EFI_ACCESS_DENIED) {
     return EFI_ACCESS_DENIED;
   }
-  if(RemoveBlockProtection() != EFI_SUCCESS
-  || WaitForBusyBit() != EFI_SUCCESS
-  || WriteEnable() != EFI_SUCCESS) {
+  if(
+     RemoveBlockProtection() != EFI_SUCCESS
+  || WaitForBusyBit() != EFI_SUCCESS) {
     return EFI_DEVICE_ERROR;
   }
   while(numberOfBytesWritten < numberOfBytesToWrite) {
-    UINTN writtenAmount = numberOfBytesToWrite;
-    EFI_STATUS writingStatus = PageProgram(address, Buffer, &writtenAmount);
+    UINTN writteAmount = numberOfBytesToWrite-numberOfBytesWritten;
+    EFI_STATUS writingStatus = PageProgram(address, Buffer, &writteAmount);
     if(writingStatus != EFI_SUCCESS && writingStatus != EFI_BAD_BUFFER_SIZE) {
       return EFI_DEVICE_ERROR;
     }
-    numberOfBytesWritten += writtenAmount;
+    numberOfBytesWritten += writteAmount;
+    address += writteAmount;
+    Buffer += writteAmount;
   }
   if(numberOfBytesToWrite != *NumBytes) {
     return EFI_BAD_BUFFER_SIZE;
