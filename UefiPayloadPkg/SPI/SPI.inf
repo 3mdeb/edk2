@@ -45,13 +45,14 @@
   UefiDriverEntryPoint
 
 [Guids]
+  gEdkiiNvVarStoreFormattedGuid       ## PRODUCES ## PROTOCOL
   gEfiAuthenticatedVariableGuid
   gEfiSystemNvDataFvGuid
   gEfiVariableGuid
   gUefiFvbSPIInfoGuid
 
 [Protocols]
-  gEfiFirmwareVolumeBlockProtocolGuid ## PRODUCES
+  gEfiFirmwareVolumeBlockProtocolGuid ## PRODUCES ## PROTOCOL
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable

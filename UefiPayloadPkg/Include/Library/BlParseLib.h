@@ -12,7 +12,7 @@
 #include <Guid/SerialPortInfoGuid.h>
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/AcpiBoardInfoGuid.h>
-// #include <Guid/SMMSTOREInfoGuid.h>
+//#include <Guid/SMMSTOREInfoGuid.h>
 
 #ifndef __BOOTLOADER_PARSE_LIB__
 #define __BOOTLOADER_PARSE_LIB__

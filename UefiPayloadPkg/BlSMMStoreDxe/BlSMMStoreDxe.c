@@ -156,10 +156,6 @@ BlSMMSTOREInitialise (
   IN EFI_SYSTEM_TABLE   *SystemTable
   )
 {
-  DEBUG ((DEBUG_WARN, "BLAH BlSMMSTOREInitialise.\n"));
-  while(1);
-  return EFI_SUCCESS;
-  //////////////////////////////////////////////
   EFI_STATUS                              Status;
   VOID                                    *ComBuf;
   VOID                                    *GuidHob;
