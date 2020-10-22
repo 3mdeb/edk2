@@ -39,16 +39,14 @@ EFI_STATUS EFIAPI SPIInitialize (
   IN EFI_HANDLE                        ImageHandle,
   IN EFI_SYSTEM_TABLE                  *SystemTable
 ) {
-  DEBUG((DEBUG_WARN, "SPI IS HERE.\n"));
     FVBSPI_INFO fvbSPIInfo = {
     .ComBuffer = 0,
     .ComBufferSize = 0,
     .NumBlocks = 4,
     .BlockSize = BLOCK_SIZE,
-    .MmioAddress = 0xFF860000,
+    .MmioAddress = 0,
     .ApmCmd = 0
   };
-  DEBUG ((DEBUG_WARN, "SPI IS HERE.\n"));
   if (PcdGetBool(PcdEmuVariableNvModeEnable)) {
     DEBUG ((
       DEBUG_WARN,
@@ -57,6 +55,26 @@ EFI_STATUS EFIAPI SPIInitialize (
     return EFI_SUCCESS;
   }
   EFI_STATUS Status;
+  // Update PCDs for Variable/RuntimeDxe
+  PcdSet32S(PcdFlashNvStorageVariableBase,
+      PcdGet32(PcdFlashNvStorageVariableBase) + fvbSPIInfo.MmioAddress);
+  PcdSet32S(PcdFlashNvStorageFtwWorkingBase,
+     PcdGet32(PcdFlashNvStorageFtwWorkingBase) + fvbSPIInfo.MmioAddress);
+  PcdSet32S(PcdFlashNvStorageFtwSpareBase,
+      PcdGet32(PcdFlashNvStorageFtwSpareBase) + fvbSPIInfo.MmioAddress);
+  spi_init();
+
+  Status = InitializeFvAndVariableStoreHeaders(&fvbSPIInfo);
+  if(Status != EFI_SUCCESS) {
+    DEBUG((DEBUG_WARN, "%a InitializeFvAndVariableStoreHeaders() failed\n", __FUNCTION__));
+  }
+  Status = ValidateFvHeader(&fvbSPIInfo);
+  if(Status != EFI_SUCCESS) {
+    DEBUG((DEBUG_WARN, "%a ValidateFvHeader() failed\n", __FUNCTION__));
+  }
+  //
+  // Install the protocol
+  //
   Status = gBS->InstallMultipleProtocolInterfaces (
     &Handle,
     &gEfiFirmwareVolumeBlockProtocolGuid, &FvbProtocol,
@@ -69,22 +87,5 @@ EFI_STATUS EFIAPI SPIInitialize (
     while(1);
     return EFI_PROTOCOL_ERROR;
   }
-  // Update PCDs for Variable/RuntimeDxe
-  PcdSet32S(PcdFlashNvStorageVariableBase,
-      PcdGet32(PcdFlashNvStorageVariableBase) + fvbSPIInfo.MmioAddress);
-  PcdSet32S(PcdFlashNvStorageFtwWorkingBase,
-     PcdGet32(PcdFlashNvStorageFtwWorkingBase) + fvbSPIInfo.MmioAddress);
-  PcdSet32S(PcdFlashNvStorageFtwSpareBase,
-      PcdGet32(PcdFlashNvStorageFtwSpareBase) + fvbSPIInfo.MmioAddress);
-  spi_init();
-
-  Status = InitializeFvAndVariableStoreHeaders(&fvbSPIInfo);
-  DEBUG((DEBUG_WARN, "InitializeFvAndVariableStoreHeaders(&fvbSPIInfo) = 0x%X\n", Status));
-  Status = ValidateFvHeader(&fvbSPIInfo);
-  DEBUG((DEBUG_WARN, "ValidateFvHeader(&fvbSPIInfo) = 0x%X\n", Status));
-  UINTN len = 5;
-  FvbWrite(NULL, 0,  0x60000, &len, (UINT8 *)(unsigned char *)"\x00\x01\x02\x03\x04");
-  UINT8 *base = (UINT8 *)0xFF860000;
-  DEBUG((DEBUG_WARN, "0x%X 0x%X 0x%X 0x%X 0x%X \n", base[0], base[1], base[2], base[3], base[4]));
   return EFI_SUCCESS;
 }

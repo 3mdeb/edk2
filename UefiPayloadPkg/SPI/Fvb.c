@@ -10,14 +10,14 @@
 #include "Winbond.h"
 
 
-#define ADDRESS(Lba, Offset) (((BLOCK_SIZE) * (Lba)) + (Offset))
+#define ADDRESS(Lba, Offset) (((BLOCK_SIZE) * ((Lba)+(VARIABLE_STORAGE_BLOCKS_OFFSET))) + (Offset))
 #define OFFSET_FROM_PAGE_START(Address) ((Address) % (PAGE_SIZE))
 #define REMAINING_SPACE(Offset, MaxSize) ((MaxSize) - (Offset))
 #define REMAINING_SPACE_IN_BLOCK(Offset) REMAINING_SPACE((Offset), (BLOCK_SIZE))
 #define REMAINING_SPACE_IN_PAGE(Offset) REMAINING_SPACE((Offset), (PAGE_SIZE))
 
 static struct spi_slave *getSPISlave();
-static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address);
+static EFI_STATUS FvbEraseBlockAtAddress(UINTN Address);
 static EFI_STATUS FvbEraseConsecutiveBlocks(EFI_LBA Lba, UINTN amount);
 static EFI_STATUS readStatusReg(UINT8 *Status);
 static EFI_STATUS checkBusyBit(UINT8 *Busy);
@@ -53,7 +53,7 @@ static struct spi_slave *getSPISlave() {
   return &slave;
 }
 
-static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address) {
+static EFI_STATUS FvbEraseBlockAtAddress(UINTN Address) {
   WaitForBusyBit();
   WriteEnable();
   UINT8 blockEraseCmd[] = {
@@ -71,10 +71,10 @@ static EFI_STATUS FvbEraseBlockAtAddress(UINT8 Address) {
   return EFI_SUCCESS;
 }
 
-static EFI_STATUS FvbEraseConsecutiveBlocks(EFI_LBA Lba, UINTN amount) {
+static EFI_STATUS FvbEraseConsecutiveBlocks(EFI_LBA Lba, UINTN Amount) {
   BOOLEAN error = FALSE;
-  for(UINTN current = 0; current < amount; ++current) {
-    if(FvbEraseBlockAtAddress(ADDRESS(Lba+current, 0)) != EFI_SUCCESS) {
+  for(UINTN current = 0; current < Amount; ++current) {
+    if(FvbEraseBlockAtAddress(0x60000/*ADDRESS(Lba+current, 0)*/) != EFI_SUCCESS) {
       error = TRUE;
     }
   }
@@ -163,7 +163,6 @@ static EFI_STATUS FvbEraseVerifiedBlocks(VA_LIST *Args) {
     if(Lba == EFI_LBA_LIST_TERMINATOR) {
       break;
     }
-    DEBUG((EFI_D_INFO, "%a ERASING: Lba = 0x%X Count = 0x%X\n", __FUNCTION__, Lba, LbaCount));
     if(FvbEraseConsecutiveBlocks(Lba, LbaCount) != EFI_SUCCESS) {
       status = EFI_DEVICE_ERROR;
     }
@@ -386,7 +385,7 @@ InitializeFvAndVariableStoreHeaders(IN FVBSPI_INFO *Instance) {
     | EFI_FVB2_ERASE_POLARITY    // After erasure all bits take this value (i.e. '1')
     | EFI_FVB2_WRITE_STATUS      // Writes are currently enabled
     | EFI_FVB2_WRITE_ENABLED_CAP // Writes may be enabled
-                                      );
+  );
   FirmwareVolumeHeader->HeaderLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY);
   FirmwareVolumeHeader->Revision = EFI_FVH_REVISION;
   FirmwareVolumeHeader->BlockMap[0].NumBlocks = Instance->NumBlocks;
@@ -421,7 +420,6 @@ InitializeFvAndVariableStoreHeaders(IN FVBSPI_INFO *Instance) {
   Status = FvbWrite(NULL, 0, HeadersLength, &backupRestoreSize, blockBackup+HeadersLength);
 
   FreePool (Headers);
-  DEBUG((EFI_D_INFO, "%a Initialized. Now checking\n", __FUNCTION__));
   ValidateFvHeader(Instance);
   return Status;
 }
@@ -824,7 +822,6 @@ FvbWrite (
   IN        UINT8                                 *Buffer
   )
 {
-  DEBUG((EFI_D_INFO, "%a(This = 0x%X, Lba = 0x%X, Offset = 0x%X, *NumBytes = 0x%X, Buffer = 0x%X)\n", __FUNCTION__, This, Lba, Offset, *NumBytes, Buffer));
   CONST UINTN numberOfBytesToWrite = MIN(
     *NumBytes, REMAINING_SPACE_IN_BLOCK(Offset)
   );
@@ -911,7 +908,6 @@ FvbEraseBlocks (
   ...
   )
 {
-  DEBUG((EFI_D_INFO, "%a(This = 0x%X)\n", __FUNCTION__, This));
   EFI_STATUS status = EFI_SUCCESS;
   VA_LIST Args;
   VA_START(Args, This);

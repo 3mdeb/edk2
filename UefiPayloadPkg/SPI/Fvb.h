@@ -7,6 +7,7 @@
 #define BLOCK_SIZE 0x10000
 #define PAGE_SIZE 0x100
 #define FLASH_SIZE 0x800000
+#define VARIABLE_STORAGE_BLOCKS_OFFSET 6
 
 EFI_STATUS
 InitializeFvAndVariableStoreHeaders (
