@@ -569,7 +569,32 @@ FvbGetAttributes(
   )
 {
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  return EFI_DEVICE_ERROR;
+  EFI_FVB_ATTRIBUTES_2  FlashFvbAttributes;
+  // SMMSTORE_INSTANCE *Instance;
+
+  // Instance = INSTANCE_FROM_FVB_THIS(This);
+
+  FlashFvbAttributes = (EFI_FVB_ATTRIBUTES_2) (
+      EFI_FVB2_READ_ENABLED_CAP | // Reads may be enabled
+      EFI_FVB2_READ_STATUS      | // Reads are currently enabled
+      EFI_FVB2_STICKY_WRITE     | // A block erase is required to flip bits into EFI_FVB2_ERASE_POLARITY
+      EFI_FVB2_MEMORY_MAPPED    | // It is memory mapped
+      EFI_FVB2_ERASE_POLARITY     // After erasure all bits take this value (i.e. '1')
+      );
+
+  // // Check if it is write protected
+  // if (Instance->Media.ReadOnly != TRUE) {
+
+  //   FlashFvbAttributes = FlashFvbAttributes         |
+  //                        EFI_FVB2_WRITE_STATUS      | // Writes are currently enabled
+  //                        EFI_FVB2_WRITE_ENABLED_CAP;  // Writes may be enabled
+  // }
+
+  *Attributes = FlashFvbAttributes;
+
+  DEBUG ((DEBUG_BLKIO, "FvbGetAttributes(0x%X)\n", *Attributes));
+
+  return EFI_SUCCESS;
 }
 
 /**

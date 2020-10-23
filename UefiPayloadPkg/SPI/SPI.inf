@@ -53,6 +53,7 @@
 
 [Protocols]
   gEfiFirmwareVolumeBlockProtocolGuid ## PRODUCES ## PROTOCOL
+  gEfiVariableWriteArchProtocolGuid
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable

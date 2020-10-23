@@ -87,14 +87,13 @@ EFI_STATUS EFIAPI SPIInitialize (
     while(1);
     return EFI_PROTOCOL_ERROR;
   }
-  //
-  // The driver implementing the variable read service can now be dispatched;
-  // the varstore headers are in place.
-  //
+
   Status = gBS->InstallProtocolInterface (
-    &gImageHandle,
-    &gEdkiiNvVarStoreFormattedGuid, EFI_NATIVE_INTERFACE,
-    NULL);
+                &Handle,
+                &gEfiVariableWriteArchProtocolGuid,
+                EFI_NATIVE_INTERFACE,
+                NULL
+                );
   if(EFI_ERROR (Status)) {
     DEBUG((
       EFI_D_INFO,

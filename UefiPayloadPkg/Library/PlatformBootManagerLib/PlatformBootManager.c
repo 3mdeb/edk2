@@ -319,7 +319,7 @@ SetPrimaryVideoOutput(
   }
 
   // Locate all GOPs
-  Status = gBS->LocateHandleBuffer(ByProtocol, 
+  Status = gBS->LocateHandleBuffer(ByProtocol,
                   &gEfiGraphicsOutputProtocolGuid,
                   NULL,
                   &HandleCount,
@@ -456,7 +456,7 @@ SetPrimaryVideoOutput(
     }
 
   } // for loop
-  
+
   return;
 }
 
