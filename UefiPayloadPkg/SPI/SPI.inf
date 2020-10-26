@@ -38,6 +38,7 @@
 
 [LibraryClasses]
   BaseMemoryLib
+  BaseLib
   DebugLib
   HobLib
   PciLib

@@ -1,6 +1,7 @@
 #include <Include/Library/DebugLib.h>
 #include <Include/Library/PciLib.h>
 #include <Include/Library/TimerLib.h>
+#include <Include/Library/BaseLib.h>
 #include <Include/PiDxe.h>
 #include "FchSPIUtil.h"
 #include "GenericSPI.h"
@@ -35,20 +36,18 @@
 
 static int wait_for_ready(VOID)
 {
-	CONST UINT64 timeoutMilisecond = 500;
-	CONST UINT64 nanoToMiliDivider = 1000000;
+	CONST UINTN timeoutMilisecond = 500;
+	CONST UINT32 nanoToMiliDivider = 1000000;
 	CONST UINT64 startTimeMilisec =
-		GetTimeInNanoSecond(GetPerformanceCounter()) / nanoToMiliDivider;
+		DivU64x32(GetTimeInNanoSecond(GetPerformanceCounter()), nanoToMiliDivider);
 	CONST UINT64 endTimeMilisec = startTimeMilisec + timeoutMilisecond;
 	UINT64 timeNow = startTimeMilisec;
 
 	do {
 		if (!(spi_read32(SPI_STATUS) & SPI_BUSY))
 			return 0;
-		timeNow = GetTimeInNanoSecond(GetPerformanceCounter()) / nanoToMiliDivider;
-	} while (
-				timeNow<startTimeMilisec
-		|| (timeNow>startTimeMilisec && timeNow>endTimeMilisec));
+		timeNow = DivU64x32(GetTimeInNanoSecond(GetPerformanceCounter()),nanoToMiliDivider);	
+	} while (timeNow<startTimeMilisec || (timeNow>startTimeMilisec && timeNow>endTimeMilisec));
 
 	return -1;
 }
