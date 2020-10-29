@@ -10,16 +10,16 @@
 
 ################################################################################
 [FD.UefiPayload]
-BaseAddress   = 0x240000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemBase
-Size          = 0x240000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemSize
+BaseAddress   = 0x440000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemBase
+Size          = 0x440000|gUefiPayloadPkgTokenSpaceGuid.PcdPayloadFdMemSize
 ErasePolarity = 1
 BlockSize     = 0x1000
-NumBlocks     = 0x240
+NumBlocks     = 0x440
 
 0x00000000|0x040000
 FV = PEIFV
 
-0x00040000|0x200000
+0x00040000|0x400000
 FV = DXEFV
 
 ################################################################################
@@ -85,7 +85,7 @@ APRIORI DXE {
   INF  MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
 
 !if $(SECURE_BOOT_ENABLE) == TRUE
-  INF  UefiPayloadPkg/SPI/SPI.inf
+  INF UefiPayloadPkg/AmdSpiDxe/AmdSpiDxe.inf
 !endif
   # Init Test Driver before Secure Boot
   # INF  UefiPayloadPkg/TestDriverDxe/TestDriver.inf
@@ -127,7 +127,7 @@ INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 INF MdeModulePkg/Logo/LogoDxe.inf
 
 !if $(SECURE_BOOT_ENABLE) == TRUE
-  INF UefiPayloadPkg/SPI/SPI.inf
+  INF UefiPayloadPkg/AmdSpiDxe/AmdSpiDxe.inf
 !endif
 
 #

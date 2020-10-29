@@ -1,0 +1,64 @@
+#/** @file
+#
+#  Component description file for SMMSTORE module
+#
+#  Copyright (c) 2020, 9elements Agency GmbH<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#**/
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UefiPayloadAmdSpiDxe
+  FILE_GUID                      = D419A03E-3543-4DE8-8AFD-D6AD124D1D61
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = BlAmdSpiInitialise
+
+[Sources.common]
+  AmdSpiDxe.h
+  AmdSpiDxe.c
+  AmdSpiFvbDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  EmbeddedPkg/EmbeddedPkg.dec
+  UefiPayloadPkg/UefiPayloadPkg.dec
+
+[LibraryClasses]
+  IoLib
+  BaseLib
+  DebugLib
+  HobLib
+  AmdSpiLib
+  UefiLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeLib
+  DxeServicesTableLib
+
+[Guids]
+  gEfiSystemNvDataFvGuid
+  gEfiVariableGuid
+  gEfiAuthenticatedVariableGuid
+  gEfiEventVirtualAddressChangeGuid
+  gEdkiiNvVarStoreFormattedGuid     ## PRODUCES ## PROTOCOL
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiDevicePathProtocolGuid
+  gEfiFirmwareVolumeBlockProtocolGuid ## PRODUCES
+  gEfiDiskIoProtocolGuid
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableBase
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingBase
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwWorkingSize
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+
+[Depex]
+  gEfiCpuArchProtocolGuid

@@ -245,6 +245,7 @@
 !if $(SECURE_BOOT_ENABLE) == TRUE
   PlatformSecureLib|OvmfPkg/Library/PlatformSecureLib/PlatformSecureLib.inf
   AuthVariableLib|SecurityPkg/Library/AuthVariableLib/AuthVariableLib.inf
+  AmdSpiLib|UefiPayloadPkg/Library/AmdSpiLib/AmdSpiLib.inf
 !else
   AuthVariableLib|MdeModulePkg/Library/AuthVariableLibNull/AuthVariableLibNull.inf
 !endif
@@ -371,7 +372,7 @@
   # The following parameters are set by Library/PlatformHookLib
   #
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseMmio|FALSE
-  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x2f8
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterBase|0x3f8
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialBaudRate|$(BAUD_RATE)
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialRegisterStride|1
 
@@ -433,9 +434,6 @@
 ################################################################################
 [Components.IA32]
 
-!if $(SECURE_BOOT_ENABLE) == TRUE
-  UefiPayloadPkg/SPI/SPI.inf
-!endif
   #
   # SEC Core
   #
@@ -604,6 +602,13 @@
 !endif
   UefiPayloadPkg/GraphicsOutputDxe/GraphicsOutputDxe.inf
   UefiPayloadPkg/PciPlatformDxe/PciPlatformDxe.inf
+
+  #
+  # AMD SPI
+  #
+!if $(SECURE_BOOT_ENABLE) == TRUE
+  UefiPayloadPkg/AmdSpiDxe/AmdSpiDxe.inf
+!endif
 
   #
   # Network Support
