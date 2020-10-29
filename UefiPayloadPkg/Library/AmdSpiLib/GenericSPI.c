@@ -5,12 +5,12 @@
 #include <Library/BaseMemoryLib/MemLibInternals.h>
 #include "GenericSPI.h"
 
-UINT32 spi_claim_bus(CONST struct spi_slave *slave)
+EFI_STATUS spi_claim_bus(CONST struct spi_slave *slave)
 {
 	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
 	if (ctrlr && ctrlr->claim_bus)
 		return ctrlr->claim_bus(slave);
-	return 0;
+	return EFI_SUCCESS;
 }
 
 VOID spi_release_bus(CONST struct spi_slave *slave)
@@ -20,40 +20,40 @@ VOID spi_release_bus(CONST struct spi_slave *slave)
 		ctrlr->release_bus(slave);
 }
 
-static INT32 spi_xfer_single_op(CONST struct spi_slave *slave,
+STATIC EFI_STATUS spi_xfer_single_op(CONST struct spi_slave *slave,
 			struct spi_op *op)
 {
 	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
-	INT32 ret;
+	EFI_STATUS status;
 
 	if (!ctrlr || !ctrlr->xfer)
-		return -1;
+		return EFI_DEVICE_ERROR;
 
-	ret = ctrlr->xfer(slave, op->dout, op->bytesout, op->din, op->bytesin);
-	if (ret)
+	status = ctrlr->xfer(slave, op->dout, op->bytesout, op->din, op->bytesin);
+	if (status)
 		op->status = SPI_OP_FAILURE;
 	else
 		op->status = SPI_OP_SUCCESS;
 
-	return ret;
+	return status;
 }
 
-static INT32 spi_xfer_vector_default(CONST struct spi_slave *slave,
+STATIC EFI_STATUS spi_xfer_vector_default(CONST struct spi_slave *slave,
 				struct spi_op vectors[], __SIZE_TYPE__ count)
 {
 	__SIZE_TYPE__ i;
-	INT32 ret;
+	EFI_STATUS status;
 
 	for (i = 0; i < count; i++) {
-		ret = spi_xfer_single_op(slave, &vectors[i]);
-		if (ret)
-			return ret;
+		status = spi_xfer_single_op(slave, &vectors[i]);
+		if (status)
+			return status;
 	}
 
-	return 0;
+	return EFI_SUCCESS;
 }
 
-int spi_xfer_vector(const struct spi_slave *slave,
+EFI_STATUS spi_xfer_vector(CONST struct spi_slave *slave,
 		struct spi_op vectors[], __SIZE_TYPE__ count)
 {
 	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
@@ -64,7 +64,7 @@ int spi_xfer_vector(const struct spi_slave *slave,
 	return spi_xfer_vector_default(slave, vectors, count);
 }
 
-UINT32 spi_xfer(CONST struct spi_slave *slave, CONST void *dout, __SIZE_TYPE__ bytesout,
+EFI_STATUS spi_xfer(CONST struct spi_slave *slave, CONST void *dout, __SIZE_TYPE__ bytesout,
 	     VOID *din, __SIZE_TYPE__ bytesin)
 {
 	CONST struct spi_ctrlr *ctrlr = slave->ctrlr;
@@ -73,7 +73,7 @@ UINT32 spi_xfer(CONST struct spi_slave *slave, CONST void *dout, __SIZE_TYPE__ b
 		return ctrlr->xfer(slave, dout, bytesout, din, bytesin);
 	}
 
-	return -1;
+	return EFI_DEVICE_ERROR;
 }
 
 UINT32 spi_crop_chunk(CONST struct spi_slave *slave, UINT32 cmd_len,
@@ -102,7 +102,7 @@ UINT32 spi_crop_chunk(CONST struct spi_slave *slave, UINT32 cmd_len,
 	return MIN(ctrlr_max, buf_len);
 }
 
-UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
+EFI_STATUS spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
 {
 	__SIZE_TYPE__ i;
 
@@ -117,7 +117,7 @@ UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
 	}
 
 	if (slave->ctrlr == NULL)
-		return -1;
+		return EFI_DEVICE_ERROR;
 
 	slave->bus = bus;
 	slave->cs = cs;
@@ -125,5 +125,5 @@ UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
 	if (slave->ctrlr->setup)
 		return slave->ctrlr->setup(slave);
 
-	return 0;
+	return EFI_SUCCESS;
 }

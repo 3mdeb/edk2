@@ -3,6 +3,9 @@
 #ifndef _SPI_GENERIC_H_
 #define _SPI_GENERIC_H_
 
+#include <Base.h>
+#include <Uefi/UefiBaseType.h>
+
 /* Common parameters -- kind of high, but they should only occur when there
  * is a problem (and well your system already is broken), so err on the side
  * of caution in case we're dealing with slower SPI buses and/or processors.
@@ -123,7 +126,6 @@ struct spi_flash {
 	UINT8 wren_cmd; /* Write Enable command. */
 	const struct spi_flash_ops *ops;
 	/* If !NULL all protection callbacks exist. */
-	const struct spi_flash_protection_ops *prot_ops;
 	const struct spi_flash_part_id *part;
 };
 
@@ -169,22 +171,19 @@ enum {
  * flash_protect: Protect a region of flash using the SPI flash controller.
  */
 struct spi_ctrlr {
-	INT32 (*claim_bus)(const struct spi_slave *slave);
+	EFI_STATUS (*claim_bus)(const struct spi_slave *slave);
 	VOID (*release_bus)(const struct spi_slave *slave);
-	INT32 (*setup)(const struct spi_slave *slave);
-	INT32 (*xfer)(const struct spi_slave *slave, const VOID *dout,
+	EFI_STATUS (*setup)(const struct spi_slave *slave);
+	EFI_STATUS (*xfer)(const struct spi_slave *slave, const VOID *dout,
 		    __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin);
-	INT32 (*xfer_vector)(const struct spi_slave *slave,
+	EFI_STATUS (*xfer_vector)(const struct spi_slave *slave,
 			struct spi_op vectors[], __SIZE_TYPE__ count);
-	INT32 (*xfer_dual)(const struct spi_slave *slave, const VOID *dout,
+	EFI_STATUS (*xfer_dual)(const struct spi_slave *slave, const VOID *dout,
 			 __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin);
 	UINT32 max_xfer_size;
 	UINT32 flags;
-	INT32 (*flash_probe)(const struct spi_slave *slave,
+	EFI_STATUS (*flash_probe)(const struct spi_slave *slave,
 				struct spi_flash *flash);
-	INT32 (*flash_protect)(const struct spi_flash *flash,
-				const struct region *region,
-				const enum ctrlr_prot_type type);
 };
 
 /*-----------------------------------------------------------------------
@@ -198,25 +197,6 @@ struct spi_ctrlr_buses {
 	const struct spi_ctrlr *ctrlr;
 	UINT32 bus_start;
 	UINT32 bus_end;
-};
-
-/*
- * SPI write protection is enforced by locking the status register.
- * The following modes are known. It depends on the flash chip if the
- * mode is actually supported.
- *
- * PRESERVE : Keep the previous status register lock-down setting (noop)
- * NONE     : Status register isn't locked
- * PIN      : Status register is locked as long as the ~WP pin is active
- * REBOOT   : Status register is locked until power failure
- * PERMANENT: Status register is permanently locked
- */
-enum spi_flash_status_reg_lockdown {
-	SPI_WRITE_PROTECTION_PRESERVE = -1,
-	SPI_WRITE_PROTECTION_NONE = 0,
-	SPI_WRITE_PROTECTION_PIN,
-	SPI_WRITE_PROTECTION_REBOOT,
-	SPI_WRITE_PROTECTION_PERMANENT
 };
 
 /* Mapping of SPI buses to controllers - should be defined by platform. */
@@ -239,7 +219,7 @@ VOID spi_init(VOID);
  * Returns:
  * 0 on success, -1 on error
  */
-UINT32 spi_get_config(CONST struct spi_slave *slave, struct spi_cfg *cfg);
+EFI_STATUS spi_get_config(CONST struct spi_slave *slave, struct spi_cfg *cfg);
 
 /*-----------------------------------------------------------------------
  * Set up communications parameters for a SPI slave.
@@ -256,7 +236,7 @@ UINT32 spi_get_config(CONST struct spi_slave *slave, struct spi_cfg *cfg);
  * Returns:
  * 0 on success, -1 on error
  */
-UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave);
+EFI_STATUS spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave);
 
 /*-----------------------------------------------------------------------
  * Claim the bus and prepare it for communication with a given slave.
@@ -272,7 +252,7 @@ UINT32 spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave);
  * Returns: 0 if the bus was claimed successfully, or a negative value
  * if it wasn't.
  */
-UINT32 spi_claim_bus(CONST struct spi_slave *slave);
+EFI_STATUS spi_claim_bus(CONST struct spi_slave *slave);
 
 /*-----------------------------------------------------------------------
  * Release the SPI bus
@@ -301,7 +281,7 @@ VOID spi_release_bus(CONST struct spi_slave *slave);
  *
  *   Returns: 0 on success, not 0 on failure
  */
-UINT32 spi_xfer(CONST struct spi_slave *slave, const VOID *dout, __SIZE_TYPE__ bytesout,
+EFI_STATUS spi_xfer(CONST struct spi_slave *slave, const VOID *dout, __SIZE_TYPE__ bytesout,
 	     VOID *din, __SIZE_TYPE__ bytesin);
 
 /*-----------------------------------------------------------------------
@@ -314,7 +294,7 @@ UINT32 spi_xfer(CONST struct spi_slave *slave, const VOID *dout, __SIZE_TYPE__ b
  *
  *   Returns: 0 on success, not 0 on failure
  */
-INT32 spi_xfer_vector(CONST struct spi_slave *slave,
+EFI_STATUS spi_xfer_vector(CONST struct spi_slave *slave,
 		struct spi_op vectors[], __SIZE_TYPE__ count);
 
 /*-----------------------------------------------------------------------
@@ -344,7 +324,7 @@ STATIC inline INT32 spi_w8r8(CONST struct spi_slave *slave, unsigned char byte)
 	dout[0] = byte;
 	dout[1] = 0;
 
-	ret = spi_xfer(slave, dout, 2, din, 2);
+	ret = (INT32)spi_xfer(slave, dout, 2, din, 2);
 	return ret < 0 ? ret : din[1];
 }
 

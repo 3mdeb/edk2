@@ -1,5 +1,3 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-
 /*
  * Driver for Adesto Technologies SPI flash
  * based on Winbond.c
@@ -22,7 +20,7 @@
 #define CMD_AT25DF_DP		0xb9	/* Deep Power-down */
 #define CMD_AT25DF_RES		0xab	/* Release from DP, and Read Signature */
 
-static const struct spi_flash_part_id flash_table[] = {
+STATIC CONST struct spi_flash_part_id flash_table[] = {
 	{
 		/* AT25SL128A */
 		.id[0]			= 0x4218,
@@ -85,7 +83,7 @@ static const struct spi_flash_part_id flash_table[] = {
 	},
 };
 
-const struct spi_flash_vendor_info spi_flash_adesto_vi = {
+CONST struct spi_flash_vendor_info spi_flash_adesto_vi = {
 	.id = VENDOR_ID_ADESTO,
 	.page_size_shift = 8,
 	.sector_size_kib_shift = 2,
