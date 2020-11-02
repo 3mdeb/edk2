@@ -72,8 +72,6 @@ ValidateFvHeader (
     FreePool (FwVolHeader);
     return EFI_DEVICE_ERROR;
   }
-  DEBUG ((EFI_D_INFO, "%a: FwVol header check:\n", __FUNCTION__));
-  InternalDumpHex((UINT8 *)FwVolHeader, BufferSize);
 
   FvLength = PcdGet32(PcdFlashNvStorageVariableSize) + PcdGet32(PcdFlashNvStorageFtwWorkingSize) +
       PcdGet32(PcdFlashNvStorageFtwSpareSize);
