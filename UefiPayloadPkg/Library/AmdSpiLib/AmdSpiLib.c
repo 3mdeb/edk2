@@ -1,5 +1,6 @@
 #include <Include/PiDxe.h>
-#include <Include/Library/DebugLib.h>
+#include <Library/DebugLib.h>
+#include <Library/TimerLib.h>
 #include "GenericSPI.h"
 #include "SPIFlashInternal.h"
 #include "Winbond.h"
@@ -49,6 +50,8 @@ AmdSpiWrite (
   if (*NumBytes == 0 || Buffer == NULL)
     return EFI_INVALID_PARAMETER;
 
+  MicroSecondDelay(5000);
+
   return spi_flash_write(&flash, address, *NumBytes, Buffer);
 }
 
@@ -68,6 +71,7 @@ AmdSpiEraseBlock (
   if (address > 0xa0000 || address < 0x60000)
     return EFI_ACCESS_DENIED;
 
+  MicroSecondDelay(5000);
   return spi_flash_erase(&flash, address, BLOCK_SIZE);
 }
 
