@@ -120,6 +120,8 @@ INF MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 INF MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
 INF UefiPayloadPkg/BlSupportDxe/BlSupportDxe.inf
 
+INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+
 !if $(SECURE_BOOT_ENABLE) == TRUE
   INF UefiPayloadPkg/AmdSpiDxe/AmdSpiDxe.inf
 !endif
@@ -166,6 +168,7 @@ INF FatPkg/EnhancedFatDxe/Fat.inf
 #
 # Usb Support
 #
+INF MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
 INF MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
