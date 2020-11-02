@@ -25,7 +25,7 @@ AmdSpiRead (
 {
   UINTN address = ADDRESS(Lba, Offset);
 
-  if (address + *NumBytes > 0xa0000 || address < 0x60000)
+  if (address + *NumBytes > 0x90000 || address < 0x60000)
     return EFI_ACCESS_DENIED;
 
   if (*NumBytes == 0 || Buffer == NULL)
@@ -44,7 +44,7 @@ AmdSpiWrite (
 {
   UINTN address = ADDRESS(Lba, Offset);
 
-  if (address + *NumBytes > 0xa0000 || address < 0x60000)
+  if (address + *NumBytes > 0x90000 || address < 0x60000)
     return EFI_ACCESS_DENIED;
 
   if (*NumBytes == 0 || Buffer == NULL)
@@ -68,7 +68,7 @@ AmdSpiEraseBlock (
 {
   UINTN address = ADDRESS(Lba, 0);
 
-  if (address > 0xa0000 || address < 0x60000)
+  if (address > 0x90000 || address < 0x60000)
     return EFI_ACCESS_DENIED;
 
   MicroSecondDelay(5000);
