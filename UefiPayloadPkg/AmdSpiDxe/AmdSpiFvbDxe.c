@@ -27,45 +27,6 @@
 STATIC EFI_EVENT mFvbVirtualAddrChangeEvent;
 STATIC UINTN     mFlashNvStorageVariableBase;
 
-STATIC VOID
-InternalDumpData (
-  IN UINT8  *Data,
-  IN UINTN  Size
-  )
-{
-  UINTN  Index;
-  for (Index = 0; Index < Size; Index++) {
-    DEBUG ((EFI_D_INFO, "%02x", (UINTN)Data[Index]));
-  }
-}
-
-STATIC VOID
-InternalDumpHex (
-  IN UINT8  *Data,
-  IN UINTN  Size
-  )
-{
-  UINTN   Index;
-  UINTN   Count;
-  UINTN   Left;
-
-#define COLUME_SIZE  (16 * 2)
-
-  Count = Size / COLUME_SIZE;
-  Left  = Size % COLUME_SIZE;
-  for (Index = 0; Index < Count; Index++) {
-    DEBUG ((EFI_D_INFO, "%04x: ", Index * COLUME_SIZE));
-    InternalDumpData (Data + Index * COLUME_SIZE, COLUME_SIZE);
-    DEBUG ((EFI_D_INFO, "\n"));
-  }
-
-  if (Left != 0) {
-    DEBUG ((EFI_D_INFO, "%04x: ", Index * COLUME_SIZE));
-    InternalDumpData (Data + Index * COLUME_SIZE, Left);
-    DEBUG ((EFI_D_INFO, "\n"));
-  }
-}
-
 ///
 /// The Firmware Volume Block Protocol is the low-level interface
 /// to a firmware volume. File-level access to a firmware volume
@@ -75,88 +36,6 @@ InternalDumpHex (
 /// produces the Firmware Volume Protocol will bind to the
 /// Firmware Volume Block Protocol.
 ///
-
-/**
-  Initialises the FV Header and Variable Store Header
-  to support variable operations.
-
-  @param[in]  Ptr - Location to initialise the headers
-
-**/
-EFI_STATUS
-InitializeFvAndVariableStoreHeaders (
-  IN AMD_SPI_INSTANCE *Instance
-  )
-{
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
-  EFI_STATUS                          Status;
-  VOID*                               Headers;
-  UINTN                               HeadersLength;
-  EFI_FIRMWARE_VOLUME_HEADER          *FirmwareVolumeHeader;
-  VARIABLE_STORE_HEADER               *VariableStoreHeader;
-
-  HeadersLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY) + sizeof(VARIABLE_STORE_HEADER);
-  Headers = AllocateZeroPool(HeadersLength);
-
-  // FirmwareVolumeHeader->FvLength is declared to have the Variable area AND the FTW working area AND the FTW Spare contiguous.
-  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) + PcdGet32(PcdFlashNvStorageVariableSize) == PcdGet32(PcdFlashNvStorageFtwWorkingBase));
-  ASSERT(PcdGet32(PcdFlashNvStorageFtwWorkingBase) + PcdGet32(PcdFlashNvStorageFtwWorkingSize) == PcdGet32(PcdFlashNvStorageFtwSpareBase));
-
-  // Check if the size of the area is at least one block size
-  ASSERT((PcdGet32(PcdFlashNvStorageVariableSize) > 0) && (PcdGet32(PcdFlashNvStorageVariableSize) / Instance->Media.BlockSize > 0));
-  ASSERT((PcdGet32(PcdFlashNvStorageFtwWorkingSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwWorkingSize) / Instance->Media.BlockSize > 0));
-  ASSERT((PcdGet32(PcdFlashNvStorageFtwSpareSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwSpareSize) / Instance->Media.BlockSize > 0));
-
-  // Ensure the Variable area Base Addresses are aligned on a block size boundaries
-  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) % Instance->Media.BlockSize == 0);
-  ASSERT(PcdGet32(PcdFlashNvStorageFtwWorkingBase) % Instance->Media.BlockSize == 0);
-  ASSERT(PcdGet32(PcdFlashNvStorageFtwSpareBase) % Instance->Media.BlockSize == 0);
-
-  //
-  // EFI_FIRMWARE_VOLUME_HEADER
-  //
-  FirmwareVolumeHeader = (EFI_FIRMWARE_VOLUME_HEADER*)Headers;
-  CopyGuid (&FirmwareVolumeHeader->FileSystemGuid, &gEfiSystemNvDataFvGuid);
-  FirmwareVolumeHeader->FvLength =
-      PcdGet32(PcdFlashNvStorageVariableSize) +
-      PcdGet32(PcdFlashNvStorageFtwWorkingSize) +
-      PcdGet32(PcdFlashNvStorageFtwSpareSize);
-  FirmwareVolumeHeader->Signature = EFI_FVH_SIGNATURE;
-  FirmwareVolumeHeader->Attributes = (EFI_FVB_ATTRIBUTES_2) (
-                                          EFI_FVB2_READ_ENABLED_CAP   | // Reads may be enabled
-                                          EFI_FVB2_READ_STATUS        | // Reads are currently enabled
-                                          EFI_FVB2_STICKY_WRITE       | // A block erase is required to flip bits into EFI_FVB2_ERASE_POLARITY
-                                          EFI_FVB2_MEMORY_MAPPED      | // It is memory mapped
-                                          EFI_FVB2_ERASE_POLARITY     | // After erasure all bits take this value (i.e. '1')
-                                          EFI_FVB2_WRITE_STATUS       | // Writes are currently enabled
-                                          EFI_FVB2_WRITE_ENABLED_CAP    // Writes may be enabled
-                                      );
-  FirmwareVolumeHeader->HeaderLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY);
-  FirmwareVolumeHeader->Revision = EFI_FVH_REVISION;
-  FirmwareVolumeHeader->BlockMap[0].NumBlocks = Instance->Media.LastBlock + 1;
-  FirmwareVolumeHeader->BlockMap[0].Length      = Instance->Media.BlockSize;
-  FirmwareVolumeHeader->BlockMap[1].NumBlocks = 0;
-  FirmwareVolumeHeader->BlockMap[1].Length      = 0;
-  FirmwareVolumeHeader->Checksum = CalculateCheckSum16 ((UINT16*)FirmwareVolumeHeader,FirmwareVolumeHeader->HeaderLength);
-
-  //
-  // VARIABLE_STORE_HEADER
-  //
-  VariableStoreHeader = (VARIABLE_STORE_HEADER*)((UINTN)Headers + FirmwareVolumeHeader->HeaderLength);
-  CopyGuid (&VariableStoreHeader->Signature, &gEfiVariableGuid);
-  VariableStoreHeader->Size = PcdGet32(PcdFlashNvStorageVariableSize) - FirmwareVolumeHeader->HeaderLength;
-  VariableStoreHeader->Format            = VARIABLE_STORE_FORMATTED;
-  VariableStoreHeader->State             = VARIABLE_STORE_HEALTHY;
-
-   DEBUG ((EFI_D_INFO, "%a: Variable Store header to write:\n", __FUNCTION__));
-  InternalDumpHex((UINT8 *)Headers, HeadersLength);
-
-  // Install the combined super-header in the store
-  Status = FvbWrite (&Instance->FvbProtocol, 0, 0, &HeadersLength, Headers);
-
-  FreePool (Headers);
-  return Status;
-}
 
 /**
   Check the integrity of firmware volume header.
@@ -233,8 +112,6 @@ ValidateFvHeader (
     FreePool (FwVolHeader);
     return EFI_DEVICE_ERROR;
   }
-   DEBUG ((EFI_D_INFO, "%a: FwVol header:\n", __FUNCTION__));
-  InternalDumpHex((UINT8 *)FwVolHeader, BufferSize);
 
   // Verify the header checksum
   Checksum = CalculateSum16((UINT16*)FwVolHeader, FwVolHeader->HeaderLength);
@@ -257,9 +134,6 @@ ValidateFvHeader (
     FreePool (FwVolHeader);
     return EFI_DEVICE_ERROR;
   }
-
-  DEBUG ((EFI_D_INFO, "%a: Variable Store header:\n", __FUNCTION__));
-  InternalDumpHex((UINT8 *)VariableStoreHeader, BufferSize);
 
   // Check the Variable Store Guid
   if (!CompareGuid (&VariableStoreHeader->Signature, &gEfiVariableGuid) &&
@@ -284,6 +158,90 @@ ValidateFvHeader (
   FreePool (VariableStoreHeader);
 
   return EFI_SUCCESS;
+}
+
+/**
+  Initialises the FV Header and Variable Store Header
+  to support variable operations.
+
+  @param[in]  Ptr - Location to initialise the headers
+
+**/
+EFI_STATUS
+InitializeFvAndVariableStoreHeaders (
+  IN AMD_SPI_INSTANCE *Instance
+  )
+{
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
+  EFI_STATUS                          Status;
+  VOID*                               Headers;
+  UINTN                               HeadersLength;
+  EFI_FIRMWARE_VOLUME_HEADER          *FirmwareVolumeHeader;
+  VARIABLE_STORE_HEADER               *VariableStoreHeader;
+
+  HeadersLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY) + sizeof(VARIABLE_STORE_HEADER);
+  Headers = AllocateZeroPool(HeadersLength);
+
+  // FirmwareVolumeHeader->FvLength is declared to have the Variable area AND the FTW working area AND the FTW Spare contiguous.
+  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) + PcdGet32(PcdFlashNvStorageVariableSize) == PcdGet32(PcdFlashNvStorageFtwWorkingBase));
+  ASSERT(PcdGet32(PcdFlashNvStorageFtwWorkingBase) + PcdGet32(PcdFlashNvStorageFtwWorkingSize) == PcdGet32(PcdFlashNvStorageFtwSpareBase));
+
+  // Check if the size of the area is at least one block size
+  ASSERT((PcdGet32(PcdFlashNvStorageVariableSize) > 0) && (PcdGet32(PcdFlashNvStorageVariableSize) / Instance->Media.BlockSize > 0));
+  ASSERT((PcdGet32(PcdFlashNvStorageFtwWorkingSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwWorkingSize) / Instance->Media.BlockSize > 0));
+  ASSERT((PcdGet32(PcdFlashNvStorageFtwSpareSize) > 0) && (PcdGet32(PcdFlashNvStorageFtwSpareSize) / Instance->Media.BlockSize > 0));
+
+  // Ensure the Variable area Base Addresses are aligned on a block size boundaries
+  ASSERT(PcdGet32(PcdFlashNvStorageVariableBase) % Instance->Media.BlockSize == 0);
+  ASSERT(PcdGet32(PcdFlashNvStorageFtwWorkingBase) % Instance->Media.BlockSize == 0);
+  ASSERT(PcdGet32(PcdFlashNvStorageFtwSpareBase) % Instance->Media.BlockSize == 0);
+
+  //
+  // EFI_FIRMWARE_VOLUME_HEADER
+  //
+  FirmwareVolumeHeader = (EFI_FIRMWARE_VOLUME_HEADER*)Headers;
+  CopyGuid (&FirmwareVolumeHeader->FileSystemGuid, &gEfiSystemNvDataFvGuid);
+  FirmwareVolumeHeader->FvLength =
+      PcdGet32(PcdFlashNvStorageVariableSize) +
+      PcdGet32(PcdFlashNvStorageFtwWorkingSize) +
+      PcdGet32(PcdFlashNvStorageFtwSpareSize);
+  FirmwareVolumeHeader->Signature = EFI_FVH_SIGNATURE;
+  FirmwareVolumeHeader->Attributes = (EFI_FVB_ATTRIBUTES_2) (
+                                          EFI_FVB2_READ_ENABLED_CAP   | // Reads may be enabled
+                                          EFI_FVB2_READ_STATUS        | // Reads are currently enabled
+                                          EFI_FVB2_STICKY_WRITE       | // A block erase is required to flip bits into EFI_FVB2_ERASE_POLARITY
+                                          EFI_FVB2_MEMORY_MAPPED      | // It is memory mapped
+                                          EFI_FVB2_ERASE_POLARITY     | // After erasure all bits take this value (i.e. '1')
+                                          EFI_FVB2_WRITE_STATUS       | // Writes are currently enabled
+                                          EFI_FVB2_WRITE_ENABLED_CAP    // Writes may be enabled
+                                      );
+  FirmwareVolumeHeader->HeaderLength = sizeof(EFI_FIRMWARE_VOLUME_HEADER) + sizeof(EFI_FV_BLOCK_MAP_ENTRY);
+  FirmwareVolumeHeader->Revision = EFI_FVH_REVISION;
+  FirmwareVolumeHeader->BlockMap[0].NumBlocks = Instance->Media.LastBlock + 1;
+  FirmwareVolumeHeader->BlockMap[0].Length      = Instance->Media.BlockSize;
+  FirmwareVolumeHeader->BlockMap[1].NumBlocks = 0;
+  FirmwareVolumeHeader->BlockMap[1].Length      = 0;
+  FirmwareVolumeHeader->Checksum = CalculateCheckSum16 ((UINT16*)FirmwareVolumeHeader,FirmwareVolumeHeader->HeaderLength);
+
+  //
+  // VARIABLE_STORE_HEADER
+  //
+  VariableStoreHeader = (VARIABLE_STORE_HEADER*)((UINTN)Headers + FirmwareVolumeHeader->HeaderLength);
+  CopyGuid (&VariableStoreHeader->Signature, &gEfiVariableGuid);
+  VariableStoreHeader->Size = PcdGet32(PcdFlashNvStorageVariableSize) - FirmwareVolumeHeader->HeaderLength;
+  VariableStoreHeader->Format            = VARIABLE_STORE_FORMATTED;
+  VariableStoreHeader->State             = VARIABLE_STORE_HEALTHY;
+
+  // Install the combined super-header in the store
+  Status = FvbWrite (&Instance->FvbProtocol, 0, 0, &HeadersLength, Headers);
+  FreePool (Headers);
+
+  if (EFI_ERROR(Status))
+    return Status;
+
+  Status = ValidateFvHeader (Instance);
+
+  return Status;
 }
 
 /**
