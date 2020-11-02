@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 
-#include <Include/Library/DebugLib.h>
-#include <Include/Library/TimerLib.h>
+#include <Library/DebugLib.h>
+#include <Library/TimerLib.h>
 #include <Include/PiDxe.h>
 #include <Library/BaseMemoryLib/MemLibInternals.h>
 #include "GenericSPI.h"
@@ -50,7 +50,7 @@ EFI_STATUS spi_flash_cmd(CONST struct spi_slave *spi, UINT8 cmd, VOID *response,
 {
 	EFI_STATUS status = do_spi_flash_cmd(spi, &cmd, sizeof(cmd), response, len);
 	if (EFI_ERROR(status))
-		DEBUG((DEBUG_BLKLIO, "%a SF: Failed to send command %02x: %d\n", __FUNCTION__, cmd, status));
+		DEBUG((DEBUG_BLKIO, "%a SF: Failed to send command %02x: %d\n", __FUNCTION__, cmd, status));
 
 	return status;
 }
@@ -71,7 +71,7 @@ EFI_STATUS spi_flash_cmd_write(CONST struct spi_slave *spi, CONST UINT8 *cmd,
 
 	status = do_spi_flash_cmd(spi, buff, cmd_len + data_len, NULL, 0);
 	if (EFI_ERROR(status)) {
-		DEBUG((DEBUG_BLKLIO, "%a SF: Failed to send write command (%zu bytes): %d\n",
+		DEBUG((DEBUG_BLKIO, "%a SF: Failed to send write command (%zu bytes): %d\n",
 				__FUNCTION__, data_len, status));
 	}
 
@@ -100,7 +100,7 @@ EFI_STATUS spi_flash_cmd_read(CONST struct spi_flash *flash, UINT32 offset,
 		spi_flash_addr(offset, cmd);
 		status = do_cmd(&flash->spi, cmd, cmd_len, data, xfer_len);
 		if (EFI_ERROR(status)) {
-			DEBUG((DEBUG_BLKLIO,
+			DEBUG((DEBUG_BLKIO,
 						"%a SF: Failed to send read command %#.2x(%#x, %#zx): %d\n",
 			       __FUNCTION__, cmd[0], offset, xfer_len, status));
 			return status;
@@ -136,7 +136,7 @@ EFI_STATUS spi_flash_cmd_poll_bit(CONST struct spi_flash *flash, unsigned long t
 				timeNow<startTimeMilisec
 		|| (timeNow>startTimeMilisec && timeNow>endTimeMilisec));
 
-	DEBUG((DEBUG_BLKLIO, "%a SF: timeout at %ld msec\n", __FUNCTION__, timeout));
+	DEBUG((DEBUG_BLKIO, "%a SF: timeout at %ld msec\n", __FUNCTION__, timeout));
 	return EFI_DEVICE_ERROR;
 }
 
@@ -155,11 +155,11 @@ EFI_STATUS spi_flash_cmd_erase(CONST struct spi_flash *flash, UINT32 offset, __S
 
 	erase_size = flash->sector_size;
 	if (offset % erase_size || len % erase_size) {
-		DEBUG((DEBUG_BLKLIO, "%a SF: Erase offset/length not multiple of erase size\n", __FUNCTION__));
+		DEBUG((DEBUG_BLKIO, "%a SF: Erase offset/length not multiple of erase size\n", __FUNCTION__));
 		return EFI_DEVICE_ERROR;
 	}
 	if (len == 0) {
-		DEBUG((DEBUG_BLKLIO, "%a SF: Erase length cannot be 0\n", __FUNCTION__));
+		DEBUG((DEBUG_BLKIO, "%a SF: Erase length cannot be 0\n", __FUNCTION__));
 		return EFI_DEVICE_ERROR;
 	}
 
@@ -171,7 +171,7 @@ EFI_STATUS spi_flash_cmd_erase(CONST struct spi_flash *flash, UINT32 offset, __S
 		spi_flash_addr(offset, cmd);
 		offset += erase_size;
 
-		DEBUG((DEBUG_BLKLIO, "%a SF: erase %2x %2x %2x %2x (%x)\n", __FUNCTION__,
+		DEBUG((DEBUG_BLKIO, "%a SF: erase %2x %2x %2x %2x (%x)\n", __FUNCTION__,
 			cmd[0], cmd[1], cmd[2], cmd[3], offset));
 
 		status = spi_flash_cmd(&flash->spi, CMD_WRITE_ENABLE, NULL, 0);
@@ -188,7 +188,7 @@ EFI_STATUS spi_flash_cmd_erase(CONST struct spi_flash *flash, UINT32 offset, __S
 			goto out;
 	}
 
-	DEBUG((DEBUG_BLKLIO, "%a SF: Successfully erased %u bytes @ %x\n",
+	DEBUG((DEBUG_BLKIO, "%a SF: Successfully erased %u bytes @ %x\n",
 		__FUNCTION__, len, start));
 
 out:
@@ -219,19 +219,19 @@ EFI_STATUS spi_flash_cmd_write_page_program(CONST struct spi_flash *flash, UINT3
 		chunk_len = spi_crop_chunk(&flash->spi, sizeof(cmd), chunk_len);
 
 		spi_flash_addr(offset, cmd);
-		DEBUG((DEBUG_BLKLIO, "%a PP: %x => cmd = { 0x%02x 0x%02x%02x%02x } chunk_len = %u\n",
+		DEBUG((DEBUG_BLKIO, "%a PP: %x => cmd = { 0x%02x 0x%02x%02x%02x } chunk_len = %u\n",
 		 	__FUNCTION__, buf + actual, cmd[0], cmd[1], cmd[2], cmd[3],	chunk_len));
 
 		status = spi_flash_cmd(&flash->spi, flash->wren_cmd, NULL, 0);
 		if (EFI_ERROR(status)) {
-			DEBUG((DEBUG_BLKLIO, "%a SF: Enabling Write failed\n", __FUNCTION__));
+			DEBUG((DEBUG_BLKIO, "%a SF: Enabling Write failed\n", __FUNCTION__));
 			goto out;
 		}
 
 		status = spi_flash_cmd_write(&flash->spi, cmd, sizeof(cmd),
 				buf + actual, chunk_len);
 		if (EFI_ERROR(status)) {
-			DEBUG((DEBUG_BLKLIO, "%a SF: Page Program failed\n", __FUNCTION__));
+			DEBUG((DEBUG_BLKIO, "%a SF: Page Program failed\n", __FUNCTION__));
 			goto out;
 		}
 
@@ -412,7 +412,7 @@ STATIC EFI_STATUS spi_flash_generic_probe(CONST struct spi_slave *spi,
 
 	manuf_id = idcode[0];
 
-  DEBUG((DEBUG_BLKLIO, "%a Manufacturer: %02x\n", __FUNCTION__, manuf_id));
+  DEBUG((DEBUG_BLKIO, "%a Manufacturer: %02x\n", __FUNCTION__, manuf_id));
 
 	id[0] = (idcode[1] << 8) | idcode[2];
 	id[1] = (idcode[3] << 8) | idcode[4];
@@ -426,7 +426,7 @@ EFI_STATUS spi_flash_probe(UINT32 bus, UINT32 cs, struct spi_flash *flash)
 	EFI_STATUS status = EFI_DEVICE_ERROR;
 
 	if (spi_setup_slave(bus, cs, &spi)) {
-		DEBUG((DEBUG_BLKLIO, "SF: Failed to set up slave\n"));
+		DEBUG((DEBUG_BLKIO, "SF: Failed to set up slave\n"));
 		return EFI_DEVICE_ERROR;
 	}
 
@@ -440,7 +440,7 @@ EFI_STATUS spi_flash_probe(UINT32 bus, UINT32 cs, struct spi_flash *flash)
 
 	/* Give up -- nothing more to try if flash is not found. */
 	if (EFI_ERROR(status)) {
-		DEBUG((DEBUG_BLKLIO, "SF: Unsupported manufacturer!\n"));
+		DEBUG((DEBUG_BLKIO, "SF: Unsupported manufacturer!\n"));
 		return EFI_DEVICE_ERROR;
 	}
 
@@ -448,7 +448,7 @@ EFI_STATUS spi_flash_probe(UINT32 bus, UINT32 cs, struct spi_flash *flash)
 	if (flash->flags.dual_spi && spi.ctrlr->xfer_dual)
 		mode_string = " (Dual SPI mode)";
 
-	DEBUG((DEBUG_BLKLIO, 
+	DEBUG((DEBUG_BLKIO, 
 	       "SF: Detected %02x %04x with sector size 0x%x, total 0x%x%s\n",
 		flash->vendor, flash->model, flash->sector_size, flash->size, mode_string));
 
