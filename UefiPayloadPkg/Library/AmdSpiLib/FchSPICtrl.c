@@ -82,11 +82,6 @@ STATIC UINT8 spi_read8(UINT8 reg)
 	return MmioRead8((spi_get_bar() + reg));
 }
 
-STATIC UINT32 spi_read32(UINT8 reg)
-{
-	return MmioRead32((spi_get_bar() + reg));
-}
-
 STATIC VOID spi_write8(UINT8 reg, UINT8 val)
 {
 	MmioWrite8((spi_get_bar() + reg), val);
