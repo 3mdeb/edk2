@@ -50,8 +50,6 @@ AmdSpiWrite (
   if (*NumBytes == 0 || Buffer == NULL)
     return EFI_INVALID_PARAMETER;
 
-  MicroSecondDelay(5000);
-
   return spi_flash_write(&flash, address, *NumBytes, Buffer);
 }
 
@@ -71,7 +69,6 @@ AmdSpiEraseBlock (
   if (address > 0x90000 || address < 0x60000)
     return EFI_ACCESS_DENIED;
 
-  MicroSecondDelay(5000);
   return spi_flash_erase(&flash, address, BLOCK_SIZE);
 }
 

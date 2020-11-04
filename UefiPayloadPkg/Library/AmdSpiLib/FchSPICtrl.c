@@ -25,6 +25,10 @@
 #define SPI_REG_FIFO							0x0c
 #define SPI_REG_CNTRL11						0x0d
  #define CNTRL11_FIFOPTR_MASK			0x07
+#define SPI_EXT_REG_INDX        0x1e
+#define SPI_EXT_REG_DATA        0x1f
+#define SPI_TX_BYTE_COUNT_IDX   0x05
+#define SPI_RX_BYTE_COUNT_IDX   0x06
 #define SPI_CMD_CODE							0x45
 #define SPI_CMD_TRIGGER						0x47
 #define SPI_CMD_TRIGGER_EXECUTE		0x80
@@ -88,17 +92,6 @@ STATIC VOID spi_write8(UINT8 reg, UINT8 val)
 	MmioWrite8((spi_get_bar() + reg), val);
 }
 
-STATIC VOID reset_internal_fifo_pointer(void)
-{
-	UINT8 reg8;
-
-	do {
-		reg8 = spi_read8(SPI_REG_CNTRL02);
-		reg8 |= CNTRL02_FIFO_RESET;
-		spi_write8(SPI_REG_CNTRL02, reg8);
-	} while (spi_read8(SPI_REG_CNTRL11) & CNTRL11_FIFOPTR_MASK);
-}
-
 STATIC EFI_STATUS wait_for_ready(VOID)
 {
 	CONST UINTN timeoutMilisecond = 500;
@@ -109,7 +102,8 @@ STATIC EFI_STATUS wait_for_ready(VOID)
 	UINT64 timeNow = startTimeMilisec;
 
 	do {
-		if (!(spi_read32(SPI_STATUS) & SPI_BUSY))
+		if (!(spi_read8(SPI_REG_CNTRL02) & CNTRL02_EXEC_OPCODE) &&
+		    !(spi_read8(SPI_REG_CNTRL03) & CNTRL03_SPIBUSY))
 			return EFI_SUCCESS;
 		timeNow = DivU64x32(GetTimeInNanoSecond(GetPerformanceCounter()),nanoToMiliDivider);	
 	} while (timeNow<startTimeMilisec || (timeNow>startTimeMilisec && timeNow>endTimeMilisec));
@@ -193,7 +187,7 @@ STATIC EFI_STATUS execute_command(void)
 {
 	dump_state(0);
 
-	spi_write8(SPI_CMD_TRIGGER, SPI_CMD_TRIGGER_EXECUTE);
+	spi_write8(SPI_REG_CNTRL02, spi_read8(SPI_REG_CNTRL02) | CNTRL02_EXEC_OPCODE);
 
 	if (wait_for_ready())
 		DEBUG((DEBUG_BLKIO, "%a: FCH_SC Error: Timeout executing command\n", __FUNCTION__));
@@ -225,31 +219,29 @@ STATIC EFI_STATUS spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout
 	 * and followed by other SPI commands.
 	 */
 	if (bytesout + bytesin > SPI_FIFO_DEPTH) {
-		DEBUG((DEBUG_BLKIO,
-      "%a: FCH_SC: Too much to transfer, code error!\n", __FUNCTION__));
+		DEBUG((DEBUG_BLKIO, "%a: FCH_SC: Too much to transfer, code error!\n", __FUNCTION__));
 		return EFI_DEVICE_ERROR;
 	}
 
 	if (wait_for_ready())
 		return EFI_DEVICE_ERROR;
 
-	spi_write8(SPI_CMD_CODE, cmd);
-	spi_write8(SPI_TX_BYTE_COUNT, bytesout);
-	spi_write8(SPI_RX_BYTE_COUNT, bytesin);
+	spi_write8(SPI_REG_OPCODE, cmd);
 
-	reset_internal_fifo_pointer();
+	spi_write8(SPI_EXT_REG_INDX, SPI_TX_BYTE_COUNT_IDX);
+	spi_write8(SPI_EXT_REG_DATA, bytesout);
+
+	spi_write8(SPI_EXT_REG_INDX, SPI_RX_BYTE_COUNT_IDX);
+	spi_write8(SPI_EXT_REG_DATA, bytesin);
 
 	for (count = 0; count < bytesout; count++)
 		spi_write8(SPI_FIFO + count, bufout[count]);
 
-	reset_internal_fifo_pointer();
 	if (execute_command())
 		return EFI_DEVICE_ERROR;
 
-	reset_internal_fifo_pointer();
-
 	for (count = 0; count < bytesin; count++)
-		bufin[count] = spi_read8(SPI_FIFO + count + bytesout);
+		bufin[count] = spi_read8(SPI_FIFO + (count + bytesout) % SPI_FIFO_DEPTH);
 
 	return EFI_SUCCESS;
 }

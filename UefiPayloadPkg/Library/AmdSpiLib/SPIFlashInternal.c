@@ -186,6 +186,7 @@ EFI_STATUS spi_flash_cmd_erase(CONST struct spi_flash *flash, UINT32 offset, __S
 				SPI_FLASH_PAGE_ERASE_TIMEOUT_MS);
 		if (EFI_ERROR(status))
 			goto out;
+		MicroSecondDelay(10000);
 	}
 
 	DEBUG((DEBUG_BLKIO, "%a SF: Successfully erased %u bytes @ %x\n",
@@ -240,7 +241,7 @@ EFI_STATUS spi_flash_cmd_write_page_program(CONST struct spi_flash *flash, UINT3
 			goto out;
 
 		offset += chunk_len;
-		MicroSecondDelay(1000);
+		MicroSecondDelay(25000);
 	}
 	status = EFI_SUCCESS;
 
