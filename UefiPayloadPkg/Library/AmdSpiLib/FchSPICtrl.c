@@ -160,8 +160,8 @@ STATIC VOID dump_state(UINT8 phase)
 	else
 		DEBUG ((DEBUG_BLKIO, "SPI: After execute\n"));
 
-	DEBUG ((DEBUG_BLKIO, "Cntrl0: %x\n", spi_read32(SPI_CNTRL0)));
-	DEBUG ((DEBUG_BLKIO,  "Status: %x\n", spi_read32(SPI_STATUS)));
+	DEBUG ((DEBUG_BLKIO, "Cntrl0: %x\n", MmioRead8(spi_get_bar() + SPI_CNTRL0)));
+	DEBUG ((DEBUG_BLKIO,  "Status: %x\n", MmioRead8(spi_get_bar() + SPI_STATUS)));
 
 	addr = spi_get_bar() + SPI_FIFO;
 	if (phase == 0) {
