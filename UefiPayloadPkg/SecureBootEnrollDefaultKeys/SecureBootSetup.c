@@ -203,7 +203,7 @@ EnrollListOfCerts (
   UINT8            *Position;
 
   Status = EFI_SUCCESS;
-
+  DEBUG ((DEBUG_INFO, "%a: enrolling for %a\n", __FUNCTION__, VariableName));
   //
   // compute total size first, for UINT32 range check, and allocation
   //
@@ -503,6 +503,8 @@ InstallSecureBootHook (
            MicrosoftDbxSize, MicrosoftDbx);
   ASSERT_EFI_ERROR (Status);
 
+  DEBUG ((DEBUG_INFO, "SecureBootSetup: enrolling certs.\n"));
+
   Status = EnrollListOfCerts (
     EFI_IMAGE_SECURITY_DATABASE,
     &gEfiImageSecurityDatabaseGuid,
@@ -552,6 +554,7 @@ InstallSecureBootHook (
   Status = gRT->SetVariable (EFI_SECURE_BOOT_ENABLE_NAME, &gEfiSecureBootEnableDisableGuid,
            EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
            sizeof Settings.SecureBootEnable, &Settings.SecureBootEnable);
+
   if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_ERROR, "SecureBootSetup: SetVariable(\"%s\", %g): %r\n", EFI_SECURE_BOOT_ENABLE_NAME,
       &gEfiSecureBootEnableDisableGuid, Status));
