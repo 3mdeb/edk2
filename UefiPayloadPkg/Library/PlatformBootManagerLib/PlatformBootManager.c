@@ -319,7 +319,7 @@ SetPrimaryVideoOutput(
   }
 
   // Locate all GOPs
-  Status = gBS->LocateHandleBuffer(ByProtocol, 
+  Status = gBS->LocateHandleBuffer(ByProtocol,
                   &gEfiGraphicsOutputProtocolGuid,
                   NULL,
                   &HandleCount,
@@ -456,7 +456,7 @@ SetPrimaryVideoOutput(
     }
 
   } // for loop
-  
+
   return;
 }
 
@@ -485,7 +485,7 @@ PlatformBootManagerBeforeConsole (
   //
   // Map Escape to Boot Manager Menu
   //
-  Escape.ScanCode    = SCAN_ESC;
+  Escape.ScanCode    = SCAN_F9;
   Escape.UnicodeChar = CHAR_NULL;
   EfiBootManagerGetBootManagerMenu (&BootOption);
   EfiBootManagerAddKeyOptionVariable (NULL, (UINT16) BootOption.OptionNumber, 0, &Escape, NULL);
@@ -553,14 +553,14 @@ PlatformBootManagerAfterConsole (
   //
   // Register UEFI Shell
   //
-  PlatformRegisterFvBootOption (PcdGetPtr (PcdShellFile), L"UEFI Shell", LOAD_OPTION_ACTIVE);
+  //PlatformRegisterFvBootOption (PcdGetPtr (PcdShellFile), L"UEFI Shell", LOAD_OPTION_ACTIVE);
 
   //
   // Register iPXE
   //
-  PlatformRegisterFvBootOption (PcdGetPtr (PcdiPXEFile), L"iPXE Network boot", LOAD_OPTION_ACTIVE);
+  //PlatformRegisterFvBootOption (PcdGetPtr (PcdiPXEFile), L"iPXE Network boot", LOAD_OPTION_ACTIVE);
 
-  Print (L"Pess ESC to enter Boot Manager Menu.\n");
+  Print (L"Press F9 to enter Boot Manager Menu.\n");
 }
 
 /**
