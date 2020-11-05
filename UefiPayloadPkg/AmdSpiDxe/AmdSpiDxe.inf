@@ -33,6 +33,7 @@
   HobLib
   AmdSpiLib
   UefiLib
+  TimerLib
   UefiDriverEntryPoint
   UefiBootServicesTableLib
   UefiRuntimeLib

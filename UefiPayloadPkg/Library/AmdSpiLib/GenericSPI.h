@@ -11,7 +11,7 @@
  * of caution in case we're dealing with slower SPI buses and/or processors.
  */
 #define SPI_FLASH_PROG_TIMEOUT_MS		200
-#define SPI_FLASH_PAGE_ERASE_TIMEOUT_MS		1000
+#define SPI_FLASH_PAGE_ERASE_TIMEOUT_MS		2000
 
 
 /* SPI vendor IDs */

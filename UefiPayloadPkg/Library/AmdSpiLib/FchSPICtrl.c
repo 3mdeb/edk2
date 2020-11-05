@@ -53,7 +53,7 @@
 #define SPI_BASE_ALIGNMENT 0x00000040
 #define ALIGN_DOWN(x,a) ((x) & ~((typeof(x))(a)-1UL))
 
-static UINTN spi_base = 0;
+STATIC UINTN spi_base = 0;
 
 STATIC UINTN lpc_get_spibase(VOID)
 {
@@ -85,30 +85,6 @@ STATIC UINT8 spi_read8(UINT8 reg)
 STATIC VOID spi_write8(UINT8 reg, UINT8 val)
 {
 	MmioWrite8((spi_get_bar() + reg), val);
-}
-
-STATIC EFI_STATUS wait_for_ready(VOID)
-{
-	CONST UINTN timeoutMilisecond = 500;
-	CONST UINT32 nanoToMiliDivider = 1000000;
-	CONST UINT64 startTimeMilisec =
-		DivU64x32(GetTimeInNanoSecond(GetPerformanceCounter()), nanoToMiliDivider);
-	CONST UINT64 endTimeMilisec = startTimeMilisec + timeoutMilisecond;
-	UINT64 timeNow = startTimeMilisec;
-
-	do {
-		if (!(spi_read8(SPI_REG_CNTRL02) & CNTRL02_EXEC_OPCODE) &&
-		    !(spi_read8(SPI_REG_CNTRL03) & CNTRL03_SPIBUSY))
-			return EFI_SUCCESS;
-		timeNow = DivU64x32(GetTimeInNanoSecond(GetPerformanceCounter()),nanoToMiliDivider);	
-	} while (timeNow<startTimeMilisec || (timeNow>startTimeMilisec && timeNow>endTimeMilisec));
-
-	return EFI_DEVICE_ERROR;
-}
-
-VOID spi_init(VOID)
-{
-	spi_get_bar();
 }
 
 STATIC VOID
@@ -150,6 +126,11 @@ InternalDumpHex (
   }
 }
 
+VOID spi_init(VOID)
+{
+	spi_get_bar();
+}
+
 STATIC VOID dump_state(UINT8 phase)
 {
 	UINT8 dump_size;
@@ -160,17 +141,17 @@ STATIC VOID dump_state(UINT8 phase)
 	else
 		DEBUG ((DEBUG_BLKIO, "SPI: After execute\n"));
 
-	DEBUG ((DEBUG_BLKIO, "Cntrl0: %x\n", MmioRead8(spi_get_bar() + SPI_CNTRL0)));
-	DEBUG ((DEBUG_BLKIO,  "Status: %x\n", MmioRead8(spi_get_bar() + SPI_STATUS)));
+	DEBUG ((DEBUG_BLKIO, "Cntrl0: %08x\n", MmioRead32(spi_get_bar() + SPI_CNTRL0)));
+	DEBUG ((DEBUG_BLKIO, "Status: %08x\n", MmioRead32(spi_get_bar() + SPI_STATUS)));
 
 	addr = spi_get_bar() + SPI_FIFO;
 	if (phase == 0) {
 		dump_size = spi_read8(SPI_TX_BYTE_COUNT);
-		DEBUG ((DEBUG_BLKIO,  "TxByteCount: %x\n", dump_size));
-		DEBUG ((DEBUG_BLKIO, "CmdCode: %x\n", spi_read8(SPI_CMD_CODE)));
+		DEBUG ((DEBUG_BLKIO, "TxByteCount: %02x\n", dump_size));
+		DEBUG ((DEBUG_BLKIO, "CmdCode: %02x\n", spi_read8(SPI_CMD_CODE)));
 	} else {
 		dump_size = spi_read8(SPI_RX_BYTE_COUNT);
-		DEBUG ((DEBUG_BLKIO, "RxByteCount: %x\n", dump_size));
+		DEBUG ((DEBUG_BLKIO, "RxByteCount: %02x\n", dump_size));
 		addr += spi_read8(SPI_TX_BYTE_COUNT);
 	}
 
@@ -184,8 +165,8 @@ STATIC EFI_STATUS execute_command(void)
 
 	spi_write8(SPI_REG_CNTRL02, spi_read8(SPI_REG_CNTRL02) | CNTRL02_EXEC_OPCODE);
 
-	if (wait_for_ready())
-		DEBUG((DEBUG_BLKIO, "%a: FCH_SC Error: Timeout executing command\n", __FUNCTION__));
+	while ((spi_read8(SPI_REG_CNTRL02) & CNTRL02_EXEC_OPCODE) ||
+	       (spi_read8(SPI_REG_CNTRL03) & CNTRL03_SPIBUSY));
 
 	dump_state(1);
 
@@ -200,7 +181,7 @@ STATIC EFI_STATUS spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout
 	UINT8 *bufin = din;
 	CONST UINT8 *bufout = dout;
 
-	DEBUG((DEBUG_BLKIO,  "%s(%x, %x)\n", __FUNCTION__, bytesout, bytesin));
+	DEBUG((DEBUG_BLKIO,  "%a(%x, %x)\n", __FUNCTION__, bytesout, bytesin));
 
 	/* First byte is cmd which cannot be sent through FIFO */
 	cmd = bufout[0];
@@ -214,26 +195,19 @@ STATIC EFI_STATUS spi_ctrlr_xfer(CONST struct spi_slave *slave, CONST VOID *dout
 	 * and followed by other SPI commands.
 	 */
 	if (bytesout + bytesin > SPI_FIFO_DEPTH) {
-		DEBUG((DEBUG_BLKIO, "%a: FCH_SC: Too much to transfer, code error!\n", __FUNCTION__));
+		DEBUG((EFI_D_ERROR, "%a: FCH_SC: Too much to transfer, code error!\n", __FUNCTION__));
 		return EFI_DEVICE_ERROR;
 	}
 
-	if (wait_for_ready())
-		return EFI_DEVICE_ERROR;
+	spi_write8(SPI_CMD_CODE, cmd);
 
-	spi_write8(SPI_REG_OPCODE, cmd);
-
-	spi_write8(SPI_EXT_REG_INDX, SPI_TX_BYTE_COUNT_IDX);
-	spi_write8(SPI_EXT_REG_DATA, bytesout);
-
-	spi_write8(SPI_EXT_REG_INDX, SPI_RX_BYTE_COUNT_IDX);
-	spi_write8(SPI_EXT_REG_DATA, bytesin);
+	spi_write8(SPI_TX_BYTE_COUNT, bytesout);
+	spi_write8(SPI_RX_BYTE_COUNT, bytesin);
 
 	for (count = 0; count < bytesout; count++)
 		spi_write8(SPI_FIFO + count, bufout[count]);
 
-	if (execute_command())
-		return EFI_DEVICE_ERROR;
+	execute_command();
 
 	for (count = 0; count < bytesin; count++)
 		bufin[count] = spi_read8(SPI_FIFO + (count + bytesout) % SPI_FIFO_DEPTH);

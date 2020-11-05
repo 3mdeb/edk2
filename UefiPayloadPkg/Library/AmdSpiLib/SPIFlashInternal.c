@@ -86,22 +86,18 @@ EFI_STATUS spi_flash_cmd_read(CONST struct spi_flash *flash, UINT32 offset,
 {
 	UINT8 cmd[5];
 	EFI_STATUS status;
-	int cmd_len;
-	EFI_STATUS (*do_cmd)(CONST struct spi_slave *spi, CONST VOID *din,
-		      __SIZE_TYPE__ in_bytes, VOID *out, __SIZE_TYPE__ out_bytes);
+	UINT8 cmd_len;
 
 	cmd_len = 4;
 	cmd[0] = CMD_READ_ARRAY_SLOW;
-	do_cmd = do_spi_flash_cmd;
 
 	UINT8 *data = buf;
 	while (len) {
 		__SIZE_TYPE__ xfer_len = spi_crop_chunk(&flash->spi, cmd_len, len);
 		spi_flash_addr(offset, cmd);
-		status = do_cmd(&flash->spi, cmd, cmd_len, data, xfer_len);
+		status = do_spi_flash_cmd(&flash->spi, cmd, cmd_len, data, xfer_len);
 		if (EFI_ERROR(status)) {
-			DEBUG((DEBUG_BLKIO,
-						"%a SF: Failed to send read command %#.2x(%#x, %#zx): %d\n",
+			DEBUG((DEBUG_BLKIO, "%a SF: Failed to send read command %#.2x(%#x, %#zx): %d\n",
 			       __FUNCTION__, cmd[0], offset, xfer_len, status));
 			return status;
 		}
@@ -117,27 +113,18 @@ EFI_STATUS spi_flash_cmd_poll_bit(CONST struct spi_flash *flash, unsigned long t
 			   UINT8 cmd, UINT8 poll_bit)
 {
 	CONST struct spi_slave *spi = &flash->spi;
-	EFI_STATUS status;
+	EFI_STATUS status = EFI_SUCCESS;
+	UINT8 spi_sr;
 
-	CONST UINT32 nanoToMiliDivider = 1000000;
-	CONST UINT32 startTimeMilisec =
-		DivU64x32(GetTimeInNanoSecond(GetPerformanceCounter()), nanoToMiliDivider);
-	CONST UINT32 endTimeMilisec = startTimeMilisec + timeout;
-	UINT32 timeNow = startTimeMilisec;
-
-	do {
-		status = do_spi_flash_cmd(spi, &cmd, 1, &status, 1);
-		if (EFI_ERROR(status))
-			return EFI_DEVICE_ERROR;
-		if ((status & poll_bit) == 0)
+	while (!EFI_ERROR(status)) {
+		status = do_spi_flash_cmd(spi, &cmd, 1, &spi_sr, 1);
+		if ((spi_sr & poll_bit) == 0)
 			return EFI_SUCCESS;
-		timeNow = DivU64x32(GetTimeInNanoSecond(GetPerformanceCounter()), nanoToMiliDivider);
-	} while (
-				timeNow<startTimeMilisec
-		|| (timeNow>startTimeMilisec && timeNow>endTimeMilisec));
 
-	DEBUG((DEBUG_BLKIO, "%a SF: timeout at %ld msec\n", __FUNCTION__, timeout));
-	return EFI_DEVICE_ERROR;
+		MicroSecondDelay(10);
+	} while (TRUE);
+
+	return status;
 }
 
 EFI_STATUS spi_flash_cmd_wait_ready(CONST struct spi_flash *flash,
@@ -186,7 +173,6 @@ EFI_STATUS spi_flash_cmd_erase(CONST struct spi_flash *flash, UINT32 offset, __S
 				SPI_FLASH_PAGE_ERASE_TIMEOUT_MS);
 		if (EFI_ERROR(status))
 			goto out;
-		MicroSecondDelay(10000);
 	}
 
 	DEBUG((DEBUG_BLKIO, "%a SF: Successfully erased %u bytes @ %x\n",
@@ -241,7 +227,6 @@ EFI_STATUS spi_flash_cmd_write_page_program(CONST struct spi_flash *flash, UINT3
 			goto out;
 
 		offset += chunk_len;
-		MicroSecondDelay(25000);
 	}
 	status = EFI_SUCCESS;
 

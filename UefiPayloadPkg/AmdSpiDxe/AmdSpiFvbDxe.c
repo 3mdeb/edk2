@@ -12,6 +12,7 @@
 #include <Library/BaseLib.h>
 #include <Library/HobLib.h>
 #include <Library/UefiLib.h>
+#include <Library/TimerLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DxeServicesTableLib.h>
@@ -233,11 +234,6 @@ InitializeFvAndVariableStoreHeaders (
   // Install the combined super-header in the store
   Status = FvbWrite (&Instance->FvbProtocol, 0, 0, &HeadersLength, Headers);
   FreePool (Headers);
-
-  if (EFI_ERROR(Status))
-    return Status;
-
-  Status = ValidateFvHeader (Instance);
 
   return Status;
 }
@@ -464,7 +460,6 @@ FvbRead (
   IN OUT    UINT8                                 *Buffer
   )
 {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   UINTN            BlockSize;
   AMD_SPI_INSTANCE *Instance;
 
@@ -558,7 +553,7 @@ FvbWrite (
   IN        UINT8                                 *Buffer
   )
 {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
+
   UINTN            BlockSize;
   AMD_SPI_INSTANCE *Instance;
 
@@ -578,7 +573,7 @@ FvbWrite (
     return EFI_BAD_BUFFER_SIZE;
   }
 
-  // We must have some bytes to read
+  // We must have some bytes to write
   if (*NumBytes == 0) {
     return EFI_BAD_BUFFER_SIZE;
   }
@@ -636,7 +631,7 @@ FvbEraseBlocks (
   ...
   )
 {
-  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
+
   EFI_STATUS  Status;
   VA_LIST     Args;
   EFI_LBA     StartingLba; // Lba from which we start erasing
@@ -792,6 +787,7 @@ AmdSpiFvbInitialize (
     // Install all appropriate headers
     Status = InitializeFvAndVariableStoreHeaders (Instance);
     if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_INFO, "%a: FVB header init failed\n", __FUNCTION__));
       return Status;
     }
   } else {
