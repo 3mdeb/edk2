@@ -588,9 +588,6 @@ PlatformBootManagerAfterConsole (
   Black.Blue = Black.Green = Black.Red = Black.Reserved = 0;
   White.Blue = White.Green = White.Red = White.Reserved = 0xFF;
 
-  gST->ConOut->ClearScreen (gST->ConOut);
-  BootLogoEnableLogo ();
-
   Print (UdLogo);
   // FIXME: USB devices are not being detected unless we wait a bit.
   gBS->Stall (100 * 1000);
