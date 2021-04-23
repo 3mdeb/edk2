@@ -84,6 +84,34 @@ STATIC PLATFORM_SERIAL_CONSOLE mSerialConsole = {
   }
 };
 
+
+STATIC CONST CHAR16* UdLogo = 
+L"Press F9 to enter Boot Manager Menu\n"
+L"\n"
+L"\n"
+L"\n"
+L"\n"
+L"\n"
+L"\n"
+L"\n"
+L"         ________  ________  ___       ___  ________       ___    ___         \n"
+L"        |\\   __  \\|\\   __  \\|\\  \\     |\\  \\|\\   ____\\     |\\  \\  /  /|        \n"
+L"        \\ \\  \\_\\  \\ \\  \\|\\  \\ \\  \\    \\ \\  \\ \\  \\___|_    \\ \\  \\/  / /        \n"
+L"         \\ \\   ____\\ \\  \\ \\  \\ \\  \\    \\ \\  \\ \\_____  \\    \\ \\    / /         \n"
+L"          \\ \\  \\___|\\ \\  \\_\\  \\ \\  \\____\\ \\  \\|____|\\  \\    \\/  /  /          \n"
+L"           \\ \\__\\    \\ \\_______\\ \\_______\\ \\__\\____\\_\\  \\  _/  / /            \n"
+L"            \\|__|     \\|_______|\\|_______|\\|__|\\_________\\|___/ /             \n"
+L"                                              \\|_________\\|___|/              \n"
+L"\n"
+L"\n"
+L"\n"
+L"\n"
+L"\n"
+L"\n"
+L"\n"
+L"\n"
+;
+
 VOID
 InstallReadyToLock (
   VOID
@@ -563,25 +591,12 @@ PlatformBootManagerAfterConsole (
   gST->ConOut->ClearScreen (gST->ConOut);
   BootLogoEnableLogo ();
 
+  Print (UdLogo);
   // FIXME: USB devices are not being detected unless we wait a bit.
   gBS->Stall (100 * 1000);
 
   EfiBootManagerConnectAll ();
   EfiBootManagerRefreshAllBootOption ();
-
-  //
-  // Register UEFI Shell
-  //
-  //DEBUG((DEBUG_INFO, "Registering UEFI Shell boot option\n"));
-  //PlatformRegisterFvBootOption (PcdGetPtr (PcdShellFile), L"UEFI Shell", LOAD_OPTION_ACTIVE);
-
-  //
-  // Register iPXE
-  //
-  //DEBUG((DEBUG_INFO, "Registering iPXE boot option\n"));
-  //PlatformRegisterFvBootOption (PcdGetPtr (PcdiPXEFile), L"iPXE Network boot", LOAD_OPTION_ACTIVE);
-
-  Print (L"Press F9 to enter Boot Manager Menu.\n");
 }
 
 /**
