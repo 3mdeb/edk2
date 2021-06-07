@@ -169,7 +169,6 @@ PrepareLpcBridgeDevicePath (
   DevicePath = TempDevicePath;
   DevicePath = AppendDevicePathNode ((EFI_DEVICE_PATH_PROTOCOL *)NULL, (EFI_DEVICE_PATH_PROTOCOL *)&gUartDeviceVendorNode);
   DevicePath = AppendDevicePathNode (DevicePath, (EFI_DEVICE_PATH_PROTOCOL *)&gUartDeviceNode);
-  DevicePath = AppendDevicePathNode (DevicePath, (EFI_DEVICE_PATH_PROTOCOL *)&gTerminalTypeDeviceNode);
 
   switch (PcdGet8 (PcdDefaultTerminalType)) {
   case TerminalTypePcAnsi:    TerminalTypeGuid = gEfiPcAnsiGuid;      break;
@@ -185,6 +184,7 @@ PrepareLpcBridgeDevicePath (
   }
 
   CopyGuid (&gTerminalTypeDeviceNode.Guid, &TerminalTypeGuid);
+  DevicePath = AppendDevicePathNode (DevicePath, (EFI_DEVICE_PATH_PROTOCOL *)&gTerminalTypeDeviceNode);
 
   EfiBootManagerUpdateConsoleVariable (ConOut, DevicePath, NULL);
   EfiBootManagerUpdateConsoleVariable (ConIn, DevicePath, NULL);

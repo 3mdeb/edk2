@@ -275,7 +275,6 @@ PlatformBootManagerBeforeConsole (
 )
 {
   EFI_INPUT_KEY                F9;
-  EFI_INPUT_KEY                Esc;
   EFI_BOOT_MANAGER_LOAD_OPTION BootOption;
   UINT16                       BootTimeOut;
   EFI_STATUS                   Status;
@@ -291,16 +290,10 @@ PlatformBootManagerBeforeConsole (
   //
   F9.ScanCode     = SCAN_F9;
   F9.UnicodeChar  = CHAR_NULL;
-  Esc.ScanCode    = SCAN_ESC;
-  Esc.UnicodeChar = CHAR_NULL;
   Status = EfiBootManagerGetBootManagerMenu (&BootOption);
   ASSERT_EFI_ERROR (Status);
   Status = EfiBootManagerAddKeyOptionVariable (
              NULL, (UINT16) BootOption.OptionNumber, 0, &F9, NULL
-             );
-  ASSERT (Status == EFI_SUCCESS || Status == EFI_ALREADY_STARTED);
-  Status = EfiBootManagerAddKeyOptionVariable (
-             NULL, (UINT16) BootOption.OptionNumber, 0, &Esc, NULL
              );
   ASSERT (Status == EFI_SUCCESS || Status == EFI_ALREADY_STARTED);
 
