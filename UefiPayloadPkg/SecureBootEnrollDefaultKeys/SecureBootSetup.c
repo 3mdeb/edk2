@@ -542,6 +542,26 @@ InstallSecureBootHook (
     ASSERT_EFI_ERROR (Status);
   }
 
+  Settings.SecureBootEnable = SECURE_BOOT_DISABLE;
+  Status = gRT->SetVariable (EFI_SECURE_BOOT_ENABLE_NAME, &gEfiSecureBootEnableDisableGuid,
+           EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+           sizeof Settings.SecureBootEnable, &Settings.SecureBootEnable);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "SecureBootSetup: SetVariable(\"%s\", %g): %r\n", EFI_SECURE_BOOT_ENABLE_NAME,
+      &gEfiSecureBootEnableDisableGuid, Status));
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  Settings.SecureBoot = SECURE_BOOT_DISABLE;
+  Status = gRT->SetVariable (EFI_SECURE_BOOT_MODE_NAME, &gEfiGlobalVariableGuid,
+           EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+           sizeof Settings.SecureBoot, &Settings.SecureBoot);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "SecureBootSetup: SetVariable(\"%s\", %g): %r\n", EFI_SECURE_BOOT_MODE_NAME,
+      &gEfiGlobalVariableGuid, Status));
+    ASSERT_EFI_ERROR (Status);
+  }
+
   Status = GetSettings (&Settings, FALSE);
   ASSERT_EFI_ERROR (Status);
 
