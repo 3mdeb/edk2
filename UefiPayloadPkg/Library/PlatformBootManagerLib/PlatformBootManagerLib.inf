@@ -52,6 +52,16 @@
   gEfiEndOfDxeEventGroupGuid
   gEfiBoardSettingsVariableGuid
   gEfiGlobalVariableGuid
+  gEfiPcAnsiGuid
+  gEfiVT100Guid
+  gEfiVT100PlusGuid
+  gEfiVTUTF8Guid
+  gEfiTtyTermGuid
+  gEdkiiLinuxTermGuid
+  gEdkiiXtermR6Guid
+  gEdkiiVT400Guid
+  gEdkiiSCOTermGuid
+  gEfiPcAnsiGuid
 
 [Protocols]
   gEfiGenericMemTestProtocolGuid  ## CONSUMES
@@ -75,4 +85,4 @@
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
   gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
-  gUefiPayloadPkgTokenSpaceGuid.PcdTerminalTypeGuidBuffer
+  gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType
