@@ -60,6 +60,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareBase
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageFtwSpareSize
   gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+  gUefiPayloadPkgTokenSpaceGuid.PcdFchSpiBar
 
 [Depex]
   gEfiCpuArchProtocolGuid

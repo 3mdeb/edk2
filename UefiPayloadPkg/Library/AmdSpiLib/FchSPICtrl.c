@@ -1,9 +1,10 @@
+#include <Include/PiDxe.h>
 #include <Library/DebugLib.h>
 #include <Library/PciLib.h>
 #include <Library/TimerLib.h>
 #include <Library/BaseLib.h>
-#include <Include/PiDxe.h>
 #include <Library/IoLib.h>
+#include <Library/UefiRuntimeLib.h>
 #include "GenericSPI.h"
 #include "SPIFlashInternal.h"
 
@@ -126,9 +127,9 @@ InternalDumpHex (
   }
 }
 
-VOID spi_init(VOID)
+UINTN spi_init(VOID)
 {
-	spi_get_bar();
+	return spi_get_bar();
 }
 
 STATIC VOID dump_state(UINT8 phase)
@@ -235,5 +236,16 @@ CONST struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {
 		.bus_end = 0,
 	},
 };
+
+VOID
+EFIAPI
+AmdSpiVirtualNotifyEvent (
+  IN EFI_EVENT        Event,
+  IN VOID             *Context
+  )
+{
+  VOID *FchSpiBase = (VOID *)spi_get_bar();
+  EfiConvertPointer (0x0, &FchSpiBase);
+}
 
 CONST __SIZE_TYPE__ spi_ctrlr_bus_map_count = ARRAY_SIZE(spi_ctrlr_bus_map);

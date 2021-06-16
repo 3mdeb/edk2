@@ -1,6 +1,7 @@
 #include <Include/PiDxe.h>
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
+#include <Library/PcdLib.h>
 #include "GenericSPI.h"
 #include "SPIFlashInternal.h"
 #include "Winbond.h"
@@ -61,9 +62,13 @@ AmdSpiEraseBlock (
 EFI_STATUS
 AmdSpiInitialize (VOID)
 {
+  UINTN FchSpiBase;
+
   DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
 
-  spi_init();
+  FchSpiBase = spi_init();
+
+  PcdSet32S (PcdFchSpiBar, (UINT32)FchSpiBase);
 
   return spi_flash_probe(0, 0, &flash);
 }

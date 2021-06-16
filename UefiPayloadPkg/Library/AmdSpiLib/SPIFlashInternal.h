@@ -140,7 +140,7 @@ union pci_bank {
 	UINT32 reg32[4096 / sizeof(UINT32)];
 };
 
-VOID spi_init(VOID);
+UINTN spi_init(VOID);
 
 /* Manufacturer-specific probe information */
 extern CONST struct spi_flash_vendor_info spi_flash_adesto_vi;

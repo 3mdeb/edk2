@@ -397,6 +397,8 @@
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid|{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmInitializationPolicy|0
 
+  gUefiPayloadPkgTokenSpaceGuid.PcdFchSpiBar|0xFEC10000
+
 ################################################################################
 #
 # Components Section - list of all EDK II Modules needed by this Platform.

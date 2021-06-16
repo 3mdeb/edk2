@@ -203,13 +203,6 @@ struct spi_ctrlr_buses {
 extern const struct spi_ctrlr_buses spi_ctrlr_bus_map[];
 extern const __SIZE_TYPE__ spi_ctrlr_bus_map_count;
 
-/*-----------------------------------------------------------------------
- * Initialization, must be called once on start up.
- *
- */
-__attribute__((__weak__))
-VOID spi_init(VOID);
-
 /*
  * Get configuration of SPI bus.
  *
