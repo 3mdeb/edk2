@@ -347,6 +347,12 @@ PlatformBootManagerAfterConsole (
 
   EfiBootManagerConnectAll ();
   EfiBootManagerRefreshAllBootOption ();
+
+  //
+  // Register iPXE
+  //
+  DEBUG((DEBUG_INFO, "Registering iPXE boot option\n"));
+  PlatformRegisterFvBootOption (PcdGetPtr (PcdiPXEFile), L"iPXE Network boot", LOAD_OPTION_ACTIVE);
 }
 
 /**

@@ -42,3 +42,4 @@
   TimerLib
   PcdLib
   UefiRuntimeLib
+  MemoryAllocationLib

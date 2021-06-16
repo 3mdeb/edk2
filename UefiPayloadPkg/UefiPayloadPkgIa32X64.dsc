@@ -85,6 +85,7 @@
   #
   DEFINE SECURE_BOOT_ENABLE           = FALSE
   DEFINE TPM_ENABLE                   = TRUE
+  DEFINE NETWORK_IPXE                 = TRUE
 
 [BuildOptions]
   *_*_*_CC_FLAGS                 = -D DISABLE_NEW_DEPRECATED_INTERFACES
@@ -329,7 +330,7 @@
 
 [PcdsPatchableInModule.common]
   gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x7
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x8000004F
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x8070004F
 !if $(SOURCE_DEBUG_ENABLE)
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x17
 !else

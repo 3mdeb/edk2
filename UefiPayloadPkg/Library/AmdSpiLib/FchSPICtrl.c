@@ -4,79 +4,47 @@
 #include <Library/TimerLib.h>
 #include <Library/BaseLib.h>
 #include <Library/IoLib.h>
-#include <Library/UefiRuntimeLib.h>
 #include "GenericSPI.h"
 #include "SPIFlashInternal.h"
 
 #define GRANULARITY_TEST_4k			0x0000f000		/* bits 15-12 */
-#define WORD_TO_DWORD_UPPER(x)	((x << 16) & 0xffff0000)
+#define WORD_TO_DWORD_UPPER(x)			((x << 16) & 0xffff0000)
 
 /* SPI MMIO registers */
-#define SPI_REG_OPCODE						0x00
-#define SPI_CNTRL0								0x00
-#define   SPI_BUSY		           	BIT31
-#define SPI_REG_CNTRL01						0x01
-#define SPI_REG_CNTRL02						0x02
- #define CNTRL02_FIFO_RESET				(1 << 4)
+#define SPI_REG_OPCODE				0x00
+#define SPI_CNTRL0				0x00
+#define   SPI_BUSY				BIT31
+#define SPI_REG_CNTRL01				0x01
+#define SPI_REG_CNTRL02				0x02
+ #define CNTRL02_FIFO_RESET			(1 << 4)
  #define CNTRL02_EXEC_OPCODE			(1 << 0)
-#define SPI_REG_CNTRL03						0x03
- #define CNTRL03_SPIBUSY					(1 << 7)
-#define SPI_RESTRICTED_CMD1				0x04
-#define SPI_RESTRICTED_CMD2				0x08
-#define SPI_REG_FIFO							0x0c
-#define SPI_REG_CNTRL11						0x0d
+#define SPI_REG_CNTRL03				0x03
+ #define CNTRL03_SPIBUSY			(1 << 7)
+#define SPI_RESTRICTED_CMD1			0x04
+#define SPI_RESTRICTED_CMD2			0x08
+#define SPI_REG_FIFO				0x0c
+#define SPI_REG_CNTRL11				0x0d
  #define CNTRL11_FIFOPTR_MASK			0x07
-#define SPI_EXT_REG_INDX        0x1e
-#define SPI_EXT_REG_DATA        0x1f
-#define SPI_TX_BYTE_COUNT_IDX   0x05
-#define SPI_RX_BYTE_COUNT_IDX   0x06
-#define SPI_CMD_CODE							0x45
-#define SPI_CMD_TRIGGER						0x47
-#define SPI_CMD_TRIGGER_EXECUTE		0x80
-#define SPI_TX_BYTE_COUNT					0x48
-#define SPI_RX_BYTE_COUNT					0x4b
-#define SPI_STATUS								0x4c
-#define SPI_DONE_BYTE_COUNT_SHIFT	0
-#define SPI_DONE_BYTE_COUNT_MASK	0xff
+#define SPI_EXT_REG_INDX			0x1e
+#define SPI_EXT_REG_DATA			0x1f
+#define SPI_TX_BYTE_COUNT_IDX			0x05
+#define SPI_RX_BYTE_COUNT_IDX			0x06
+#define SPI_CMD_CODE				0x45
+#define SPI_CMD_TRIGGER				0x47
+#define SPI_CMD_TRIGGER_EXECUTE			0x80
+#define SPI_TX_BYTE_COUNT			0x48
+#define SPI_RX_BYTE_COUNT			0x4b
+#define SPI_STATUS				0x4c
+#define SPI_DONE_BYTE_COUNT_SHIFT		0
+#define SPI_DONE_BYTE_COUNT_MASK		0xff
 #define SPI_FIFO_WR_PTR_SHIFT			8
 #define SPI_FIFO_WR_PTR_MASK			0x7f
 #define SPI_FIFO_RD_PTR_SHIFT			16
 #define SPI_FIFO_RD_PTR_MASK			0x7f
-#define SPI_BUSY	BIT31
-#define SPI_FIFO	0x80
-#define SPI_FIFO_LAST_BYTE	0xc7
-#define SPI_FIFO_DEPTH	(SPI_FIFO_LAST_BYTE - SPI_FIFO)
-
-#define LPC_DEV		0x14
-#define LPC_FUNC	0x03
-
-#define SPIROM_BASE_ADDRESS_REGISTER 0xa0
-#define SPI_BASE_ALIGNMENT 0x00000040
-#define ALIGN_DOWN(x,a) ((x) & ~((typeof(x))(a)-1UL))
-
-STATIC UINTN spi_base = 0;
-
-STATIC UINTN lpc_get_spibase(VOID)
-{
-	UINT32 base;
-	base = PciRead32(
-		PCI_LIB_ADDRESS(0, LPC_DEV, LPC_FUNC, SPIROM_BASE_ADDRESS_REGISTER));
-	base = ALIGN_DOWN(base, SPI_BASE_ALIGNMENT);
-	return (UINTN)base;
-}
-
-STATIC VOID spi_set_base(UINTN base)
-{
-	spi_base = base;
-}
-
-STATIC UINTN spi_get_bar(VOID)
-{
-	if (spi_base == 0) {
-		spi_set_base(lpc_get_spibase());
-	}
-	return spi_base;
-}
+#define SPI_BUSY				BIT31
+#define SPI_FIFO				0x80
+#define SPI_FIFO_LAST_BYTE			0xc7
+#define SPI_FIFO_DEPTH				(SPI_FIFO_LAST_BYTE - SPI_FIFO)
 
 STATIC UINT8 spi_read8(UINT8 reg)
 {
@@ -125,11 +93,6 @@ InternalDumpHex (
     InternalDumpData (Data + Index * COLUME_SIZE, Left);
     DEBUG ((DEBUG_BLKIO, "\n"));
   }
-}
-
-UINTN spi_init(VOID)
-{
-	return spi_get_bar();
 }
 
 STATIC VOID dump_state(UINT8 phase)
@@ -236,16 +199,5 @@ CONST struct spi_ctrlr_buses spi_ctrlr_bus_map[] = {
 		.bus_end = 0,
 	},
 };
-
-VOID
-EFIAPI
-AmdSpiVirtualNotifyEvent (
-  IN EFI_EVENT        Event,
-  IN VOID             *Context
-  )
-{
-  VOID *FchSpiBase = (VOID *)spi_get_bar();
-  EfiConvertPointer (0x0, &FchSpiBase);
-}
 
 CONST __SIZE_TYPE__ spi_ctrlr_bus_map_count = ARRAY_SIZE(spi_ctrlr_bus_map);

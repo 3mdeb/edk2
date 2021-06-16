@@ -335,7 +335,7 @@ STATIC EFI_STATUS fill_spi_flash(const struct spi_slave *spi, struct spi_flash *
 	CONST struct spi_flash_vendor_info *vi,
 	CONST struct spi_flash_part_id *part)
 {
-	InternalMemCopyMem(&flash->spi, spi, sizeof(*spi));
+	InternalMemCopyMem (&flash->spi, spi, sizeof(struct spi_slave));
 	flash->vendor = vi->id;
 	flash->model = part->id[0];
 
@@ -349,7 +349,8 @@ STATIC EFI_STATUS fill_spi_flash(const struct spi_slave *spi, struct spi_flash *
 
 	flash->flags.dual_spi = part->fast_read_dual_output_support;
 
-	flash->ops = &vi->desc->ops;
+	InternalMemCopyMem ((VOID *)flash->ops, (VOID *)&vi->desc->ops,
+			    sizeof(struct spi_flash_ops));
 	flash->part = part;
 
 	if (vi->after_probe)

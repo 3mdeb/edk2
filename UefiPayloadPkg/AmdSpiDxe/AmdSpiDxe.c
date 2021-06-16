@@ -18,6 +18,7 @@
 #include "AmdSpiDxe.h"
 
 STATIC EFI_EVENT mAmdSpiVirtualAddrChangeEvent;
+STATIC EFI_EVENT mAmdSpiDxeVirtualAddrChangeEvent;
 
 //
 // Global variable declarations
@@ -135,6 +136,7 @@ BlAMDSpiVirtualNotifyEvent (
   IN VOID             *Context
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   // Convert Fvb
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.EraseBlocks);
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.GetAttributes);
@@ -143,7 +145,6 @@ BlAMDSpiVirtualNotifyEvent (
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.Read);
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.SetAttributes);
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.Write);
-  AmdSpiVirtualNotifyEvent (Event, Context);
   return;
 }
 
@@ -193,10 +194,19 @@ BlAmdSpiInitialise (
                   BlAMDSpiVirtualNotifyEvent,
                   NULL,
                   &gEfiEventVirtualAddressChangeGuid,
-                  &mAmdSpiVirtualAddrChangeEvent
+                  &mAmdSpiDxeVirtualAddrChangeEvent
                   );
   ASSERT_EFI_ERROR (Status);
 
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_NOTIFY,
+                  AmdSpiVirtualNotifyEvent,
+                  NULL,
+                  &gEfiEventVirtualAddressChangeGuid,
+                  &mAmdSpiVirtualAddrChangeEvent
+                  );
+  ASSERT_EFI_ERROR (Status);
   //
   // Mark the memory mapped store as MMIO memory
   //
