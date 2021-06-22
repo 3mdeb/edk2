@@ -111,8 +111,14 @@ AmdSpiInitialize (VOID)
     return EFI_OUT_OF_RESOURCES;
   }
 
-  flash->spi.ctrlr = AllocateRuntimeZeroPool (sizeof(struct spi_ctrlr));
-  if (!flash->spi.ctrlr) {
+  flash->spi = AllocateRuntimeZeroPool (sizeof(struct spi_slave));
+  if (!flash->spi) {
+    DEBUG((EFI_D_ERROR, "%a: Out of resources\n", __FUNCTION__));
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  flash->spi->ctrlr = AllocateRuntimeZeroPool (sizeof(struct spi_ctrlr));
+  if (!flash->spi->ctrlr) {
     DEBUG((EFI_D_ERROR, "%a: Out of resources\n", __FUNCTION__));
     return EFI_OUT_OF_RESOURCES;
   }
@@ -133,12 +139,12 @@ AmdSpiVirtualNotifyEvent (
   EfiConvertPointer (0x0, &spi_base);
   EfiConvertPointer (0x0, &fch_pci_addr);
   EfiConvertPointer (0x0, (VOID **)&flash);
-  EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr);
-  EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->setup);
-  EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->xfer);
-  EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->xfer_vector);
-  EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->xfer_dual);
-  EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->flash_probe);
+  EfiConvertPointer (0x0, (VOID **)&flash->spi);
+  EfiConvertPointer (0x0, (VOID **)&flash->spi->ctrlr);
+  EfiConvertPointer (0x0, (VOID **)&flash->spi->ctrlr->setup);
+  EfiConvertPointer (0x0, (VOID **)&flash->spi->ctrlr->xfer);
+  EfiConvertPointer (0x0, (VOID **)&flash->spi->ctrlr->xfer_vector);
+  EfiConvertPointer (0x0, (VOID **)&flash->spi->ctrlr->xfer_dual);
   EfiConvertPointer (0x0, (VOID **)&flash->ops);
   EfiConvertPointer (0x0, (VOID **)&flash->ops->read);
   EfiConvertPointer (0x0, (VOID **)&flash->ops->write);

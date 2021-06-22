@@ -111,8 +111,7 @@ EFI_STATUS spi_setup_slave(UINT32 bus, UINT32 cs, struct spi_slave *slave)
 	for (i = 0; i < spi_ctrlr_bus_map_count; i++) {
 		if ((spi_ctrlr_bus_map[i].bus_start <= bus) &&
 		    (spi_ctrlr_bus_map[i].bus_end >= bus)) {
-			InternalMemCopyMem((VOID *)slave->ctrlr,
-					   (VOID *)&spi_ctrlr_bus_map[i].ctrlr, sizeof (struct spi_ctrlr));
+			slave->ctrlr = spi_ctrlr_bus_map[i].ctrlr;
 			break;
 		}
 	}

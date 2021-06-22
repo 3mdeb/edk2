@@ -107,7 +107,7 @@ struct spi_cfg {
 #define SPI_CTRLR_DEFAULT_MAX_XFER_SIZE	(UINT32_MAX)
 
 struct spi_flash {
-	struct spi_slave spi;
+	struct spi_slave *spi;
 	UINT8 vendor;
 	union {
 		UINT8 raw;
@@ -182,8 +182,6 @@ struct spi_ctrlr {
 			 __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin);
 	UINT32 max_xfer_size;
 	UINT32 flags;
-	EFI_STATUS (*flash_probe)(const struct spi_slave *slave,
-				struct spi_flash *flash);
 };
 
 /*-----------------------------------------------------------------------

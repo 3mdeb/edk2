@@ -50,7 +50,7 @@ EFI_STATUS spi_flash_cmd(CONST struct spi_slave *spi, UINT8 cmd, VOID *response,
 {
 	EFI_STATUS status = do_spi_flash_cmd(spi, &cmd, sizeof(cmd), response, len);
 	if (EFI_ERROR(status))
-		DEBUG((DEBUG_BLKIO, "%a SF: Failed to send command %02x: %d\n", __FUNCTION__, cmd, status));
+		DEBUG((DEBUG_ERROR, "%a SF: Failed to send command %02x: %d\n", __FUNCTION__, cmd, status));
 
 	return status;
 }
@@ -71,7 +71,7 @@ EFI_STATUS spi_flash_cmd_write(CONST struct spi_slave *spi, CONST UINT8 *cmd,
 
 	status = do_spi_flash_cmd(spi, buff, cmd_len + data_len, NULL, 0);
 	if (EFI_ERROR(status)) {
-		DEBUG((DEBUG_BLKIO, "%a SF: Failed to send write command (%zu bytes): %d\n",
+		DEBUG((DEBUG_ERROR, "%a SF: Failed to send write command (%zu bytes): %d\n",
 				__FUNCTION__, data_len, status));
 	}
 
@@ -93,11 +93,11 @@ EFI_STATUS spi_flash_cmd_read(CONST struct spi_flash *flash, UINT32 offset,
 
 	UINT8 *data = buf;
 	while (len) {
-		__SIZE_TYPE__ xfer_len = spi_crop_chunk(&flash->spi, cmd_len, len);
+		__SIZE_TYPE__ xfer_len = spi_crop_chunk(flash->spi, cmd_len, len);
 		spi_flash_addr(offset, cmd);
-		status = do_spi_flash_cmd(&flash->spi, cmd, cmd_len, data, xfer_len);
+		status = do_spi_flash_cmd(flash->spi, cmd, cmd_len, data, xfer_len);
 		if (EFI_ERROR(status)) {
-			DEBUG((DEBUG_BLKIO, "%a SF: Failed to send read command %#.2x(%#x, %#zx): %d\n",
+			DEBUG((DEBUG_ERROR, "%a SF: Failed to send read command %#.2x(%#x, %#zx): %d\n",
 			       __FUNCTION__, cmd[0], offset, xfer_len, status));
 			return status;
 		}
@@ -112,12 +112,11 @@ EFI_STATUS spi_flash_cmd_read(CONST struct spi_flash *flash, UINT32 offset,
 EFI_STATUS spi_flash_cmd_poll_bit(CONST struct spi_flash *flash, unsigned long timeout,
 			   UINT8 cmd, UINT8 poll_bit)
 {
-	CONST struct spi_slave *spi = &flash->spi;
 	EFI_STATUS status = EFI_SUCCESS;
 	UINT8 spi_sr;
 
 	while (!EFI_ERROR(status)) {
-		status = do_spi_flash_cmd(spi, &cmd, 1, &spi_sr, 1);
+		status = do_spi_flash_cmd(flash->spi, &cmd, 1, &spi_sr, 1);
 		if ((spi_sr & poll_bit) == 0)
 			return EFI_SUCCESS;
 
@@ -142,11 +141,11 @@ EFI_STATUS spi_flash_cmd_erase(CONST struct spi_flash *flash, UINT32 offset, __S
 
 	erase_size = flash->sector_size;
 	if (offset % erase_size || len % erase_size) {
-		DEBUG((DEBUG_BLKIO, "%a SF: Erase offset/length not multiple of erase size\n", __FUNCTION__));
+		DEBUG((DEBUG_ERROR, "%a SF: Erase offset/length not multiple of erase size\n", __FUNCTION__));
 		return EFI_DEVICE_ERROR;
 	}
 	if (len == 0) {
-		DEBUG((DEBUG_BLKIO, "%a SF: Erase length cannot be 0\n", __FUNCTION__));
+		DEBUG((DEBUG_ERROR, "%a SF: Erase length cannot be 0\n", __FUNCTION__));
 		return EFI_DEVICE_ERROR;
 	}
 
@@ -161,11 +160,11 @@ EFI_STATUS spi_flash_cmd_erase(CONST struct spi_flash *flash, UINT32 offset, __S
 		DEBUG((DEBUG_BLKIO, "%a SF: erase %2x %2x %2x %2x (%x)\n", __FUNCTION__,
 			cmd[0], cmd[1], cmd[2], cmd[3], offset));
 
-		status = spi_flash_cmd(&flash->spi, CMD_WRITE_ENABLE, NULL, 0);
+		status = spi_flash_cmd(flash->spi, CMD_WRITE_ENABLE, NULL, 0);
 		if (EFI_ERROR(status))
 			goto out;
 
-		status = spi_flash_cmd_write(&flash->spi, cmd, sizeof(cmd), NULL, 0);
+		status = spi_flash_cmd_write(flash->spi, cmd, sizeof(cmd), NULL, 0);
 		if (EFI_ERROR(status))
 			goto out;
 
@@ -184,7 +183,7 @@ out:
 
 EFI_STATUS spi_flash_cmd_status(CONST struct spi_flash *flash, UINT8 *reg)
 {
-	return spi_flash_cmd(&flash->spi, flash->status_cmd, reg, sizeof(*reg));
+	return spi_flash_cmd(flash->spi, flash->status_cmd, reg, sizeof(*reg));
 }
 
 EFI_STATUS spi_flash_cmd_write_page_program(CONST struct spi_flash *flash, UINT32 offset,
@@ -203,22 +202,22 @@ EFI_STATUS spi_flash_cmd_write_page_program(CONST struct spi_flash *flash, UINT3
 	for (actual = 0; actual < len; actual += chunk_len) {
 		byte_addr = offset % page_size;
 		chunk_len = MIN(len - actual, page_size - byte_addr);
-		chunk_len = spi_crop_chunk(&flash->spi, sizeof(cmd), chunk_len);
+		chunk_len = spi_crop_chunk(flash->spi, sizeof(cmd), chunk_len);
 
 		spi_flash_addr(offset, cmd);
 		DEBUG((DEBUG_BLKIO, "%a PP: %x => cmd = { 0x%02x 0x%02x%02x%02x } chunk_len = %u\n",
 		 	__FUNCTION__, buf + actual, cmd[0], cmd[1], cmd[2], cmd[3],	chunk_len));
 
-		status = spi_flash_cmd(&flash->spi, flash->wren_cmd, NULL, 0);
+		status = spi_flash_cmd(flash->spi, flash->wren_cmd, NULL, 0);
 		if (EFI_ERROR(status)) {
-			DEBUG((DEBUG_BLKIO, "%a SF: Enabling Write failed\n", __FUNCTION__));
+			DEBUG((DEBUG_ERROR, "%a SF: Enabling Write failed\n", __FUNCTION__));
 			goto out;
 		}
 
-		status = spi_flash_cmd_write(&flash->spi, cmd, sizeof(cmd),
+		status = spi_flash_cmd_write(flash->spi, cmd, sizeof(cmd),
 				buf + actual, chunk_len);
 		if (EFI_ERROR(status)) {
-			DEBUG((DEBUG_BLKIO, "%a SF: Page Program failed\n", __FUNCTION__));
+			DEBUG((DEBUG_ERROR, "%a SF: Page Program failed\n", __FUNCTION__));
 			goto out;
 		}
 
@@ -335,7 +334,7 @@ STATIC EFI_STATUS fill_spi_flash(const struct spi_slave *spi, struct spi_flash *
 	CONST struct spi_flash_vendor_info *vi,
 	CONST struct spi_flash_part_id *part)
 {
-	InternalMemCopyMem (&flash->spi, spi, sizeof(struct spi_slave));
+	InternalMemCopyMem (flash->spi, spi, sizeof(struct spi_slave));
 	flash->vendor = vi->id;
 	flash->model = part->id[0];
 
@@ -399,7 +398,7 @@ STATIC EFI_STATUS spi_flash_generic_probe(CONST struct spi_slave *spi,
 
 	manuf_id = idcode[0];
 
-  DEBUG((DEBUG_BLKIO, "%a Manufacturer: %02x\n", __FUNCTION__, manuf_id));
+	DEBUG((DEBUG_ERROR, "%a Manufacturer: %02x\n", __FUNCTION__, manuf_id));
 
 	id[0] = (idcode[1] << 8) | idcode[2];
 	id[1] = (idcode[3] << 8) | idcode[4];
@@ -412,22 +411,17 @@ EFI_STATUS spi_flash_probe(UINT32 bus, UINT32 cs, struct spi_flash *flash)
 	struct spi_slave spi;
 	EFI_STATUS status = EFI_DEVICE_ERROR;
 
-	if (spi_setup_slave(bus, cs, &spi)) {
-		DEBUG((DEBUG_BLKIO, "SF: Failed to set up slave\n"));
+	status = spi_setup_slave(bus, cs, &spi);
+	if (EFI_ERROR(status)) {
+		DEBUG((DEBUG_ERROR, "SF: Failed to set up slave\n"));
 		return EFI_DEVICE_ERROR;
 	}
 
-	/* Try special programmer probe if any. */
-	if (spi.ctrlr->flash_probe)
-		status = spi.ctrlr->flash_probe(&spi, flash);
-
-	/* If flash is not found, try generic spi flash probe. */
-	if (EFI_ERROR(status))
-		status = spi_flash_generic_probe(&spi, flash);
+	status = spi_flash_generic_probe(&spi, flash);
 
 	/* Give up -- nothing more to try if flash is not found. */
 	if (EFI_ERROR(status)) {
-		DEBUG((DEBUG_BLKIO, "SF: Unsupported manufacturer!\n"));
+		DEBUG((DEBUG_ERROR, "SF: Unsupported manufacturer!\n"));
 		return EFI_DEVICE_ERROR;
 	}
 
@@ -435,7 +429,7 @@ EFI_STATUS spi_flash_probe(UINT32 bus, UINT32 cs, struct spi_flash *flash)
 	if (flash->flags.dual_spi && spi.ctrlr->xfer_dual)
 		mode_string = " (Dual SPI mode)";
 
-	DEBUG((DEBUG_BLKIO, 
+	DEBUG((DEBUG_ERROR, 
 	       "SF: Detected %02x %04x with sector size 0x%x, total 0x%x%s\n",
 		flash->vendor, flash->model, flash->sector_size, flash->size, mode_string));
 
