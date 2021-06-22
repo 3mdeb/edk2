@@ -134,11 +134,15 @@ AmdSpiVirtualNotifyEvent (
   EfiConvertPointer (0x0, &fch_pci_addr);
   EfiConvertPointer (0x0, (VOID **)&flash);
   EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr);
+  EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->setup);
   EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->xfer);
   EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->xfer_vector);
+  EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->xfer_dual);
+  EfiConvertPointer (0x0, (VOID **)&flash->spi.ctrlr->flash_probe);
   EfiConvertPointer (0x0, (VOID **)&flash->ops);
   EfiConvertPointer (0x0, (VOID **)&flash->ops->read);
   EfiConvertPointer (0x0, (VOID **)&flash->ops->write);
   EfiConvertPointer (0x0, (VOID **)&flash->ops->erase);
   EfiConvertPointer (0x0, (VOID **)&flash->ops->status);
+  EfiConvertPointer (0x0, (VOID **)&flash->part);
 }
