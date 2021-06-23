@@ -94,6 +94,8 @@ EFI_STATUS spi_flash_write(CONST struct spi_flash *flash, UINT32 offset, __SIZE_
 EFI_STATUS spi_flash_erase(CONST struct spi_flash *flash, UINT32 offset, __SIZE_TYPE__ len);
 EFI_STATUS spi_flash_status(CONST struct spi_flash *flash, UINT8 *reg);
 
+UINTN spi_get_bar(VOID);
+
 struct spi_flash_part_id {
 	/* rdid command CONSTructs 2x 16-bit id using the following method
 	 * for matching after reading 5 bytes (1st byte is manuf id):
@@ -134,31 +136,9 @@ struct spi_flash_vendor_info {
 	int (*after_probe)(CONST struct spi_flash *flash);
 };
 
-union pci_bank {
-	UINT8 reg8[4096];
-	UINT16 reg16[4096 / sizeof(UINT16)];
-	UINT32 reg32[4096 / sizeof(UINT32)];
-};
-
-VOID spi_init(VOID);
 
 /* Manufacturer-specific probe information */
 extern CONST struct spi_flash_vendor_info spi_flash_adesto_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_amic_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_atmel_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_eon_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_gigadevice_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_macronix_vi;
-/* Probing order matters between the spansion sequence. */
-extern CONST struct spi_flash_vendor_info spi_flash_spansion_ext1_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_spansion_ext2_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_spansion_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_sst_ai_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_sst_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_stmicro1_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_stmicro2_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_stmicro3_vi;
-extern CONST struct spi_flash_vendor_info spi_flash_stmicro4_vi;
 extern CONST struct spi_flash_vendor_info spi_flash_winbond_vi;
 
 /* Page Programming Command Set with 0x20 Sector Erase command. */

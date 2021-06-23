@@ -85,6 +85,7 @@
   #
   DEFINE SECURE_BOOT_ENABLE           = FALSE
   DEFINE TPM_ENABLE                   = TRUE
+  DEFINE NETWORK_IPXE                 = TRUE
 
 [BuildOptions]
   *_*_*_CC_FLAGS                 = -D DISABLE_NEW_DEPRECATED_INTERFACES
@@ -396,6 +397,8 @@
 
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid|{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmInitializationPolicy|0
+
+  gUefiPayloadPkgTokenSpaceGuid.PcdFchSpiBar|0xFEC10000
 
 ################################################################################
 #

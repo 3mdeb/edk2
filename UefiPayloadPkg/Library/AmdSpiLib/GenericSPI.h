@@ -107,7 +107,7 @@ struct spi_cfg {
 #define SPI_CTRLR_DEFAULT_MAX_XFER_SIZE	(UINT32_MAX)
 
 struct spi_flash {
-	struct spi_slave spi;
+	struct spi_slave *spi;
 	UINT8 vendor;
 	union {
 		UINT8 raw;
@@ -182,8 +182,6 @@ struct spi_ctrlr {
 			 __SIZE_TYPE__ bytesout, VOID *din, __SIZE_TYPE__ bytesin);
 	UINT32 max_xfer_size;
 	UINT32 flags;
-	EFI_STATUS (*flash_probe)(const struct spi_slave *slave,
-				struct spi_flash *flash);
 };
 
 /*-----------------------------------------------------------------------
@@ -202,13 +200,6 @@ struct spi_ctrlr_buses {
 /* Mapping of SPI buses to controllers - should be defined by platform. */
 extern const struct spi_ctrlr_buses spi_ctrlr_bus_map[];
 extern const __SIZE_TYPE__ spi_ctrlr_bus_map_count;
-
-/*-----------------------------------------------------------------------
- * Initialization, must be called once on start up.
- *
- */
-__attribute__((__weak__))
-VOID spi_init(VOID);
 
 /*
  * Get configuration of SPI bus.

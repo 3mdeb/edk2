@@ -18,6 +18,7 @@
 #include "AmdSpiDxe.h"
 
 STATIC EFI_EVENT mAmdSpiVirtualAddrChangeEvent;
+STATIC EFI_EVENT mAmdSpiDxeVirtualAddrChangeEvent;
 
 //
 // Global variable declarations
@@ -135,6 +136,7 @@ BlAMDSpiVirtualNotifyEvent (
   IN VOID             *Context
   )
 {
+  DEBUG((EFI_D_INFO, "%a\n", __FUNCTION__));
   // Convert Fvb
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.EraseBlocks);
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.GetAttributes);
@@ -143,7 +145,6 @@ BlAMDSpiVirtualNotifyEvent (
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.Read);
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.SetAttributes);
   EfiConvertPointer (0x0, (VOID**)&mAMDSpiInstance->FvbProtocol.Write);
-
   return;
 }
 
@@ -193,14 +194,23 @@ BlAmdSpiInitialise (
                   BlAMDSpiVirtualNotifyEvent,
                   NULL,
                   &gEfiEventVirtualAddressChangeGuid,
-                  &mAmdSpiVirtualAddrChangeEvent
+                  &mAmdSpiDxeVirtualAddrChangeEvent
                   );
   ASSERT_EFI_ERROR (Status);
 
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_NOTIFY,
+                  AmdSpiVirtualNotifyEvent,
+                  NULL,
+                  &gEfiEventVirtualAddressChangeGuid,
+                  &mAmdSpiVirtualAddrChangeEvent
+                  );
+  ASSERT_EFI_ERROR (Status);
   //
   // Mark the memory mapped store as MMIO memory
   //
-  Status      = gDS->GetMemorySpaceDescriptor (PcdGet32(PcdFlashNvStorageVariableBase), &GcdDescriptor);
+  Status = gDS->GetMemorySpaceDescriptor (PcdGet32(PcdFlashNvStorageVariableBase), &GcdDescriptor);
   if (EFI_ERROR (Status) || GcdDescriptor.GcdMemoryType != EfiGcdMemoryTypeMemoryMappedIo) {
     DEBUG((EFI_D_INFO, "%a: No memory space descriptor for com buffer found\n",
       __FUNCTION__));
@@ -211,7 +221,27 @@ BlAmdSpiInitialise (
     Status = gDS->AddMemorySpace (
         EfiGcdMemoryTypeMemoryMappedIo,
         PcdGet32(PcdFlashNvStorageVariableBase),
-        3 * 0x10000,
+        3 * SIZE_64KB,
+        EFI_MEMORY_UC | EFI_MEMORY_RUNTIME
+        );
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  //
+  // Mark the memory mapped SPI base as MMIO memory
+  //
+  Status = gDS->GetMemorySpaceDescriptor (PcdGet32(PcdFchSpiBar), &GcdDescriptor);
+  if (EFI_ERROR (Status) || GcdDescriptor.GcdMemoryType != EfiGcdMemoryTypeMemoryMappedIo) {
+    DEBUG((EFI_D_INFO, "%a: No memory space descriptor for SPI BAR found\n",
+      __FUNCTION__));
+
+    //
+    // Add a new entry if not covered by existing mapping
+    //
+    Status = gDS->AddMemorySpace (
+        EfiGcdMemoryTypeMemoryMappedIo,
+        PcdGet32(PcdFchSpiBar),
+        SIZE_4KB,
         EFI_MEMORY_UC | EFI_MEMORY_RUNTIME
         );
     ASSERT_EFI_ERROR (Status);
@@ -222,7 +252,17 @@ BlAmdSpiInitialise (
   //
   Status = gDS->SetMemorySpaceAttributes (
                   PcdGet32(PcdFlashNvStorageVariableBase),
-                  3 * 0x10000,
+                  3 * SIZE_64KB,
+                  EFI_MEMORY_RUNTIME
+                  );
+  ASSERT_EFI_ERROR (Status);
+
+  //
+  // Mark as runtime service
+  //
+  Status = gDS->SetMemorySpaceAttributes (
+                  PcdGet32(PcdFchSpiBar),
+                  SIZE_4KB,
                   EFI_MEMORY_RUNTIME
                   );
   ASSERT_EFI_ERROR (Status);
