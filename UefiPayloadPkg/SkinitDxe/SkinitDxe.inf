@@ -1,0 +1,37 @@
+## @file
+# Copyright (c) 2022, 3mdeb Sp. z o.o.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SkinitDxe
+  MODULE_UNI_FILE                = SkinitDxe.uni
+  FILE_GUID                      = 0220091c-1ab7-47a2-ae63-d33be1811753
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = Entry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 EBC
+#
+#
+
+[Sources]
+  SkinitDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  PcdLib
+  IoLib
+  DebugLib
+  UefiDriverEntryPoint
+  BaseLib
+
+[Depex]
+  TRUE

@@ -558,6 +558,8 @@
 
   UefiPayloadPkg/BlSupportDxe/BlSupportDxe.inf
 
+  UefiPayloadPkg/SkinitDxe/SkinitDxe.inf
+
   #
   # SMBIOS Support
   #
