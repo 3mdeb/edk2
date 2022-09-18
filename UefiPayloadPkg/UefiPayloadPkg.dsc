@@ -559,6 +559,7 @@
   UefiPayloadPkg/BlSupportDxe/BlSupportDxe.inf
 
   UefiPayloadPkg/SkinitDxe/SkinitDxe.inf
+  UefiPayloadPkg/IoMmuDxe/AmdIoMmuDxe.inf
 
   #
   # SMBIOS Support

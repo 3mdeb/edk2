@@ -85,6 +85,7 @@ APRIORI DXE {
   INF  MdeModulePkg/Universal/StatusCodeHandler/RuntimeDxe/StatusCodeHandlerRuntimeDxe.inf
 !if $(BOOTLOADER) == "COREBOOT"
   INF  UefiPayloadPkg/SkinitDxe/SkinitDxe.inf
+  INF  UefiPayloadPkg/IoMmuDxe/AmdIoMmuDxe.inf
   # Initialize VariableStore and update PCDs before VariableRuntimeDxe
   INF  UefiPayloadPkg/BlSMMStoreDxe/BlSMMStoreDxe.inf
 !endif
@@ -129,6 +130,7 @@ INF MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 INF MdeModulePkg/Logo/LogoDxe.inf
 !if $(BOOTLOADER) == "COREBOOT"
 INF  UefiPayloadPkg/SkinitDxe/SkinitDxe.inf
+INF  UefiPayloadPkg/IoMmuDxe/AmdIoMmuDxe.inf
 INF UefiPayloadPkg/BlSMMStoreDxe/BlSMMStoreDxe.inf
 !endif
 
