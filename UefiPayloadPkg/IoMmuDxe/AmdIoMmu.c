@@ -870,7 +870,7 @@ AmdInstallIoMmuProtocol (
   //
   ASSERT (lo & 1);
 
-  if (lo & 1)
+  if (!(lo & 1))
     return EFI_UNSUPPORTED;
 
   mMmioBase = (UINT64 *)(EFI_PHYSICAL_ADDRESS)
