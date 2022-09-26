@@ -14,6 +14,7 @@
 #include <Protocol/IoMmu.h>
 
 #include <Library/BaseLib.h>
+#include <Library/PciLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -28,6 +29,7 @@ typedef struct {
   UINTN                                     NumberOfBytes;
   UINTN                                     NumberOfPages;
   EFI_PHYSICAL_ADDRESS                      Address;
+  EFI_PHYSICAL_ADDRESS                      DevAddress;
 } MAP_INFO;
 
 //
@@ -36,6 +38,190 @@ typedef struct {
 // currently in effect.
 //
 STATIC LIST_ENTRY mMapInfos = INITIALIZE_LIST_HEAD_VARIABLE (mMapInfos);
+
+typedef struct {
+  // First UINT64
+  UINT64    V:1;
+  UINT64    TV:1;
+  UINT64    res0:6;
+  UINT64    HAD:2;
+  UINT64    Mode:3;
+  UINT64    HPTRP:40;
+  UINT64    PPR:1;
+  UINT64    GPRP:1;
+  UINT64    GloV:1;
+  UINT64    GV:1;
+  UINT64    GLX:1;
+  UINT64    GCR3TRP1:3;
+  UINT64    IR:1;
+  UINT64    IW:1;
+  UINT64    res1:1;
+  // Second UINT64
+  UINT64    DomainID:16;
+  UINT64    GCR3TRP2:16;
+  UINT64    I:1;
+  UINT64    SE:1;
+  UINT64    SA:1;
+  UINT64    IoCtl:2;
+  UINT64    Cache:1;
+  UINT64    SD:1;
+  UINT64    EX:1;
+  UINT64    SysMgt:2;
+  UINT64    res2:1;
+  UINT64    GCR3TRP3:21;
+  // Third UINT64
+  UINT64    IV:1;
+  UINT64    IntTabLen:4;
+  UINT64    IG:1;
+  UINT64    ITRP:46;
+  UINT64    res3:4;
+  UINT64    InitPass:1;
+  UINT64    EIntPass:1;
+  UINT64    NMIPass:1;
+  UINT64    res4:1;
+  UINT64    IntCtl:2;
+  UINT64    Lint0Pass:1;
+  UINT64    Lint1Pass:1;
+  // Fourth UINT64
+  UINT64    res5:54;
+  UINT64    AttrV:1;
+  UINT64    Mode0FC:1;
+  UINT64    SnoopAttribute:8;
+} DT_ENTRY;
+
+typedef struct {
+  UINT64    PR:1;
+  UINT64    res0:4;
+  UINT64    A:1;
+  UINT64    D:1;
+  UINT64    res1:2;
+  UINT64    NextLevel:3;
+  UINT64    PageAddress:40;
+  UINT64    res2:7;
+  UINT64    U:1;
+  UINT64    FC:1;
+  UINT64    IR:1;
+  UINT64    IW:1;
+  UINT64    res3:1;
+} IO_PTE;
+
+typedef union {
+  UINT64    Val[2];
+  struct {
+    UINT64  res0:60;
+    UINT64  Opcode:4;
+    UINT64  res1;
+  } Generic;
+  struct {
+    UINT64  s:1;
+    UINT64  i:1;
+    UINT64  f:1;
+    UINT64  StoreAddress:49;
+    UINT64  res0:8;
+    UINT64  Opcode:4;
+    UINT64  StoreData;
+  } CompletionWait;
+} IOMMU_CMD;
+
+#define COMPLETION_WAIT(addr, data)     ((IOMMU_CMD)                    \
+{                                                                       \
+  .CompletionWait.f = 1,                                                \
+  .CompletionWait.s = 1,                                                \
+  .CompletionWait.StoreAddress = ((EFI_PHYSICAL_ADDRESS)(addr)) >> 3,   \
+  .CompletionWait.StoreData = (data),                                   \
+  .CompletionWait.Opcode = 1,                                           \
+})
+
+#define INVALIDATE_IOMMU_ALL      ((IOMMU_CMD) { .Generic.Opcode = 8})
+
+#define IOMMU_DONE SIGNATURE_64 ('C', 'O', 'M', 'P', 'L', 'E', 'T', 'E')
+
+STATIC IO_PTE *mDenyAll;
+
+//
+// Due to the way EDK2 IOMMU protocol is defined, we don't know the device at
+// the time the mapping is produced, so we're using one global DPA space shared
+// across all devices.
+//
+// Addresses are limited to 21 bits, so we can use 1-level paging.
+//
+// WARNING: there are no mechanisms to protect against concurrent accesses to
+// this protocol. Something WILL break if APs are to call Map()/Unmap().
+//
+typedef struct {
+  LIST_ENTRY  Link;
+  UINTN       BasePFN;
+  UINTN       Pages;
+} FREE_PAGES_LIST;
+
+STATIC LIST_ENTRY mFP = INITIALIZE_LIST_HEAD_VARIABLE (mFP);
+
+STATIC DT_ENTRY *mDT;
+STATIC IOMMU_CMD *mCmdBuf;
+STATIC void *mEvtLog;
+
+STATIC UINT64 *mMmioBase;
+#define IOMMU_MMIO_DEVICE_TABLE_BA    (0x0000 / sizeof(UINT64))
+#define IOMMU_MMIO_COMMAND_BUF_BA     (0x0008 / sizeof(UINT64))
+#define IOMMU_MMIO_EVENT_LOG_BA       (0x0010 / sizeof(UINT64))
+#define IOMMU_MMIO_CONTROL_REGISTER   (0x0018 / sizeof(UINT64))
+#define IOMMU_MMIO_EXTENDED_FEATURE   (0x0030 / sizeof(UINT64))
+#define IOMMU_MMIO_COMMAND_BUF_HEAD   (0x2000 / sizeof(UINT64))
+#define IOMMU_MMIO_COMMAND_BUF_TAIL   (0x2008 / sizeof(UINT64))
+#define IOMMU_MMIO_EVENT_LOG_HEAD     (0x2010 / sizeof(UINT64))
+#define IOMMU_MMIO_EVENT_LOG_TAIL     (0x2018 / sizeof(UINT64))
+#define IOMMU_MMIO_STATUS_REGISTER    (0x2020 / sizeof(UINT64))
+
+#define IOMMU_CR_IommuEn            (1ULL << 0)
+#define IOMMU_CR_HtTunEn            (1ULL << 1)
+#define IOMMU_CR_EventLogEn         (1ULL << 2)
+#define IOMMU_CR_EventIntEn         (1ULL << 3)
+#define IOMMU_CR_ComWaitIntEn       (1ULL << 4)
+#define IOMMU_CR_CmdBufEn           (1ULL << 12)
+#define IOMMU_CR_PPRLogEn           (1ULL << 13)
+#define IOMMU_CR_PprIntEn           (1ULL << 14)
+#define IOMMU_CR_PPREn              (1ULL << 15)
+#define IOMMU_CR_GTEn               (1ULL << 16)
+#define IOMMU_CR_GAEn               (1ULL << 17)
+#define IOMMU_CR_SmiFEn             (1ULL << 22)
+#define IOMMU_CR_SmiFLogEn          (1ULL << 24)
+#define IOMMU_CR_GALogEn            (1ULL << 28)
+#define IOMMU_CR_GAIntEn            (1ULL << 29)
+#define IOMMU_CR_DualPprLogEn       (3ULL << 30)
+#define IOMMU_CR_DualEventLogEn     (3ULL << 32)
+#define IOMMU_CR_DevTblSegEn        (7ULL << 34)
+#define IOMMU_CR_PrivAbrtEn         (3ULL << 37)
+#define IOMMU_CR_PprAutoRspEn       (1ULL << 39)
+#define IOMMU_CR_MarcEn             (1ULL << 40)
+#define IOMMU_CR_BlkStopMrkEn       (1ULL << 41)
+#define IOMMU_CR_PprAutoRspAon      (1ULL << 42)
+
+
+#define IOMMU_EF_IASup              (1ULL << 6)
+
+#define IOMMU_CR_ENABLE_ALL_MASK  (IOMMU_CR_IommuEn | \
+           IOMMU_CR_HtTunEn | \
+           IOMMU_CR_EventLogEn | \
+           IOMMU_CR_EventIntEn | \
+           IOMMU_CR_ComWaitIntEn | \
+           IOMMU_CR_CmdBufEn | \
+           IOMMU_CR_PPRLogEn | \
+           IOMMU_CR_PprIntEn | \
+           IOMMU_CR_PPREn | \
+           IOMMU_CR_GTEn | \
+           IOMMU_CR_GAEn | \
+           IOMMU_CR_SmiFEn | \
+           IOMMU_CR_SmiFLogEn | \
+           IOMMU_CR_GALogEn | \
+           IOMMU_CR_GAIntEn | \
+           IOMMU_CR_DualPprLogEn | \
+           IOMMU_CR_DualEventLogEn | \
+           IOMMU_CR_DevTblSegEn | \
+           IOMMU_CR_PrivAbrtEn | \
+           IOMMU_CR_PprAutoRspEn | \
+           IOMMU_CR_MarcEn | \
+           IOMMU_CR_BlkStopMrkEn | \
+           IOMMU_CR_PprAutoRspAon)
 
 //
 // ASCII names for EDKII_IOMMU_OPERATION constants, for debug logging.
@@ -50,29 +236,47 @@ mBusMasterOperationName[EdkiiIoMmuOperationMaximum] = {
   "CommonBuffer64"
 };
 
-//
-// The following structure enables Map() and Unmap() to perform in-place
-// decryption and encryption, respectively, for BusMasterCommonBuffer[64]
-// operations, without dynamic memory allocation or release.
-//
-// Both COMMON_BUFFER_HEADER and COMMON_BUFFER_HEADER.StashBuffer are allocated
-// by AllocateBuffer() and released by FreeBuffer().
-//
-#pragma pack (1)
-typedef struct {
-  UINT64 Signature;
+STATIC void SendCommand(IOMMU_CMD cmd)
+{
+  STATIC int idx = 0;
+  mCmdBuf[idx++] = cmd;
+  if (idx == EFI_PAGE_SIZE / sizeof(IOMMU_CMD))
+    idx = 0;
+  MemoryFence();
+  mMmioBase[IOMMU_MMIO_COMMAND_BUF_TAIL] =
+        (EFI_PHYSICAL_ADDRESS)(&mCmdBuf[idx]) & ~(EFI_PAGE_SIZE - 1);
+}
 
-  //
-  // Always allocated from EfiBootServicesData type memory, and always
-  // encrypted.
-  //
-  VOID *StashBuffer;
+// This is defined in Library/BaseLib.h for newer versions of edk2
+#define BASE_LIST_FOR_EACH(Entry, ListHead)    \
+  for(Entry = (ListHead)->ForwardLink; Entry != (ListHead); Entry = Entry->ForwardLink)
 
-  //
-  // Followed by the actual common buffer, starting at the next page.
-  //
-} COMMON_BUFFER_HEADER;
-#pragma pack ()
+STATIC EFI_PHYSICAL_ADDRESS AllocDevPages (UINTN Pages)
+{
+  LIST_ENTRY *Entry;
+  EFI_PHYSICAL_ADDRESS Ret = 0;
+
+  BASE_LIST_FOR_EACH(Entry, &mFP) {
+    FREE_PAGES_LIST *E = BASE_CR (Entry, FREE_PAGES_LIST, Link);
+
+    if (E->Pages < Pages)
+      continue;
+
+    Ret = EFI_PAGE_SIZE * E->BasePFN;
+
+    if (E->Pages == Pages) {
+      Entry = RemoveEntryList (Entry);
+      FreePool (E);
+    } else {
+      E->BasePFN += Pages;
+      E->Pages -= Pages;
+    }
+
+    break;
+  }
+
+  return Ret;
+}
 
 /**
   Provides the controller-specific addresses required to access system memory
@@ -143,7 +347,7 @@ IoMmuMap (
   }
 
   //
-  // Initialize the MAP_INFO structure, except the PlainTextAddress field
+  // Initialize the MAP_INFO structure.
   //
   ZeroMem (&MapInfo->Link, sizeof MapInfo->Link);
   MapInfo->Signature         = MAP_INFO_SIG;
@@ -165,6 +369,11 @@ IoMmuMap (
     goto FreeMapInfo;
   }
 
+  MapInfo->DevAddress = AllocDevPages(MapInfo->NumberOfPages);
+  if (MapInfo->DevAddress == 0) {
+    goto FreeMapInfo;
+  }
+
   //
   // Track all MAP_INFO structures.
   //
@@ -172,7 +381,7 @@ IoMmuMap (
   //
   // Populate output parameters.
   //
-  *DeviceAddress = MapInfo->Address;
+  *DeviceAddress = MapInfo->DevAddress;
   *Mapping       = MapInfo;
 
   DEBUG ((
@@ -237,12 +446,15 @@ IoMmuUnmapWorker (
 
   MapInfo = (MAP_INFO *)Mapping;
 
+  // TODO: free pages in device space and return them to mFP
+
   //
   // Forget the MAP_INFO structure, then free it (unless the UEFI memory map is
   // locked).
   //
   RemoveEntryList (&MapInfo->Link);
   if (!MemoryMapLocked) {
+    // TODO: free buffer from UEFI
     FreePool (MapInfo);
   }
 
@@ -461,7 +673,7 @@ IoMmuSetAttribute (
   // - create page tables for mapping
   // - convert DeviceHandle (UEFI) to DeviceID (IOMMU)
   // - set IW/IR based on IoMmuAccess
-  // - flush IOMMU TLB
+  // - flush IOMMU cache
   //
   return EFI_UNSUPPORTED;
 }
@@ -567,16 +779,137 @@ AmdInstallIoMmuProtocol (
   EFI_EVENT   UnmapAllMappingsEvent;
   EFI_EVENT   ExitBootEvent;
   EFI_HANDLE  Handle;
+  UINT32 lo, hi;
+  volatile UINT64 done = 0;
+  FREE_PAGES_LIST *FP;
 
   //
-  // TODO: allocate and initialize IOMMU data structures:
-  // - device table
-  // - command buffer
-  // - I/O page tables (or leave it to IoMmuSetAttribute() maybe?)
-  // - event log
-  // - interrupt remapping tables (probably can be skipped?)
-  // - peripheral page request log (probably can be skipped?)
+  // Allocate 2MB for IOMMU Device Table, enough for all 2^16 DeviceIDs.
   //
+  Status = gBS->AllocatePages (
+                  AllocateAnyPages,                 // Type
+                  EfiBootServicesData,              // MemoryType
+                  1,                                // Pages
+                  (EFI_PHYSICAL_ADDRESS *)&mDenyAll // Memory
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  gBS->SetMem (mDenyAll, EFI_PAGE_SIZE, 0);
+
+  DT_ENTRY DefaultEntry =
+  {
+    .V = 1,       // valid
+    .TV = 1,      // translation valid
+    //.Mode = 1,    // 21-bit GPA space
+    //.HPTRP = ((EFI_PHYSICAL_ADDRESS)mDenyAll) >> 12,
+  };
+
+  //
+  // Allocate 2MB for IOMMU Device Table, enough for all 2^16 DeviceIDs.
+  //
+  Status = gBS->AllocatePages (
+                  AllocateAnyPages,                 // Type
+                  EfiBootServicesData,              // MemoryType
+                  512,                              // Pages
+                  (EFI_PHYSICAL_ADDRESS *)&mDT      // Memory
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  for (int i = 0; i < 0x10000; i++)
+    mDT[i] = DefaultEntry;
+
+  //
+  // Allocate one page for Command Buffer.
+  //
+  Status = gBS->AllocatePages (
+                  AllocateAnyPages,                 // Type
+                  EfiBootServicesData,              // MemoryType
+                  1,                                // Pages
+                  (EFI_PHYSICAL_ADDRESS *)&mCmdBuf  // Memory
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  gBS->SetMem (mCmdBuf, EFI_PAGE_SIZE, 0);
+
+  //
+  // Allocate one page for Event Log.
+  //
+  Status = gBS->AllocatePages (
+                  AllocateAnyPages,                 // Type
+                  EfiBootServicesData,              // MemoryType
+                  1,                                // Pages
+                  (EFI_PHYSICAL_ADDRESS *)&mEvtLog  // Memory
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  gBS->SetMem (mEvtLog, EFI_PAGE_SIZE, 0);
+
+  //
+  // Add initial element to free pages list.
+  //
+  FP = AllocatePool (sizeof (FREE_PAGES_LIST));
+  if (FP == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+  }
+  FP->BasePFN = 1;      // Allocate first page due to omnipresent NULL checks
+  FP->Pages = 0x1ff;    // 2^21 / 2^12 - 1
+  InsertHeadList (&mFP, &FP->Link);
+
+  //
+  // TODO: unhardcode, find IOMMU capability
+  //
+  lo = PciRead32 (PCI_LIB_ADDRESS (0, 0, 2, 0x44));
+  hi = PciRead32 (PCI_LIB_ADDRESS (0, 0, 2, 0x48));
+
+  //
+  // TODO: define bit
+  //
+  ASSERT (lo & 1);
+
+  if (lo & 1)
+    return EFI_UNSUPPORTED;
+
+  mMmioBase = (UINT64 *)(EFI_PHYSICAL_ADDRESS)
+                    ((UINT64)hi << 32 | (lo & 0xffffc000));
+
+  mMmioBase[IOMMU_MMIO_CONTROL_REGISTER] &= ~IOMMU_CR_ENABLE_ALL_MASK;
+  MemoryFence ();
+
+  mMmioBase[IOMMU_MMIO_DEVICE_TABLE_BA] = (EFI_PHYSICAL_ADDRESS)mDT | 0x1ff;
+
+  mMmioBase[IOMMU_MMIO_COMMAND_BUF_BA] = (EFI_PHYSICAL_ADDRESS)mCmdBuf | (8ULL << 56);
+  mMmioBase[IOMMU_MMIO_COMMAND_BUF_HEAD] = 0;
+  mMmioBase[IOMMU_MMIO_COMMAND_BUF_TAIL] = 0;
+
+  mMmioBase[IOMMU_MMIO_EVENT_LOG_BA] = (EFI_PHYSICAL_ADDRESS)mEvtLog | (8ULL << 56);
+  mMmioBase[IOMMU_MMIO_EVENT_LOG_HEAD] = 0;
+  mMmioBase[IOMMU_MMIO_EVENT_LOG_TAIL] = 0;
+
+  //
+  // Clear EventLogInt set by IOMMU not being able to read command buffer
+  //
+  mMmioBase[IOMMU_MMIO_STATUS_REGISTER] &= ~2;
+  MemoryFence ();
+  mMmioBase[IOMMU_MMIO_CONTROL_REGISTER] |= IOMMU_CR_CmdBufEn | IOMMU_CR_EventLogEn;
+  MemoryFence ();
+
+  mMmioBase[IOMMU_MMIO_CONTROL_REGISTER] |= IOMMU_CR_IommuEn;
+
+  //
+  // TODO: check if EXTENDED_FEATURES even exist
+  //
+  if ( mMmioBase[IOMMU_MMIO_EXTENDED_FEATURE] & IOMMU_EF_IASup ) {
+    SendCommand (INVALIDATE_IOMMU_ALL);
+  } /* TODO: else? */
+
+  SendCommand (COMPLETION_WAIT( &done, IOMMU_DONE));
+
+  while (done != IOMMU_DONE)
+    CpuPause ();
 
   //
   // Create the "late" event whose notification function will tear down all
