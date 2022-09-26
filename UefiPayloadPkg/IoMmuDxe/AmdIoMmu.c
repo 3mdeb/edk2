@@ -243,7 +243,7 @@ STATIC void SendCommand(IOMMU_CMD cmd)
     idx = 0;
   MemoryFence();
   mMmioBase[IOMMU_MMIO_COMMAND_BUF_TAIL] =
-        (EFI_PHYSICAL_ADDRESS)(&mCmdBuf[idx]) & ~(EFI_PAGE_SIZE - 1);
+        (EFI_PHYSICAL_ADDRESS)(&mCmdBuf[idx]) & (EFI_PAGE_SIZE - 1);
 }
 
 // This is defined in Library/BaseLib.h for newer versions of edk2
