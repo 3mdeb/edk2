@@ -17,6 +17,7 @@
 #include <Library/PciLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DevicePathLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
@@ -135,8 +136,6 @@ typedef union {
 #define INVALIDATE_IOMMU_ALL      ((IOMMU_CMD) { .Generic.Opcode = 8})
 
 #define IOMMU_DONE SIGNATURE_64 ('C', 'O', 'M', 'P', 'L', 'E', 'T', 'E')
-
-STATIC IO_PTE *mDenyAll;
 
 //
 // Due to the way EDK2 IOMMU protocol is defined, we don't know the device at
@@ -668,14 +667,93 @@ IoMmuSetAttribute (
   IN UINT64                IoMmuAccess
   )
 {
-  //
-  // TODO: this should be the function doing all the heavy lifting:
-  // - create page tables for mapping
-  // - convert DeviceHandle (UEFI) to DeviceID (IOMMU)
-  // - set IW/IR based on IoMmuAccess
-  // - flush IOMMU cache
-  //
-  return EFI_UNSUPPORTED;
+  MAP_INFO    *MapInfo = (MAP_INFO *) Mapping;
+  EFI_DEVICE_PATH_PROTOCOL *Node = DevicePathFromHandle(DeviceHandle);
+  UINT32      DeviceID;
+  IO_PTE      *PTE;
+  EFI_STATUS  Status;
+  UINTN       BasePFN;
+  volatile UINT64 done = 0;
+
+  if (Node == NULL)
+    return EFI_UNSUPPORTED;
+
+  DEBUG ((DEBUG_INFO, "IOMMU: remapping %s\n",
+          ConvertDevicePathToText(
+                    DevicePathFromHandle(DeviceHandle),
+                    FALSE, FALSE
+          )
+        ));
+
+  DEBUG ((DEBUG_INFO, "  (DPA) 0x%lx -> 0x%lx (SPA), 0x%lx pages\n",
+          MapInfo->DevAddress, MapInfo->Address, MapInfo->NumberOfPages));
+
+  while (!IsDevicePathEnd(Node) &&
+         DevicePathType(Node) != HARDWARE_DEVICE_PATH &&
+         DevicePathSubType(Node) != HW_PCI_DP) {
+    DEBUG ((DEBUG_INFO, "  T: 0x%lx ST: 0x%lx\n", DevicePathType(Node), DevicePathSubType(Node)));
+    Node = NextDevicePathNode(Node);
+  }
+
+  DEBUG ((DEBUG_INFO, "  Last: T: 0x%lx ST: 0x%lx\n", DevicePathType(Node), DevicePathSubType(Node)));
+
+  if (IsDevicePathEnd(Node))
+    return EFI_UNSUPPORTED;
+
+  DeviceID = (((PCI_DEVICE_PATH *)Node)->Function << 3) |
+             ((PCI_DEVICE_PATH *)Node)->Device;
+
+  // FIXME: check if device already has PTE
+  if (mDT[DeviceID].HPTRP == 0) {
+    Status = gBS->AllocatePages (
+                    AllocateAnyPages,                 // Type
+                    EfiBootServicesData,              // MemoryType
+                    1,                                // Pages
+                    (EFI_PHYSICAL_ADDRESS *)&PTE      // Memory
+                    );
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    gBS->SetMem (mCmdBuf, EFI_PAGE_SIZE, 0);
+  } else {
+    PTE = (IO_PTE *)(EFI_PHYSICAL_ADDRESS)(mDT[DeviceID].HPTRP << 12);
+  }
+
+  BasePFN = MapInfo->DevAddress >> 12;
+
+  for (UINTN i = 0; i < MapInfo->NumberOfPages; i++) {
+    PTE[BasePFN + i] = (IO_PTE) {
+      .PageAddress = BasePFN + i,
+      .PR = 1,
+      .IR = 1,  // FIXME
+      .IW = 1,  // FIXME
+      // others 0
+    };
+  }
+
+  mDT[DeviceID].Mode = 1;       // 21-bit GPA space
+  mDT[DeviceID].HPTRP = ((EFI_PHYSICAL_ADDRESS)PTE) >> 12;
+
+  // FIXME: I am lazy
+  SendCommand(INVALIDATE_IOMMU_ALL);
+  SendCommand(COMPLETION_WAIT(&done, IOMMU_DONE));
+
+  for (int i = 0; i < 0x100; i++) {
+    if (i%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
+    DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)mEvtLog)[i]));
+  }
+
+  DEBUG ((DEBUG_INFO, "\n"));
+
+  for (int i = 0; i < 0x100; i++) {
+    if (i%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
+    DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)mCmdBuf)[i]));
+  }
+
+  while (done != IOMMU_DONE)
+    CpuPause ();
+
+  return EFI_SUCCESS;
 }
 
 EDKII_IOMMU_PROTOCOL  mAmdIoMmu = {
@@ -782,20 +860,6 @@ AmdInstallIoMmuProtocol (
   UINT32 lo, hi;
   volatile UINT64 done = 0;
   FREE_PAGES_LIST *FP;
-
-  //
-  // Allocate 2MB for IOMMU Device Table, enough for all 2^16 DeviceIDs.
-  //
-  Status = gBS->AllocatePages (
-                  AllocateAnyPages,                 // Type
-                  EfiBootServicesData,              // MemoryType
-                  1,                                // Pages
-                  (EFI_PHYSICAL_ADDRESS *)&mDenyAll // Memory
-                  );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-  gBS->SetMem (mDenyAll, EFI_PAGE_SIZE, 0);
 
   DT_ENTRY DefaultEntry =
   {
