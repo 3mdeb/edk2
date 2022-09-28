@@ -44,7 +44,7 @@ typedef struct {
   // First UINT64
   UINT64    V:1;
   UINT64    TV:1;
-  UINT64    res0:6;
+  UINT64    res0:5;
   UINT64    HAD:2;
   UINT64    Mode:3;
   UINT64    HPTRP:40;
@@ -52,7 +52,7 @@ typedef struct {
   UINT64    GPRP:1;
   UINT64    GloV:1;
   UINT64    GV:1;
-  UINT64    GLX:1;
+  UINT64    GLX:2;
   UINT64    GCR3TRP1:3;
   UINT64    IR:1;
   UINT64    IW:1;
@@ -672,7 +672,8 @@ IoMmuSetAttribute (
   UINT32      DeviceID;
   IO_PTE      *PTE;
   EFI_STATUS  Status;
-  UINTN       BasePFN;
+  UINTN       DevPFN;
+  UINTN       HostPFN;
   volatile UINT64 done = 0;
 
   if (Node == NULL)
@@ -689,8 +690,8 @@ IoMmuSetAttribute (
           MapInfo->DevAddress, MapInfo->Address, MapInfo->NumberOfPages));
 
   while (!IsDevicePathEnd(Node) &&
-         DevicePathType(Node) != HARDWARE_DEVICE_PATH &&
-         DevicePathSubType(Node) != HW_PCI_DP) {
+         (DevicePathType(Node) != HARDWARE_DEVICE_PATH ||
+          DevicePathSubType(Node) != HW_PCI_DP)) {
     DEBUG ((DEBUG_INFO, "  T: 0x%lx ST: 0x%lx\n", DevicePathType(Node), DevicePathSubType(Node)));
     Node = NextDevicePathNode(Node);
   }
@@ -700,10 +701,11 @@ IoMmuSetAttribute (
   if (IsDevicePathEnd(Node))
     return EFI_UNSUPPORTED;
 
-  DeviceID = (((PCI_DEVICE_PATH *)Node)->Function << 3) |
-             ((PCI_DEVICE_PATH *)Node)->Device;
+  DEBUG ((DEBUG_INFO, "  Dev: 0x%lx Fn: 0x%lx\n", ((PCI_DEVICE_PATH *)Node)->Device, ((PCI_DEVICE_PATH *)Node)->Function));
 
-  // FIXME: check if device already has PTE
+  DeviceID = (((PCI_DEVICE_PATH *)Node)->Device << 3) |
+             ((PCI_DEVICE_PATH *)Node)->Function;
+
   if (mDT[DeviceID].HPTRP == 0) {
     Status = gBS->AllocatePages (
                     AllocateAnyPages,                 // Type
@@ -714,30 +716,47 @@ IoMmuSetAttribute (
     if (EFI_ERROR (Status)) {
       return Status;
     }
-    gBS->SetMem (mCmdBuf, EFI_PAGE_SIZE, 0);
+    gBS->SetMem (PTE, EFI_PAGE_SIZE, 0);
   } else {
     PTE = (IO_PTE *)(EFI_PHYSICAL_ADDRESS)(mDT[DeviceID].HPTRP << 12);
   }
 
-  BasePFN = MapInfo->DevAddress >> 12;
+  DevPFN = MapInfo->DevAddress >> 12;
+  HostPFN = MapInfo->Address >> 12;
 
   for (UINTN i = 0; i < MapInfo->NumberOfPages; i++) {
-    PTE[BasePFN + i] = (IO_PTE) {
-      .PageAddress = BasePFN + i,
+    PTE[DevPFN + i] = (IO_PTE) {
+      .PageAddress = HostPFN + i,
       .PR = 1,
       .IR = 1,  // FIXME
       .IW = 1,  // FIXME
       // others 0
     };
+    DEBUG ((DEBUG_INFO, "\nPTE %lx:\n", DevPFN + i));
+    for (int ii = 0; ii < sizeof(PTE[0]); ii++) {
+      if (ii%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
+      DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)&PTE[DevPFN + i])[ii]));
+    }
   }
 
   mDT[DeviceID].Mode = 1;       // 21-bit GPA space
   mDT[DeviceID].HPTRP = ((EFI_PHYSICAL_ADDRESS)PTE) >> 12;
+  mDT[DeviceID].IW = 1;  // FIXME
+  mDT[DeviceID].IR = 1;  // FIXME
+
+  DEBUG ((DEBUG_INFO, "\nmDT[%lx]:\n", DeviceID));
+  for (int i = 0; i < sizeof(mDT[0]); i++) {
+    if (i%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
+    DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)&mDT[DeviceID])[i]));
+  }
+
+  DEBUG ((DEBUG_INFO, "\n"));
 
   // FIXME: I am lazy
   SendCommand(INVALIDATE_IOMMU_ALL);
   SendCommand(COMPLETION_WAIT(&done, IOMMU_DONE));
 
+  DEBUG ((DEBUG_INFO, "EvtLog:\n"));
   for (int i = 0; i < 0x100; i++) {
     if (i%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
     DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)mEvtLog)[i]));
@@ -745,10 +764,13 @@ IoMmuSetAttribute (
 
   DEBUG ((DEBUG_INFO, "\n"));
 
+  DEBUG ((DEBUG_INFO, "CmdBuf:\n"));
   for (int i = 0; i < 0x100; i++) {
     if (i%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
     DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)mCmdBuf)[i]));
   }
+
+  DEBUG ((DEBUG_INFO, "\n"));
 
   while (done != IOMMU_DONE)
     CpuPause ();
