@@ -277,6 +277,47 @@ STATIC EFI_PHYSICAL_ADDRESS AllocDevPages (UINTN Pages)
   return Ret;
 }
 
+STATIC EFI_STATUS FreeDevPages (UINTN PFN, UINTN Pages)
+{
+  LIST_ENTRY *Entry;
+
+  DEBUG ((DEBUG_VERBOSE, "FreeDevPages: PFN=0x%x Pages=0x%x\n", PFN, Pages));
+  // Create and insert element at head of list
+  FREE_PAGES_LIST *FP = AllocatePool (sizeof (FREE_PAGES_LIST));
+  if (FP == NULL) {
+    // Yes, we need resources to free resources
+    return EFI_OUT_OF_RESOURCES;
+  }
+  FP->BasePFN = PFN;
+  FP->Pages = Pages;
+  InsertHeadList (&mFP, &FP->Link);
+
+  BASE_LIST_FOR_EACH (Entry, &mFP) {
+    FREE_PAGES_LIST *E = BASE_CR (Entry, FREE_PAGES_LIST, Link);
+
+    if (E == FP)
+      continue;
+
+    // Bubble sort it to proper place
+    if (FP->BasePFN > E->BasePFN + E->Pages) {
+      Entry = SwapListEntries (Entry, &FP->Link);
+      continue;
+    }
+
+    // Merge if possible
+    if (FP->BasePFN == E->BasePFN + E->Pages) {
+      DEBUG ((DEBUG_VERBOSE, "   Trying to merge\n"));
+      E->Pages += FP->Pages;
+      RemoveEntryList (&FP->Link);
+      FreePool (FP);
+    }
+
+    break;
+  }
+
+  return EFI_SUCCESS;
+}
+
 /**
   Provides the controller-specific addresses required to access system memory
   from a DMA bus master.
@@ -317,6 +358,7 @@ IoMmuMap (
 {
   EFI_STATUS                                        Status;
   MAP_INFO                                          *MapInfo;
+  UINTN                                             PageOffset;
 
   DEBUG ((
     DEBUG_VERBOSE,
@@ -335,12 +377,15 @@ IoMmuMap (
     return EFI_INVALID_PARAMETER;
   }
 
+  PageOffset = ((UINTN)HostAddress) & (EFI_PAGE_SIZE - 1);
+
   //
   // Allocate a MAP_INFO structure to remember the mapping when Unmap() is
   // called later.
   //
   MapInfo = AllocatePool (sizeof (MAP_INFO));
   if (MapInfo == NULL) {
+    DEBUG ((DEBUG_VERBOSE, "MapInfo == NULL\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto Failed;
   }
@@ -349,27 +394,21 @@ IoMmuMap (
   // Initialize the MAP_INFO structure.
   //
   ZeroMem (&MapInfo->Link, sizeof MapInfo->Link);
-  MapInfo->Signature         = MAP_INFO_SIG;
-  MapInfo->Operation         = Operation;
-  MapInfo->NumberOfBytes     = *NumberOfBytes;
-  MapInfo->NumberOfPages     = EFI_SIZE_TO_PAGES (MapInfo->NumberOfBytes);
-  MapInfo->Address           = (UINTN)HostAddress;
-
-  //
-  // Allocate the buffer.
-  //
-  Status = gBS->AllocatePages (
-                  AllocateAnyPages,
-                  EfiBootServicesData,
-                  MapInfo->NumberOfPages,
-                  &MapInfo->Address
-                  );
-  if (EFI_ERROR (Status)) {
-    goto FreeMapInfo;
-  }
-
-  MapInfo->DevAddress = AllocDevPages(MapInfo->NumberOfPages);
+  MapInfo->Signature      = MAP_INFO_SIG;
+  MapInfo->Operation      = Operation;
+  MapInfo->NumberOfBytes  = *NumberOfBytes;
+  MapInfo->NumberOfPages  = EFI_SIZE_TO_PAGES (MapInfo->NumberOfBytes + PageOffset);
+  MapInfo->Address        = (UINTN)HostAddress;
+  MapInfo->DevAddress     = AllocDevPages(MapInfo->NumberOfPages);
   if (MapInfo->DevAddress == 0) {
+    LIST_ENTRY *Entry;
+    DEBUG ((DEBUG_VERBOSE, "AllocDevPages returned 0, free pages:\n"));
+    BASE_LIST_FOR_EACH(Entry, &mFP) {
+      FREE_PAGES_LIST *E = BASE_CR (Entry, FREE_PAGES_LIST, Link);
+      DEBUG ((DEBUG_VERBOSE, "PFN %3x: 0x%x pages\n", E->BasePFN, E->Pages));
+    }
+
+    Status = EFI_OUT_OF_RESOURCES;
     goto FreeMapInfo;
   }
 
@@ -380,8 +419,14 @@ IoMmuMap (
   //
   // Populate output parameters.
   //
-  *DeviceAddress = MapInfo->DevAddress;
+  *DeviceAddress = MapInfo->DevAddress + PageOffset;
   *Mapping       = MapInfo;
+  //
+  // According to comment in IoMmu.h we should return number of bytes actually
+  // mapped, however there are drivers that check if value on output is the same
+  // as it was on input, and fail if they are not.
+  //
+  //*NumberOfBytes = MapInfo->NumberOfPages * EFI_PAGE_SIZE;
 
   DEBUG ((
     DEBUG_VERBOSE,
@@ -445,7 +490,11 @@ IoMmuUnmapWorker (
 
   MapInfo = (MAP_INFO *)Mapping;
 
-  // TODO: free pages in device space and return them to mFP
+  // TODO: undo IoMmuSetAttribute
+
+  if (FreeDevPages (MapInfo->DevAddress >> 12, MapInfo->NumberOfPages) != EFI_SUCCESS) {
+    DEBUG ((DEBUG_INFO, "%a: couldn't free device pages from pool\n", __FUNCTION__));
+  }
 
   //
   // Forget the MAP_INFO structure, then free it (unless the UEFI memory map is
@@ -453,7 +502,6 @@ IoMmuUnmapWorker (
   //
   RemoveEntryList (&MapInfo->Link);
   if (!MemoryMapLocked) {
-    // TODO: free buffer from UEFI
     FreePool (MapInfo);
   }
 
