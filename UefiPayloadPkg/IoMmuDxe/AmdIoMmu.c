@@ -281,7 +281,6 @@ STATIC EFI_STATUS FreeDevPages (UINTN PFN, UINTN Pages)
 {
   LIST_ENTRY *Entry;
 
-  DEBUG ((DEBUG_VERBOSE, "FreeDevPages: PFN=0x%x Pages=0x%x\n", PFN, Pages));
   // Create and insert element at head of list
   FREE_PAGES_LIST *FP = AllocatePool (sizeof (FREE_PAGES_LIST));
   if (FP == NULL) {
@@ -306,7 +305,6 @@ STATIC EFI_STATUS FreeDevPages (UINTN PFN, UINTN Pages)
 
     // Merge if possible
     if (FP->BasePFN == E->BasePFN + E->Pages) {
-      DEBUG ((DEBUG_VERBOSE, "   Trying to merge\n"));
       E->Pages += FP->Pages;
       RemoveEntryList (&FP->Link);
       FreePool (FP);
@@ -360,6 +358,7 @@ IoMmuMap (
   MAP_INFO                                          *MapInfo;
   UINTN                                             PageOffset;
 
+  (void)mBusMasterOperationName;  // Unused variable when building release target
   DEBUG ((
     DEBUG_VERBOSE,
     "%a: Operation=%a Host=0x%p Bytes=0x%Lx\n",
@@ -405,6 +404,7 @@ IoMmuMap (
     DEBUG ((DEBUG_VERBOSE, "AllocDevPages returned 0, free pages:\n"));
     BASE_LIST_FOR_EACH(Entry, &mFP) {
       FREE_PAGES_LIST *E = BASE_CR (Entry, FREE_PAGES_LIST, Link);
+      (void)E;  // Unused variable when building release target
       DEBUG ((DEBUG_VERBOSE, "PFN %3x: 0x%x pages\n", E->BasePFN, E->Pages));
     }
 
@@ -727,29 +727,14 @@ IoMmuSetAttribute (
   if (Node == NULL)
     return EFI_UNSUPPORTED;
 
-  DEBUG ((DEBUG_INFO, "IOMMU: remapping %s\n",
-          ConvertDevicePathToText(
-                    DevicePathFromHandle(DeviceHandle),
-                    FALSE, FALSE
-          )
-        ));
-
-  DEBUG ((DEBUG_INFO, "  (DPA) 0x%lx -> 0x%lx (SPA), 0x%lx pages\n",
-          MapInfo->DevAddress, MapInfo->Address, MapInfo->NumberOfPages));
-
   while (!IsDevicePathEnd(Node) &&
          (DevicePathType(Node) != HARDWARE_DEVICE_PATH ||
           DevicePathSubType(Node) != HW_PCI_DP)) {
-    DEBUG ((DEBUG_INFO, "  T: 0x%lx ST: 0x%lx\n", DevicePathType(Node), DevicePathSubType(Node)));
     Node = NextDevicePathNode(Node);
   }
 
-  DEBUG ((DEBUG_INFO, "  Last: T: 0x%lx ST: 0x%lx\n", DevicePathType(Node), DevicePathSubType(Node)));
-
   if (IsDevicePathEnd(Node))
     return EFI_UNSUPPORTED;
-
-  DEBUG ((DEBUG_INFO, "  Dev: 0x%lx Fn: 0x%lx\n", ((PCI_DEVICE_PATH *)Node)->Device, ((PCI_DEVICE_PATH *)Node)->Function));
 
   DeviceID = (((PCI_DEVICE_PATH *)Node)->Device << 3) |
              ((PCI_DEVICE_PATH *)Node)->Function;
@@ -780,11 +765,6 @@ IoMmuSetAttribute (
       .IW = 1,  // FIXME
       // others 0
     };
-    DEBUG ((DEBUG_INFO, "\nPTE %lx:\n", DevPFN + i));
-    for (int ii = 0; ii < sizeof(PTE[0]); ii++) {
-      if (ii%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
-      DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)&PTE[DevPFN + i])[ii]));
-    }
   }
 
   mDT[DeviceID].Mode = 1;       // 21-bit GPA space
@@ -792,33 +772,9 @@ IoMmuSetAttribute (
   mDT[DeviceID].IW = 1;  // FIXME
   mDT[DeviceID].IR = 1;  // FIXME
 
-  DEBUG ((DEBUG_INFO, "\nmDT[%lx]:\n", DeviceID));
-  for (int i = 0; i < sizeof(mDT[0]); i++) {
-    if (i%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
-    DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)&mDT[DeviceID])[i]));
-  }
-
-  DEBUG ((DEBUG_INFO, "\n"));
-
   // FIXME: I am lazy
   SendCommand(INVALIDATE_IOMMU_ALL);
   SendCommand(COMPLETION_WAIT(&done, IOMMU_DONE));
-
-  DEBUG ((DEBUG_INFO, "EvtLog:\n"));
-  for (int i = 0; i < 0x100; i++) {
-    if (i%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
-    DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)mEvtLog)[i]));
-  }
-
-  DEBUG ((DEBUG_INFO, "\n"));
-
-  DEBUG ((DEBUG_INFO, "CmdBuf:\n"));
-  for (int i = 0; i < 0x100; i++) {
-    if (i%16 == 0) DEBUG ((DEBUG_INFO, "\n"));
-    DEBUG ((DEBUG_INFO, "%02x ", ((UINT8 *)mCmdBuf)[i]));
-  }
-
-  DEBUG ((DEBUG_INFO, "\n"));
 
   while (done != IOMMU_DONE)
     CpuPause ();
@@ -865,8 +821,25 @@ AmdIoMmuExitBoot (
 {
   DEBUG ((DEBUG_VERBOSE, "%a\n", __FUNCTION__));
   //
-  // TODO: dump IOMMU log
+  // Dump IOMMU log
   //
+  UINT8 NotAllZeros = 1;
+
+  DEBUG ((DEBUG_VERBOSE, "EvtLog:"));
+  for (int i = 0; i < EFI_PAGE_SIZE; i++) {
+    if (i%16 == 0) {
+      DEBUG ((DEBUG_VERBOSE, "\n"));
+      if (NotAllZeros == 0) {
+        DEBUG ((DEBUG_VERBOSE, "..."));
+        break;
+      }
+      NotAllZeros = 0;
+    }
+    NotAllZeros |= ((UINT8 *)mEvtLog)[i];
+    DEBUG ((DEBUG_VERBOSE, "%02x ", ((UINT8 *)mEvtLog)[i]));
+  }
+  DEBUG ((DEBUG_VERBOSE, "\n"));
+
   gBS->SignalEvent (EventToSignal);
 }
 
